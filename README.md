@@ -330,10 +330,76 @@ pytest
 umara run examples/demo_app.py
 ```
 
+## 💬 Chat Interface
+
+Build AI chatbot interfaces with ease:
+
+```python
+import umara as um
+
+# Simple chat widget
+messages = [
+    {'role': 'assistant', 'content': 'Hello! How can I help?'},
+    {'role': 'user', 'content': 'What is Umara?'},
+]
+
+message = um.chat(messages, key='my_chat')
+
+if message:
+    # Handle new message (call your AI API here)
+    messages.append({'role': 'user', 'content': message})
+```
+
+Or build custom chat layouts:
+
+```python
+with um.chat_container(height='400px'):
+    um.chat_message('user', 'Hello!')
+    um.chat_message('assistant', 'Hi there!')
+
+um.chat_input('Type a message...', key='input')
+```
+
+## 📊 All Components
+
+### Layout
+`container`, `columns`, `grid`, `card`, `tabs`, `divider`, `spacer`, `sidebar`
+
+### Typography
+`text`, `header`, `subheader`, `markdown`, `code`
+
+### Inputs
+`button`, `input`, `text_area`, `slider`, `select`, `multiselect`, `checkbox`, `toggle`, `radio`, `date_input`, `time_input`, `color_picker`, `number_input`, `rating`, `tag_input`, `search_input`, `file_uploader`
+
+### Data Display
+`dataframe`, `table`, `metric`, `stat_card`, `progress`, `badge`, `avatar`, `avatar_group`
+
+### Feedback
+`success`, `error`, `warning`, `info`, `spinner`, `loading_skeleton`, `empty_state`
+
+### Navigation
+`nav_link`, `breadcrumbs`, `pagination`, `steps`
+
+### Container
+`expander`, `accordion`, `modal`, `popover`, `tooltip`
+
+### Chat
+`chat`, `chat_message`, `chat_input`, `chat_container`
+
+### Charts
+`line_chart`, `bar_chart`, `area_chart`, `pie_chart`
+
+### Media
+`image`, `video`, `audio`, `iframe`
+
+### Utility
+`timeline`, `json_viewer`, `copy_button`, `html`
+
 ## 📋 Roadmap
 
-- [ ] Charts & data visualization (Plotly, Altair)
-- [ ] File upload component
+- [x] Charts & data visualization
+- [x] Chat/conversation components
+- [x] Additional input types
 - [ ] Authentication helpers
 - [ ] Multi-page app support
 - [ ] Component marketplace

@@ -1197,3 +1197,1199 @@ def audio(
     }
     style_dict = style.to_dict() if style else None
     ctx.create_component("audio", props=props, style=style_dict)
+
+
+# =============================================================================
+# Chat/Conversation Components
+# =============================================================================
+
+@dataclass
+class ChatMessage:
+    """Represents a chat message."""
+    role: str  # 'user', 'assistant', 'system'
+    content: str
+    avatar: Optional[str] = None
+    timestamp: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+from dataclasses import dataclass
+
+
+def chat_message(
+    content: str,
+    *,
+    role: str = "assistant",
+    avatar: Optional[str] = None,
+    name: Optional[str] = None,
+    timestamp: Optional[str] = None,
+    is_streaming: bool = False,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a single chat message.
+
+    Args:
+        content: Message content (supports markdown)
+        role: Message role ('user', 'assistant', 'system')
+        avatar: Avatar URL or emoji
+        name: Display name
+        timestamp: Message timestamp
+        is_streaming: Show typing indicator
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "content": content,
+        "role": role,
+        "avatar": avatar,
+        "name": name,
+        "timestamp": timestamp,
+        "isStreaming": is_streaming,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("chat_message", props=props, style=style_dict)
+
+
+def chat_input(
+    placeholder: str = "Type a message...",
+    *,
+    key: Optional[str] = None,
+    disabled: bool = False,
+    max_length: Optional[int] = None,
+    style: Optional[Style] = None,
+) -> Optional[str]:
+    """
+    Display a chat input field. Returns the submitted message.
+
+    Args:
+        placeholder: Input placeholder text
+        key: State key
+        disabled: Whether input is disabled
+        max_length: Maximum message length
+        style: Optional Style object
+
+    Returns:
+        Submitted message or None if no submission
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or "_chat_input"
+    submitted_message = state.get(f"{state_key}_submitted", None)
+
+    # Clear submitted message after reading
+    if submitted_message:
+        state.update(**{f"{state_key}_submitted": None})
+
+    props = {
+        "placeholder": placeholder,
+        "disabled": disabled,
+        "maxLength": max_length,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("chat_input", props=props, style=style_dict)
+
+    return submitted_message
+
+
+@contextmanager
+def chat_container(
+    *,
+    height: str = "500px",
+    key: Optional[str] = None,
+    style: Optional[Style] = None,
+):
+    """
+    Create a scrollable chat container for messages.
+
+    Args:
+        height: Container height
+        key: State key for scroll position
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "height": height,
+        "stateKey": key or "_chat_container",
+    }
+    style_dict = style.to_dict() if style else None
+    component = ctx.create_component("chat_container", props=props, style=style_dict)
+    with ContainerContext(component):
+        yield
+
+
+def chat(
+    messages: List[Dict[str, Any]],
+    *,
+    key: Optional[str] = None,
+    height: str = "500px",
+    show_input: bool = True,
+    input_placeholder: str = "Type a message...",
+    on_submit: Optional[Callable[[str], None]] = None,
+    user_avatar: Optional[str] = None,
+    assistant_avatar: Optional[str] = None,
+    style: Optional[Style] = None,
+) -> Optional[str]:
+    """
+    Display a complete chat interface with message history and input.
+
+    This is the easiest way to add an AI chatbot interface to your app.
+
+    Args:
+        messages: List of message dicts with 'role' and 'content' keys
+        key: State key for the chat
+        height: Chat container height
+        show_input: Whether to show the input field
+        input_placeholder: Input placeholder text
+        on_submit: Callback when user submits a message
+        user_avatar: Default avatar for user messages
+        assistant_avatar: Default avatar for assistant messages
+        style: Optional Style object
+
+    Returns:
+        Submitted message if user sent one, else None
+
+    Example:
+        messages = [
+            {"role": "assistant", "content": "Hello! How can I help?"},
+            {"role": "user", "content": "What's the weather?"},
+        ]
+
+        if user_input := um.chat(messages):
+            # Process user input, call AI, update messages
+            messages.append({"role": "user", "content": user_input})
+            response = call_ai(user_input)
+            messages.append({"role": "assistant", "content": response})
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or "_chat"
+
+    # Get submitted message
+    submitted = state.get(f"{state_key}_submitted", None)
+    if submitted:
+        state.update(**{f"{state_key}_submitted": None})
+
+    props = {
+        "messages": messages,
+        "height": height,
+        "showInput": show_input,
+        "inputPlaceholder": input_placeholder,
+        "userAvatar": user_avatar,
+        "assistantAvatar": assistant_avatar,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("chat", props=props, style=style_dict)
+
+    return submitted
+
+
+# =============================================================================
+# Navigation Components
+# =============================================================================
+
+@contextmanager
+def sidebar(
+    *,
+    width: str = "280px",
+    collapsed: bool = False,
+    style: Optional[Style] = None,
+):
+    """
+    Create a sidebar navigation panel.
+
+    Args:
+        width: Sidebar width
+        collapsed: Whether sidebar is collapsed
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "width": width,
+        "collapsed": collapsed,
+    }
+    style_dict = style.to_dict() if style else None
+    component = ctx.create_component("sidebar", props=props, style=style_dict)
+    with ContainerContext(component):
+        yield
+
+
+def nav_link(
+    label: str,
+    *,
+    href: Optional[str] = None,
+    icon: Optional[str] = None,
+    active: bool = False,
+    key: Optional[str] = None,
+    style: Optional[Style] = None,
+) -> bool:
+    """
+    Create a navigation link.
+
+    Args:
+        label: Link label
+        href: Link URL (optional, can use as button)
+        icon: Icon name
+        active: Whether link is active/selected
+        key: State key
+        style: Optional Style object
+
+    Returns:
+        True if clicked
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or f"_nav_{label}"
+    was_clicked = state.get(f"{state_key}_clicked", False)
+    if was_clicked:
+        state.update(**{f"{state_key}_clicked": False})
+
+    props = {
+        "label": label,
+        "href": href,
+        "icon": icon,
+        "active": active,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("nav_link", props=props, style=style_dict)
+
+    return was_clicked
+
+
+def breadcrumbs(
+    items: List[Dict[str, str]],
+    *,
+    separator: str = "/",
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display breadcrumb navigation.
+
+    Args:
+        items: List of dicts with 'label' and optional 'href' keys
+        separator: Separator between items
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "items": items,
+        "separator": separator,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("breadcrumbs", props=props, style=style_dict)
+
+
+def pagination(
+    total_pages: int,
+    *,
+    current_page: int = 1,
+    key: Optional[str] = None,
+    style: Optional[Style] = None,
+) -> int:
+    """
+    Display pagination controls.
+
+    Args:
+        total_pages: Total number of pages
+        current_page: Current page (1-indexed)
+        key: State key
+        style: Optional Style object
+
+    Returns:
+        Current page number
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or "_pagination"
+    page = state.setdefault(state_key, current_page)
+
+    props = {
+        "totalPages": total_pages,
+        "currentPage": page,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("pagination", props=props, style=style_dict)
+
+    return page
+
+
+# =============================================================================
+# Container Components
+# =============================================================================
+
+@contextmanager
+def expander(
+    title: str,
+    *,
+    expanded: bool = False,
+    key: Optional[str] = None,
+    icon: Optional[str] = None,
+    style: Optional[Style] = None,
+):
+    """
+    Create an expandable/collapsible section.
+
+    Args:
+        title: Section title
+        expanded: Whether initially expanded
+        key: State key
+        icon: Optional icon
+        style: Optional Style object
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or f"_expander_{title}"
+    is_expanded = state.setdefault(state_key, expanded)
+
+    props = {
+        "title": title,
+        "expanded": is_expanded,
+        "icon": icon,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    component = ctx.create_component("expander", props=props, style=style_dict)
+    with ContainerContext(component):
+        yield
+
+
+@contextmanager
+def accordion(
+    items: List[str],
+    *,
+    allow_multiple: bool = False,
+    key: Optional[str] = None,
+    style: Optional[Style] = None,
+):
+    """
+    Create an accordion with multiple collapsible sections.
+
+    Args:
+        items: List of section titles
+        allow_multiple: Allow multiple sections open
+        key: State key
+        style: Optional Style object
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or "_accordion"
+    open_items = state.setdefault(state_key, [])
+
+    props = {
+        "items": items,
+        "allowMultiple": allow_multiple,
+        "openItems": open_items,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    component = ctx.create_component("accordion", props=props, style=style_dict)
+    with ContainerContext(component):
+        yield
+
+
+@contextmanager
+def modal(
+    title: str,
+    *,
+    is_open: bool = False,
+    key: Optional[str] = None,
+    size: str = "md",
+    close_on_overlay: bool = True,
+    style: Optional[Style] = None,
+):
+    """
+    Create a modal dialog.
+
+    Args:
+        title: Modal title
+        is_open: Whether modal is open
+        key: State key
+        size: Modal size ('sm', 'md', 'lg', 'xl', 'full')
+        close_on_overlay: Close when clicking overlay
+        style: Optional Style object
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or f"_modal_{title}"
+    open_state = state.setdefault(state_key, is_open)
+
+    props = {
+        "title": title,
+        "isOpen": open_state,
+        "size": size,
+        "closeOnOverlay": close_on_overlay,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    component = ctx.create_component("modal", props=props, style=style_dict)
+    with ContainerContext(component):
+        yield
+
+
+def open_modal(key: str) -> None:
+    """Open a modal by its key."""
+    state = get_session_state()
+    state.update(**{key: True})
+
+
+def close_modal(key: str) -> None:
+    """Close a modal by its key."""
+    state = get_session_state()
+    state.update(**{key: False})
+
+
+@contextmanager
+def popover(
+    trigger_label: str,
+    *,
+    position: str = "bottom",
+    key: Optional[str] = None,
+    style: Optional[Style] = None,
+):
+    """
+    Create a popover that appears on click.
+
+    Args:
+        trigger_label: Label for the trigger button
+        position: Position ('top', 'bottom', 'left', 'right')
+        key: State key
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "triggerLabel": trigger_label,
+        "position": position,
+        "stateKey": key or f"_popover_{trigger_label}",
+    }
+    style_dict = style.to_dict() if style else None
+    component = ctx.create_component("popover", props=props, style=style_dict)
+    with ContainerContext(component):
+        yield
+
+
+def tooltip(
+    content: str,
+    *,
+    text: str,
+    position: str = "top",
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display text with a tooltip on hover.
+
+    Args:
+        content: Text to display
+        text: Tooltip text
+        position: Tooltip position ('top', 'bottom', 'left', 'right')
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "content": content,
+        "tooltipText": text,
+        "position": position,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("tooltip", props=props, style=style_dict)
+
+
+# =============================================================================
+# Additional Input Components
+# =============================================================================
+
+def number_input(
+    label: str = "",
+    *,
+    key: Optional[str] = None,
+    value: float = 0,
+    min_value: Optional[float] = None,
+    max_value: Optional[float] = None,
+    step: float = 1,
+    disabled: bool = False,
+    style: Optional[Style] = None,
+) -> float:
+    """
+    Create a number input with increment/decrement buttons.
+
+    Args:
+        label: Input label
+        key: State key
+        value: Default value
+        min_value: Minimum value
+        max_value: Maximum value
+        step: Step increment
+        disabled: Whether disabled
+        style: Optional Style object
+
+    Returns:
+        Current value
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or f"_number_{label or 'default'}"
+    current_value = state.setdefault(state_key, value)
+
+    props = {
+        "label": label,
+        "value": current_value,
+        "min": min_value,
+        "max": max_value,
+        "step": step,
+        "disabled": disabled,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("number_input", props=props, style=style_dict)
+
+    return current_value
+
+
+def search_input(
+    placeholder: str = "Search...",
+    *,
+    key: Optional[str] = None,
+    value: str = "",
+    debounce: int = 300,
+    style: Optional[Style] = None,
+) -> str:
+    """
+    Create a search input with icon and debounced updates.
+
+    Args:
+        placeholder: Placeholder text
+        key: State key
+        value: Default value
+        debounce: Debounce delay in ms
+        style: Optional Style object
+
+    Returns:
+        Current search value
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or "_search"
+    current_value = state.setdefault(state_key, value)
+
+    props = {
+        "placeholder": placeholder,
+        "value": current_value,
+        "debounce": debounce,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("search_input", props=props, style=style_dict)
+
+    return current_value
+
+
+def rating(
+    label: str = "",
+    *,
+    key: Optional[str] = None,
+    value: int = 0,
+    max_value: int = 5,
+    disabled: bool = False,
+    style: Optional[Style] = None,
+) -> int:
+    """
+    Create a star rating input.
+
+    Args:
+        label: Input label
+        key: State key
+        value: Default value
+        max_value: Maximum stars
+        disabled: Whether disabled
+        style: Optional Style object
+
+    Returns:
+        Current rating
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or f"_rating_{label or 'default'}"
+    current_value = state.setdefault(state_key, value)
+
+    props = {
+        "label": label,
+        "value": current_value,
+        "maxValue": max_value,
+        "disabled": disabled,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("rating", props=props, style=style_dict)
+
+    return current_value
+
+
+def tag_input(
+    label: str = "",
+    *,
+    key: Optional[str] = None,
+    value: Optional[List[str]] = None,
+    placeholder: str = "Add tag...",
+    max_tags: Optional[int] = None,
+    suggestions: Optional[List[str]] = None,
+    style: Optional[Style] = None,
+) -> List[str]:
+    """
+    Create a tag/chip input.
+
+    Args:
+        label: Input label
+        key: State key
+        value: Default tags
+        placeholder: Input placeholder
+        max_tags: Maximum number of tags
+        suggestions: Autocomplete suggestions
+        style: Optional Style object
+
+    Returns:
+        List of tags
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or f"_tags_{label or 'default'}"
+    current_value = state.setdefault(state_key, value or [])
+
+    props = {
+        "label": label,
+        "value": current_value,
+        "placeholder": placeholder,
+        "maxTags": max_tags,
+        "suggestions": suggestions,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("tag_input", props=props, style=style_dict)
+
+    return current_value
+
+
+# =============================================================================
+# Display Components
+# =============================================================================
+
+def badge(
+    text: str,
+    *,
+    variant: str = "default",
+    size: str = "md",
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a badge/chip.
+
+    Args:
+        text: Badge text
+        variant: Badge variant ('default', 'success', 'warning', 'error', 'info')
+        size: Badge size ('sm', 'md', 'lg')
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "text": text,
+        "variant": variant,
+        "size": size,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("badge", props=props, style=style_dict)
+
+
+def avatar(
+    src: Optional[str] = None,
+    *,
+    name: Optional[str] = None,
+    size: str = "md",
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display an avatar.
+
+    Args:
+        src: Image URL
+        name: Fallback name for initials
+        size: Avatar size ('sm', 'md', 'lg', 'xl')
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "src": src,
+        "name": name,
+        "size": size,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("avatar", props=props, style=style_dict)
+
+
+def avatar_group(
+    avatars: List[Dict[str, str]],
+    *,
+    max_display: int = 4,
+    size: str = "md",
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a group of overlapping avatars.
+
+    Args:
+        avatars: List of avatar dicts with 'src' and/or 'name'
+        max_display: Max avatars to show before +N
+        size: Avatar size
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "avatars": avatars,
+        "maxDisplay": max_display,
+        "size": size,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("avatar_group", props=props, style=style_dict)
+
+
+def stat_card(
+    title: str,
+    value: str,
+    *,
+    description: Optional[str] = None,
+    icon: Optional[str] = None,
+    trend: Optional[float] = None,
+    trend_label: Optional[str] = None,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a statistic card with icon and trend.
+
+    Args:
+        title: Stat title
+        value: Stat value
+        description: Optional description
+        icon: Icon name
+        trend: Trend percentage
+        trend_label: Trend label
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "title": title,
+        "value": value,
+        "description": description,
+        "icon": icon,
+        "trend": trend,
+        "trendLabel": trend_label,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("stat_card", props=props, style=style_dict)
+
+
+def empty_state(
+    title: str,
+    *,
+    description: Optional[str] = None,
+    icon: Optional[str] = None,
+    action_label: Optional[str] = None,
+    key: Optional[str] = None,
+    style: Optional[Style] = None,
+) -> bool:
+    """
+    Display an empty state placeholder.
+
+    Args:
+        title: Title text
+        description: Description text
+        icon: Icon name
+        action_label: Action button label
+        key: State key for button
+        style: Optional Style object
+
+    Returns:
+        True if action button was clicked
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or f"_empty_{title}"
+    was_clicked = state.get(f"{state_key}_clicked", False)
+    if was_clicked:
+        state.update(**{f"{state_key}_clicked": False})
+
+    props = {
+        "title": title,
+        "description": description,
+        "icon": icon,
+        "actionLabel": action_label,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("empty_state", props=props, style=style_dict)
+
+    return was_clicked
+
+
+def loading_skeleton(
+    *,
+    variant: str = "text",
+    lines: int = 3,
+    height: Optional[str] = None,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a loading skeleton placeholder.
+
+    Args:
+        variant: Skeleton type ('text', 'card', 'avatar', 'image')
+        lines: Number of lines for text variant
+        height: Custom height
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "variant": variant,
+        "lines": lines,
+        "height": height,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("skeleton", props=props, style=style_dict)
+
+
+def timeline(
+    items: List[Dict[str, Any]],
+    *,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a timeline of events.
+
+    Args:
+        items: List of timeline items with 'title', 'description', 'date', 'icon'
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "items": items,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("timeline", props=props, style=style_dict)
+
+
+def steps(
+    items: List[str],
+    *,
+    current: int = 0,
+    key: Optional[str] = None,
+    clickable: bool = False,
+    style: Optional[Style] = None,
+) -> int:
+    """
+    Display a step indicator/wizard.
+
+    Args:
+        items: List of step labels
+        current: Current step index
+        key: State key
+        clickable: Allow clicking to navigate
+        style: Optional Style object
+
+    Returns:
+        Current step index
+    """
+    ctx = get_context()
+    state = get_session_state()
+
+    state_key = key or "_steps"
+    step = state.setdefault(state_key, current)
+
+    props = {
+        "items": items,
+        "current": step,
+        "clickable": clickable,
+        "stateKey": state_key,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("steps", props=props, style=style_dict)
+
+    return step
+
+
+# =============================================================================
+# Chart Components (Simple built-in charts)
+# =============================================================================
+
+def line_chart(
+    data: List[Dict[str, Any]],
+    *,
+    x: str,
+    y: Union[str, List[str]],
+    title: Optional[str] = None,
+    height: str = "300px",
+    colors: Optional[List[str]] = None,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a line chart.
+
+    Args:
+        data: List of data points
+        x: Key for x-axis values
+        y: Key(s) for y-axis values
+        title: Chart title
+        height: Chart height
+        colors: Line colors
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "data": data,
+        "x": x,
+        "y": y if isinstance(y, list) else [y],
+        "title": title,
+        "height": height,
+        "colors": colors,
+        "chartType": "line",
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("chart", props=props, style=style_dict)
+
+
+def bar_chart(
+    data: List[Dict[str, Any]],
+    *,
+    x: str,
+    y: Union[str, List[str]],
+    title: Optional[str] = None,
+    height: str = "300px",
+    colors: Optional[List[str]] = None,
+    horizontal: bool = False,
+    stacked: bool = False,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a bar chart.
+
+    Args:
+        data: List of data points
+        x: Key for x-axis values
+        y: Key(s) for y-axis values
+        title: Chart title
+        height: Chart height
+        colors: Bar colors
+        horizontal: Horizontal bars
+        stacked: Stacked bars
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "data": data,
+        "x": x,
+        "y": y if isinstance(y, list) else [y],
+        "title": title,
+        "height": height,
+        "colors": colors,
+        "horizontal": horizontal,
+        "stacked": stacked,
+        "chartType": "bar",
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("chart", props=props, style=style_dict)
+
+
+def area_chart(
+    data: List[Dict[str, Any]],
+    *,
+    x: str,
+    y: Union[str, List[str]],
+    title: Optional[str] = None,
+    height: str = "300px",
+    colors: Optional[List[str]] = None,
+    stacked: bool = False,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display an area chart.
+
+    Args:
+        data: List of data points
+        x: Key for x-axis values
+        y: Key(s) for y-axis values
+        title: Chart title
+        height: Chart height
+        colors: Area colors
+        stacked: Stacked areas
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "data": data,
+        "x": x,
+        "y": y if isinstance(y, list) else [y],
+        "title": title,
+        "height": height,
+        "colors": colors,
+        "stacked": stacked,
+        "chartType": "area",
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("chart", props=props, style=style_dict)
+
+
+def pie_chart(
+    data: List[Dict[str, Any]],
+    *,
+    label: str,
+    value: str,
+    title: Optional[str] = None,
+    height: str = "300px",
+    colors: Optional[List[str]] = None,
+    donut: bool = False,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a pie/donut chart.
+
+    Args:
+        data: List of data points
+        label: Key for labels
+        value: Key for values
+        title: Chart title
+        height: Chart height
+        colors: Slice colors
+        donut: Donut style
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "data": data,
+        "label": label,
+        "value": value,
+        "title": title,
+        "height": height,
+        "colors": colors,
+        "donut": donut,
+        "chartType": "pie",
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("chart", props=props, style=style_dict)
+
+
+# =============================================================================
+# Utility Components
+# =============================================================================
+
+def copy_button(
+    text: str,
+    *,
+    label: str = "Copy",
+    success_label: str = "Copied!",
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a button that copies text to clipboard.
+
+    Args:
+        text: Text to copy
+        label: Button label
+        success_label: Label after copying
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "text": text,
+        "label": label,
+        "successLabel": success_label,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("copy_button", props=props, style=style_dict)
+
+
+def json_viewer(
+    data: Any,
+    *,
+    expanded: bool = True,
+    max_depth: int = 3,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display JSON data in a collapsible tree view.
+
+    Args:
+        data: JSON-serializable data
+        expanded: Initially expanded
+        max_depth: Maximum expansion depth
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "data": data,
+        "expanded": expanded,
+        "maxDepth": max_depth,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("json_viewer", props=props, style=style_dict)
+
+
+def html(
+    content: str,
+    *,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Render raw HTML content.
+
+    WARNING: Only use with trusted content to avoid XSS vulnerabilities.
+
+    Args:
+        content: HTML string
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "content": content,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("html", props=props, style=style_dict)
+
+
+def iframe(
+    src: str,
+    *,
+    height: str = "400px",
+    width: str = "100%",
+    title: str = "Embedded content",
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Embed an iframe.
+
+    Args:
+        src: Source URL
+        height: Frame height
+        width: Frame width
+        title: Accessibility title
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "src": src,
+        "height": height,
+        "width": width,
+        "title": title,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("iframe", props=props, style=style_dict)

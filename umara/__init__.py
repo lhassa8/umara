@@ -66,6 +66,49 @@ from umara.components import (
     image,
     video,
     audio,
+    # Chat/Conversation
+    chat,
+    chat_message,
+    chat_input,
+    chat_container,
+    ChatMessage,
+    # Navigation
+    sidebar,
+    nav_link,
+    breadcrumbs,
+    pagination,
+    # Container Components
+    expander,
+    accordion,
+    modal,
+    open_modal,
+    close_modal,
+    popover,
+    tooltip,
+    # Additional Inputs
+    number_input,
+    search_input,
+    rating,
+    tag_input,
+    # Display Components
+    badge,
+    avatar,
+    avatar_group,
+    stat_card,
+    empty_state,
+    loading_skeleton,
+    timeline,
+    steps,
+    # Charts
+    line_chart,
+    bar_chart,
+    area_chart,
+    pie_chart,
+    # Utility Components
+    copy_button,
+    json_viewer,
+    html,
+    iframe,
 )
 from umara.themes import (
     set_theme,
@@ -80,7 +123,7 @@ from umara.state import (
 )
 from umara.style import style
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = [
     # Core
     "UmaraApp",
@@ -131,6 +174,49 @@ __all__ = [
     "image",
     "video",
     "audio",
+    # Chat/Conversation
+    "chat",
+    "chat_message",
+    "chat_input",
+    "chat_container",
+    "ChatMessage",
+    # Navigation
+    "sidebar",
+    "nav_link",
+    "breadcrumbs",
+    "pagination",
+    # Container Components
+    "expander",
+    "accordion",
+    "modal",
+    "open_modal",
+    "close_modal",
+    "popover",
+    "tooltip",
+    # Additional Inputs
+    "number_input",
+    "search_input",
+    "rating",
+    "tag_input",
+    # Display Components
+    "badge",
+    "avatar",
+    "avatar_group",
+    "stat_card",
+    "empty_state",
+    "loading_skeleton",
+    "timeline",
+    "steps",
+    # Charts
+    "line_chart",
+    "bar_chart",
+    "area_chart",
+    "pie_chart",
+    # Utility Components
+    "copy_button",
+    "json_viewer",
+    "html",
+    "iframe",
     # Themes
     "set_theme",
     "get_theme",
