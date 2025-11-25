@@ -28,7 +28,7 @@ um.divider()
 um.subheader('Progress Steps')
 um.steps(
     ['Select Plan', 'Account Info', 'Payment', 'Confirmation'],
-    current_step=1,
+    current=1,
     key='onboarding_steps'
 )
 
@@ -41,13 +41,13 @@ um.subheader('Statistics Cards')
 
 with um.columns(4):
     with um.column():
-        um.stat_card('Total Users', '12,543', delta=12.5, icon='👥')
+        um.stat_card('Total Users', '12,543', trend=12.5, icon='👥')
     with um.column():
-        um.stat_card('Revenue', '$48.2K', delta=8.2, icon='💰')
+        um.stat_card('Revenue', '$48.2K', trend=8.2, icon='💰')
     with um.column():
-        um.stat_card('Active Sessions', '1,892', delta=-2.4, icon='📊')
+        um.stat_card('Active Sessions', '1,892', trend=-2.4, icon='📊')
     with um.column():
-        um.stat_card('Conversion', '3.24%', delta=0.5, icon='📈')
+        um.stat_card('Conversion', '3.24%', trend=0.5, icon='📈')
 
 um.divider()
 
@@ -96,12 +96,12 @@ um.subheader('Input Components')
 with um.card():
     with um.columns(2):
         with um.column():
-            um.number_input('Quantity', min=0, max=100, value=1, step=1, key='qty')
+            um.number_input('Quantity', min_value=0, max_value=100, value=1, step=1, key='qty')
             um.date_input('Select Date', key='date')
             um.time_input('Select Time', key='time')
         with um.column():
             um.color_picker('Pick a Color', value='#6366f1', key='color')
-            um.rating('Rate this', value=4, max=5, key='rating')
+            um.rating('Rate this', value=4, max_value=5, key='rating')
 
 um.divider()
 
@@ -254,9 +254,9 @@ um.divider()
 # ============================================================================
 um.subheader('Loading Skeleton')
 
-um.loading_skeleton(height='20px', width='60%')
-um.loading_skeleton(height='16px', width='80%')
-um.loading_skeleton(height='16px', width='40%')
+um.loading_skeleton(variant='text', lines=1, height='20px')
+um.loading_skeleton(variant='text', lines=1, height='16px')
+um.loading_skeleton(variant='text', lines=1, height='16px')
 
 um.divider()
 

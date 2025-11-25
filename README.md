@@ -1,6 +1,6 @@
 <div align="center">
 
-# ✨ Umara
+# Umara
 
 ### Beautiful Python UIs — Without the Complexity
 
@@ -8,19 +8,17 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-[Getting Started](#-quick-start) • [Documentation](#-documentation) • [Examples](#-examples) • [Contributing](#-contributing)
-
----
-
-<img src="https://raw.githubusercontent.com/lhassa8/umara/main/assets/demo.png" alt="Umara Demo" width="800"/>
+[Getting Started](#quick-start) • [Documentation](#documentation) • [Examples](#examples) • [Contributing](#contributing)
 
 </div>
 
+---
+
 ## Why Umara?
 
-**Umara** is a modern Python framework for building stunning web applications with pure Python. No HTML, CSS, or JavaScript required.
+**Umara** is a modern Python framework for building web applications with pure Python. No HTML, CSS, or JavaScript required.
 
-Think of it as **Streamlit's beautiful cousin** — with better styling, smarter state management, and more layout control.
+Think of it as a more polished alternative to Streamlit — with better styling, smarter state management, and more layout control.
 
 ```python
 import umara as um
@@ -45,16 +43,16 @@ if um.button('Say Hello'):
 | **Animations** | Smooth transitions built-in | None |
 | **Performance** | Smart re-rendering | Re-runs entire script |
 
-## ✨ Features
+## Features
 
-- **🎨 Beautiful by Default** — Components look polished out of the box
-- **⚡ Fast & Reactive** — WebSocket-based for instant UI updates
-- **🎭 Flexible Theming** — Light, dark, ocean, forest + custom themes
-- **📐 Powerful Layouts** — Columns, grids, cards, tabs with precise control
-- **🔄 Hot Reload** — See changes instantly during development
-- **🧠 Smart State** — Efficient updates without full re-runs
+- **Beautiful by Default** — Components look polished out of the box
+- **Fast & Reactive** — WebSocket-based for instant UI updates
+- **Flexible Theming** — Light, dark, ocean, forest + custom themes
+- **Powerful Layouts** — Columns, grids, cards, tabs with precise control
+- **Hot Reload** — See changes instantly during development
+- **Smart State** — Efficient updates without full re-runs
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -96,9 +94,9 @@ Run it:
 umara run app.py
 ```
 
-Open http://localhost:8501 🎉
+Open http://localhost:8501
 
-## 📚 Documentation
+## Documentation
 
 ### Themes
 
@@ -202,12 +200,35 @@ um.metric('Revenue', '$48,234', delta=12.5, delta_label='vs last month')
 # Progress bars
 um.progress(75, label='Completion')
 
-# Tables (works with pandas!)
+# Tables (works with pandas)
 data = [
     {'Name': 'Alice', 'Role': 'Engineer'},
     {'Name': 'Bob', 'Role': 'Designer'},
 ]
 um.dataframe(data)
+
+# Stat cards with trends
+um.stat_card('Total Users', '12,543', trend=12.5, icon='Users')
+```
+
+### Charts
+
+```python
+# Line chart
+data = [
+    {'month': 'Jan', 'revenue': 10000, 'profit': 2000},
+    {'month': 'Feb', 'revenue': 25000, 'profit': 5000},
+]
+um.line_chart(data, x='month', y=['revenue', 'profit'], title='Revenue & Profit')
+
+# Bar chart
+um.bar_chart(data, x='category', y='sales', title='Sales by Category')
+
+# Area chart
+um.area_chart(data, x='month', y='revenue', title='Revenue Trend')
+
+# Pie chart
+um.pie_chart(data, label='name', value='share', title='Market Share')
 ```
 
 ### Feedback Messages
@@ -234,7 +255,7 @@ um.text(
 )
 ```
 
-## 🖥️ CLI Commands
+## CLI Commands
 
 ```bash
 # Run an app
@@ -250,7 +271,7 @@ umara init my_project
 umara themes
 ```
 
-## 📁 Examples
+## Examples
 
 ### Dashboard
 
@@ -261,15 +282,14 @@ um.set_theme('dark')
 um.header('Analytics Dashboard')
 
 with um.columns(4):
-    for label, value, delta in [
+    for label, value, trend in [
         ('Users', '12,543', 12.5),
         ('Revenue', '$48.2K', 8.2),
         ('Sessions', '1,892', -2.4),
         ('Conversion', '3.24%', 0.5),
     ]:
         with um.column():
-            with um.card():
-                um.metric(label, value, delta=delta)
+            um.stat_card(label, value, trend=trend)
 
 um.subheader('Recent Activity')
 um.dataframe(activity_data)
@@ -284,7 +304,7 @@ um.header('Contact Form')
 
 with um.card():
     name = um.input('Name', key='name')
-    email = um.input('Email', type='email', key='email')
+    email = um.input('Email', key='email')
     message = um.text_area('Message', key='message')
 
     if um.button('Send Message', variant='primary'):
@@ -294,45 +314,9 @@ with um.card():
             um.error('Please fill in all fields.')
 ```
 
-## 🏗️ Architecture
+## Chat Interface
 
-```
-umara/
-├── umara/                 # Python package
-│   ├── core.py           # App lifecycle & component tree
-│   ├── components.py     # UI components
-│   ├── server.py         # WebSocket server
-│   ├── state.py          # State management
-│   ├── themes.py         # Theming system
-│   └── cli.py            # CLI commands
-├── umara_frontend/       # React frontend
-│   ├── src/components/   # React components
-│   └── src/styles/       # CSS & theming
-└── examples/             # Example apps
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how to get started:
-
-```bash
-# Clone the repo
-git clone https://github.com/lhassa8/umara.git
-cd umara
-
-# Install in dev mode
-pip install -e ".[dev]"
-
-# Run tests
-pytest
-
-# Run the demo
-umara run examples/demo_app.py
-```
-
-## 💬 Chat Interface
-
-Build AI chatbot interfaces with ease:
+Build AI chatbot interfaces:
 
 ```python
 import umara as um
@@ -360,7 +344,7 @@ with um.chat_container(height='400px'):
 um.chat_input('Type a message...', key='input')
 ```
 
-## 📊 All Components
+## All Components
 
 ### Layout
 `container`, `columns`, `grid`, `card`, `tabs`, `divider`, `spacer`, `sidebar`
@@ -369,16 +353,16 @@ um.chat_input('Type a message...', key='input')
 `text`, `header`, `subheader`, `markdown`, `code`
 
 ### Inputs
-`button`, `input`, `text_area`, `slider`, `select`, `multiselect`, `checkbox`, `toggle`, `radio`, `date_input`, `time_input`, `color_picker`, `number_input`, `rating`, `tag_input`, `search_input`, `file_uploader`
+`button`, `input`, `text_area`, `slider`, `select`, `multiselect`, `checkbox`, `toggle`, `radio`, `date_input`, `time_input`, `color_picker`, `number_input`, `rating`, `file_uploader`
 
 ### Data Display
-`dataframe`, `table`, `metric`, `stat_card`, `progress`, `badge`, `avatar`, `avatar_group`
+`dataframe`, `table`, `metric`, `stat_card`, `progress`, `badge`, `avatar`
 
 ### Feedback
 `success`, `error`, `warning`, `info`, `spinner`, `loading_skeleton`, `empty_state`
 
 ### Navigation
-`nav_link`, `breadcrumbs`, `pagination`, `steps`
+`breadcrumbs`, `pagination`, `steps`
 
 ### Container
 `expander`, `accordion`, `modal`, `popover`, `tooltip`
@@ -393,19 +377,54 @@ um.chat_input('Type a message...', key='input')
 `image`, `video`, `audio`, `iframe`
 
 ### Utility
-`timeline`, `json_viewer`, `copy_button`, `html`
+`timeline`, `json_viewer`, `html`
 
-## 📋 Roadmap
+## Architecture
+
+```
+umara/
+├── umara/                 # Python package
+│   ├── core.py           # App lifecycle & component tree
+│   ├── components.py     # UI components
+│   ├── server.py         # WebSocket server
+│   ├── frontend.py       # Frontend HTML/CSS/JS
+│   ├── state.py          # State management
+│   ├── themes.py         # Theming system
+│   └── cli.py            # CLI commands
+└── examples/             # Example apps
+```
+
+## Contributing
+
+Contributions are welcome. Here's how to get started:
+
+```bash
+# Clone the repo
+git clone https://github.com/lhassa8/umara.git
+cd umara
+
+# Install in dev mode
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run the demo
+umara run examples/components_showcase.py
+```
+
+## Roadmap
 
 - [x] Charts & data visualization
 - [x] Chat/conversation components
 - [x] Additional input types
+- [x] Modern frontend with animations
 - [ ] Authentication helpers
 - [ ] Multi-page app support
 - [ ] Component marketplace
 - [ ] VS Code extension
 
-## 📄 License
+## License
 
 MIT License — see [LICENSE](LICENSE) for details.
 
@@ -413,8 +432,8 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-**Built with ❤️ for the Python community**
+**Built for the Python community**
 
-[⬆ Back to top](#-umara)
+[Back to top](#umara)
 
 </div>
