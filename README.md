@@ -231,6 +231,28 @@ um.area_chart(data, x='month', y='revenue', title='Revenue Trend')
 um.pie_chart(data, label='name', value='share', title='Market Share')
 ```
 
+### Smart Write
+
+```python
+# Automatically handles any data type
+um.write('Hello, world!')           # Text
+um.write(42)                        # Numbers
+um.write({'a': 1, 'b': 2})          # Dicts as JSON
+um.write(df)                        # DataFrames as tables
+um.write(my_chart)                  # Charts
+```
+
+### Forms
+
+```python
+with um.form('my_form'):
+    name = um.input('Name')
+    email = um.input('Email')
+
+    if um.form_submit_button('Submit'):
+        um.success(f'Thanks {name}!')
+```
+
 ### Feedback Messages
 
 ```python
@@ -238,6 +260,7 @@ um.success('Operation completed!')
 um.error('Something went wrong.')
 um.warning('Please review your input.')
 um.info('Pro tip: Try the dark theme!')
+um.toast('Quick notification!')     # Toast notification
 ```
 
 ### Custom Styling
@@ -350,34 +373,40 @@ um.chat_input('Type a message...', key='input')
 `container`, `columns`, `grid`, `card`, `tabs`, `divider`, `spacer`, `sidebar`
 
 ### Typography
-`text`, `header`, `subheader`, `markdown`, `code`
+`title`, `header`, `subheader`, `text`, `caption`, `markdown`, `code`, `latex`
 
 ### Inputs
-`button`, `input`, `text_area`, `slider`, `select`, `multiselect`, `checkbox`, `toggle`, `radio`, `date_input`, `time_input`, `color_picker`, `number_input`, `rating`, `file_uploader`
+`button`, `download_button`, `link_button`, `input`, `text_area`, `number_input`, `slider`, `select_slider`, `select`, `multiselect`, `checkbox`, `toggle`, `radio`, `date_input`, `time_input`, `color_picker`, `rating`, `file_uploader`, `camera_input`, `audio_input`, `pills`, `segmented_control`, `feedback`
+
+### Forms
+`form`, `form_submit_button`
 
 ### Data Display
-`dataframe`, `table`, `metric`, `stat_card`, `progress`, `badge`, `avatar`
+`write`, `dataframe`, `data_editor`, `table`, `metric`, `stat_card`, `progress`, `badge`, `avatar`, `avatar_group`
 
 ### Feedback
-`success`, `error`, `warning`, `info`, `spinner`, `loading_skeleton`, `empty_state`
+`success`, `error`, `warning`, `info`, `toast`, `spinner`, `status`, `loading_skeleton`, `empty_state`, `exception`
 
 ### Navigation
-`breadcrumbs`, `pagination`, `steps`
+`breadcrumbs`, `pagination`, `steps`, `nav_link`
 
 ### Container
-`expander`, `accordion`, `modal`, `popover`, `tooltip`
+`expander`, `accordion`, `modal`, `dialog`, `popover`, `tooltip`
 
 ### Chat
 `chat`, `chat_message`, `chat_input`, `chat_container`
 
 ### Charts
-`line_chart`, `bar_chart`, `area_chart`, `pie_chart`
+`line_chart`, `bar_chart`, `area_chart`, `pie_chart`, `scatter_chart`, `map`
 
 ### Media
-`image`, `video`, `audio`, `iframe`
+`image`, `video`, `audio`, `logo`, `iframe`
 
 ### Utility
-`timeline`, `json_viewer`, `html`
+`timeline`, `json_viewer`, `html`, `copy_button`, `tag_input`, `search_input`
+
+### Page Config
+`set_page_config`, `rerun`, `stop`
 
 ## Architecture
 
@@ -419,6 +448,9 @@ umara run examples/components_showcase.py
 - [x] Chat/conversation components
 - [x] Additional input types
 - [x] Modern frontend with animations
+- [x] Streamlit parity (112 components)
+- [x] Forms with batched submission
+- [x] Page configuration
 - [ ] Authentication helpers
 - [ ] Multi-page app support
 - [ ] Component marketplace
