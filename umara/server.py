@@ -1157,8 +1157,8 @@ def get_dev_html(title: str) -> str:
                         mdContent = mdContent.replace(/^### (.+)$/gm, '<h3 style="font-size: 1.25rem; font-weight: 600; margin: 1em 0 0.5em;">$1</h3>');
                         mdContent = mdContent.replace(/^## (.+)$/gm, '<h2 style="font-size: 1.5rem; font-weight: 600; margin: 1em 0 0.5em;">$1</h2>');
                         mdContent = mdContent.replace(/^# (.+)$/gm, '<h1 style="font-size: 2rem; font-weight: 700; margin: 1em 0 0.5em;">$1</h1>');
-                        mdContent = mdContent.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-                        mdContent = mdContent.replace(/\*(.+?)\*/g, '<em>$1</em>');
+                        mdContent = mdContent.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
+                        mdContent = mdContent.replace(/\\*(.+?)\\*/g, '<em>$1</em>');
                         mdContent = mdContent.replace(/`(.+?)`/g, '<code style="background: var(--um-color-background-secondary, #f1f5f9); padding: 2px 6px; border-radius: 4px; font-family: monospace;">$1</code>');
                         mdContent = mdContent.replace(/\\n/g, '<br>');
                         mdEl.innerHTML = mdContent;
