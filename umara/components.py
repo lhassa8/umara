@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, List, Optional, Union
 from contextlib import contextmanager
+from dataclasses import dataclass
 
 from umara.core import get_context, ContainerContext, Component
 from umara.state import get_session_state
@@ -1211,9 +1212,6 @@ class ChatMessage:
     avatar: Optional[str] = None
     timestamp: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
-
-
-from dataclasses import dataclass
 
 
 def chat_message(

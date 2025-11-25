@@ -24,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from umara.core import UmaraApp, get_app, Session
+from umara.frontend import get_frontend_html
 
 
 def create_fastapi_app(umara_app: UmaraApp) -> FastAPI:
@@ -50,8 +51,8 @@ def create_fastapi_app(umara_app: UmaraApp) -> FastAPI:
         if frontend_dist.exists() and (frontend_dist / "index.html").exists():
             return FileResponse(frontend_dist / "index.html")
 
-        # Development mode - serve basic HTML that loads from Vite dev server
-        return HTMLResponse(get_dev_html(umara_app.title))
+        # Development mode - serve the modern frontend
+        return HTMLResponse(get_frontend_html(umara_app.title))
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):
@@ -160,9 +161,10 @@ def get_dev_html(title: str) -> str:
         }}
         body {{
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8fafc;
-            color: #0f172a;
+            background: var(--um-color-background, #f8fafc);
+            color: var(--um-color-text, #0f172a);
             line-height: 1.5;
+            transition: background 0.3s ease, color 0.3s ease;
         }}
         #root {{
             min-height: 100vh;
@@ -283,10 +285,30 @@ def get_dev_html(title: str) -> str:
             render(data) {{
                 const root = document.getElementById('root');
                 if (data.tree) {{
+                    // Save focused element info before re-render
+                    const activeEl = document.activeElement;
+                    const activeId = activeEl?.id || '';
+                    const activeTagName = activeEl?.tagName || '';
+                    const selectionStart = activeEl?.selectionStart;
+                    const selectionEnd = activeEl?.selectionEnd;
+
                     root.innerHTML = '';
                     const element = this.renderComponent(data.tree);
                     root.appendChild(element);
                     this.applyTheme(data.theme);
+
+                    // Restore focus after re-render
+                    if (activeId) {{
+                        const newActiveEl = document.getElementById(activeId);
+                        if (newActiveEl && (newActiveEl.tagName === 'INPUT' || newActiveEl.tagName === 'TEXTAREA')) {{
+                            newActiveEl.focus();
+                            if (typeof selectionStart === 'number' && typeof selectionEnd === 'number') {{
+                                try {{
+                                    newActiveEl.setSelectionRange(selectionStart, selectionEnd);
+                                }} catch (e) {{}}
+                            }}
+                        }}
+                    }}
                 }}
             }}
 
@@ -297,6 +319,13 @@ def get_dev_html(title: str) -> str:
                 Object.entries(colors).forEach(([key, value]) => {{
                     root.style.setProperty(`--um-color-${{key.replace(/_/g, '-')}}`, value);
                 }});
+                // Apply background and text colors to body
+                if (colors.background) {{
+                    document.body.style.background = colors.background;
+                }}
+                if (colors.text) {{
+                    document.body.style.color = colors.text;
+                }}
             }}
 
             renderComponent(component) {{
@@ -309,7 +338,7 @@ def get_dev_html(title: str) -> str:
                     case 'root':
                         const container = document.createElement('div');
                         container.className = 'umara-root';
-                        container.style.cssText = 'max-width: 1200px; margin: 0 auto; padding: 24px;';
+                        container.style.cssText = 'max-width: 1200px; margin: 0 auto; padding: 24px; min-height: 100vh;';
                         children?.forEach(child => {{
                             container.appendChild(this.renderComponent(child));
                         }});
@@ -368,7 +397,8 @@ def get_dev_html(title: str) -> str:
                         input.value = props.value || '';
                         input.placeholder = props.placeholder || '';
                         input.className = 'um-input';
-                        input.style.cssText = 'width: 100%; padding: 10px 14px; border: 1px solid var(--um-color-border, #e2e8f0); border-radius: 8px; font-size: 14px; transition: all 0.2s; outline: none;';
+                        input.id = `input-${{id}}`;
+                        input.style.cssText = 'width: 100%; padding: 10px 14px; border: 1px solid var(--um-color-border, #e2e8f0); border-radius: 8px; font-size: 14px; transition: all 0.2s; outline: none; background: var(--um-color-surface, #fff); color: var(--um-color-text, #0f172a);';
                         input.onfocus = () => input.style.borderColor = 'var(--um-color-primary, #6366f1)';
                         input.onblur = () => input.style.borderColor = 'var(--um-color-border, #e2e8f0)';
                         input.oninput = (e) => this.sendStateUpdate(props.stateKey || id, e.target.value);
@@ -1166,14 +1196,135 @@ def get_dev_html(title: str) -> str:
                         this.applyStyle(iframeWrapper, style);
                         return iframeWrapper;
 
+                    case 'chart':
                     case 'line_chart':
                     case 'bar_chart':
                     case 'area_chart':
                     case 'pie_chart':
                         const chartWrapper = document.createElement('div');
-                        chartWrapper.className = `um-chart um-${{type}}`;
-                        chartWrapper.style.cssText = `height: ${{props.height || '300px'}}; background: var(--um-color-surface, #fff); border: 1px solid var(--um-color-border, #e2e8f0); border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center;`;
-                        chartWrapper.innerHTML = `<div style="text-align: center; color: var(--um-color-text-secondary, #64748b);"><div style="font-size: 32px; margin-bottom: 8px;">📊</div><div>Chart: ${{props.title || type}}</div><div style="font-size: 12px; margin-top: 4px;">Connect a charting library for full visualization</div></div>`;
+                        const chartType = props.chartType || type;
+                        chartWrapper.className = `um-chart um-${{chartType}}`;
+                        chartWrapper.style.cssText = `height: ${{props.height || '300px'}}; background: var(--um-color-surface, #fff); border: 1px solid var(--um-color-border, #e2e8f0); border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; flex-direction: column;`;
+
+                        // Render a simple SVG chart visualization
+                        const chartData = props.data || [];
+                        const chartTitle = props.title || '';
+                        const chartHeight = parseInt(props.height) || 300;
+
+                        let chartContent = '';
+                        if (chartTitle) {{
+                            chartContent += `<div style="font-weight: 600; margin-bottom: 12px; color: var(--um-color-text, #0f172a);">${{chartTitle}}</div>`;
+                        }}
+
+                        if (chartData.length > 0) {{
+                            const svgHeight = chartHeight - 80;
+                            const svgWidth = 400;
+
+                            if (chartType === 'pie' || chartType === 'donut') {{
+                                // Pie chart
+                                const total = chartData.reduce((sum, d) => sum + (d[props.value] || 0), 0);
+                                const colors = props.colors || ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+                                let currentAngle = 0;
+                                let paths = '';
+                                let legend = '';
+
+                                chartData.forEach((d, i) => {{
+                                    const value = d[props.value] || 0;
+                                    const angle = (value / total) * 360;
+                                    const startAngle = currentAngle;
+                                    const endAngle = currentAngle + angle;
+
+                                    const x1 = 100 + 80 * Math.cos((startAngle - 90) * Math.PI / 180);
+                                    const y1 = 100 + 80 * Math.sin((startAngle - 90) * Math.PI / 180);
+                                    const x2 = 100 + 80 * Math.cos((endAngle - 90) * Math.PI / 180);
+                                    const y2 = 100 + 80 * Math.sin((endAngle - 90) * Math.PI / 180);
+
+                                    const largeArc = angle > 180 ? 1 : 0;
+                                    const color = colors[i % colors.length];
+
+                                    if (props.donut) {{
+                                        paths += `<path d="M 100 100 L ${{x1}} ${{y1}} A 80 80 0 ${{largeArc}} 1 ${{x2}} ${{y2}} Z" fill="${{color}}" />`;
+                                        paths += `<circle cx="100" cy="100" r="40" fill="var(--um-color-surface, #fff)" />`;
+                                    }} else {{
+                                        paths += `<path d="M 100 100 L ${{x1}} ${{y1}} A 80 80 0 ${{largeArc}} 1 ${{x2}} ${{y2}} Z" fill="${{color}}" />`;
+                                    }}
+
+                                    legend += `<span style="display: inline-flex; align-items: center; margin-right: 16px; font-size: 12px;"><span style="width: 12px; height: 12px; background: ${{color}}; border-radius: 2px; margin-right: 6px;"></span>${{d[props.label] || 'Item'}}</span>`;
+                                    currentAngle = endAngle;
+                                }});
+
+                                chartContent += `<div style="display: flex; align-items: center; justify-content: center; flex: 1;"><svg viewBox="0 0 200 200" style="width: 180px; height: 180px;">${{paths}}</svg></div>`;
+                                chartContent += `<div style="display: flex; flex-wrap: wrap; justify-content: center; margin-top: 12px;">${{legend}}</div>`;
+                            }} else {{
+                                // Line, Bar, Area charts
+                                const xKey = props.x;
+                                const yKeys = props.y || [];
+                                const colors = props.colors || ['#6366f1', '#10b981', '#f59e0b', '#ef4444'];
+
+                                const values = chartData.flatMap(d => yKeys.map(k => d[k] || 0));
+                                const maxVal = Math.max(...values, 1);
+                                const minVal = Math.min(...values, 0);
+                                const range = maxVal - minVal || 1;
+
+                                let paths = '';
+                                let legend = '';
+
+                                yKeys.forEach((yKey, yi) => {{
+                                    const color = colors[yi % colors.length];
+                                    const points = chartData.map((d, i) => {{
+                                        const x = 40 + (i / (chartData.length - 1 || 1)) * (svgWidth - 60);
+                                        const y = svgHeight - 20 - ((d[yKey] - minVal) / range) * (svgHeight - 40);
+                                        return `${{x}},${{y}}`;
+                                    }}).join(' ');
+
+                                    if (chartType === 'bar') {{
+                                        const barWidth = (svgWidth - 60) / chartData.length / yKeys.length - 4;
+                                        chartData.forEach((d, i) => {{
+                                            const x = 40 + (i / chartData.length) * (svgWidth - 60) + yi * (barWidth + 2);
+                                            const height = ((d[yKey] - minVal) / range) * (svgHeight - 40);
+                                            const y = svgHeight - 20 - height;
+                                            paths += `<rect x="${{x}}" y="${{y}}" width="${{barWidth}}" height="${{height}}" fill="${{color}}" rx="2" />`;
+                                        }});
+                                    }} else if (chartType === 'area') {{
+                                        const firstX = 40;
+                                        const lastX = 40 + (svgWidth - 60);
+                                        paths += `<path d="M ${{firstX}},${{svgHeight - 20}} L ${{points.split(' ').join(' L ')}} L ${{lastX}},${{svgHeight - 20}} Z" fill="${{color}}" fill-opacity="0.2" />`;
+                                        paths += `<polyline points="${{points}}" fill="none" stroke="${{color}}" stroke-width="2" />`;
+                                    }} else {{
+                                        paths += `<polyline points="${{points}}" fill="none" stroke="${{color}}" stroke-width="2" />`;
+                                        chartData.forEach((d, i) => {{
+                                            const x = 40 + (i / (chartData.length - 1 || 1)) * (svgWidth - 60);
+                                            const y = svgHeight - 20 - ((d[yKey] - minVal) / range) * (svgHeight - 40);
+                                            paths += `<circle cx="${{x}}" cy="${{y}}" r="4" fill="${{color}}" />`;
+                                        }});
+                                    }}
+
+                                    legend += `<span style="display: inline-flex; align-items: center; margin-right: 16px; font-size: 12px;"><span style="width: 12px; height: 12px; background: ${{color}}; border-radius: 2px; margin-right: 6px;"></span>${{yKey}}</span>`;
+                                }});
+
+                                // Axes
+                                const axes = `<line x1="40" y1="${{svgHeight - 20}}" x2="${{svgWidth - 20}}" y2="${{svgHeight - 20}}" stroke="var(--um-color-border, #e2e8f0)" />
+                                              <line x1="40" y1="20" x2="40" y2="${{svgHeight - 20}}" stroke="var(--um-color-border, #e2e8f0)" />`;
+
+                                // X-axis labels
+                                let xLabels = '';
+                                chartData.forEach((d, i) => {{
+                                    if (i % Math.ceil(chartData.length / 5) === 0 || i === chartData.length - 1) {{
+                                        const x = 40 + (i / (chartData.length - 1 || 1)) * (svgWidth - 60);
+                                        xLabels += `<text x="${{x}}" y="${{svgHeight - 4}}" text-anchor="middle" font-size="10" fill="var(--um-color-text-secondary, #64748b)">${{d[xKey] || i}}</text>`;
+                                    }}
+                                }});
+
+                                chartContent += `<div style="flex: 1; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 ${{svgWidth}} ${{svgHeight}}" style="width: 100%; max-width: ${{svgWidth}}px; height: ${{svgHeight}}px;">${{axes}}${{paths}}${{xLabels}}</svg></div>`;
+                                if (yKeys.length > 1) {{
+                                    chartContent += `<div style="display: flex; flex-wrap: wrap; justify-content: center; margin-top: 8px;">${{legend}}</div>`;
+                                }}
+                            }}
+                        }} else {{
+                            chartContent += `<div style="flex: 1; display: flex; align-items: center; justify-content: center; color: var(--um-color-text-secondary, #64748b);">No data</div>`;
+                        }}
+
+                        chartWrapper.innerHTML = chartContent;
                         this.applyStyle(chartWrapper, style);
                         return chartWrapper;
 
@@ -1198,10 +1349,11 @@ def get_dev_html(title: str) -> str:
                         }}
 
                         const taEl = document.createElement('textarea');
+                        taEl.id = `textarea-${{id}}`;
                         taEl.value = props.value || '';
                         taEl.placeholder = props.placeholder || '';
                         taEl.rows = props.rows || 4;
-                        taEl.style.cssText = 'width: 100%; padding: 10px 14px; border: 1px solid var(--um-color-border, #e2e8f0); border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit; outline: none;';
+                        taEl.style.cssText = 'width: 100%; padding: 10px 14px; border: 1px solid var(--um-color-border, #e2e8f0); border-radius: 8px; font-size: 14px; resize: vertical; font-family: inherit; outline: none; background: var(--um-color-surface, #fff); color: var(--um-color-text, #0f172a);';
                         taEl.onfocus = () => taEl.style.borderColor = 'var(--um-color-primary, #6366f1)';
                         taEl.onblur = () => taEl.style.borderColor = 'var(--um-color-border, #e2e8f0)';
                         taEl.oninput = (e) => this.sendStateUpdate(props.stateKey || id, e.target.value);

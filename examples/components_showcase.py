@@ -170,36 +170,68 @@ um.json_viewer({
 um.divider()
 
 # ============================================================================
-# Charts (Placeholder)
+# Charts
 # ============================================================================
 um.subheader('Charts')
+
+# Sample data for charts
+revenue_data = [
+    {'month': 'Jan', 'revenue': 10000, 'profit': 2000},
+    {'month': 'Feb', 'revenue': 25000, 'profit': 5000},
+    {'month': 'Mar', 'revenue': 45000, 'profit': 12000},
+    {'month': 'Apr', 'revenue': 30000, 'profit': 8000},
+    {'month': 'May', 'revenue': 55000, 'profit': 15000},
+    {'month': 'Jun', 'revenue': 70000, 'profit': 22000},
+]
+
+sales_data = [
+    {'category': 'Electronics', 'sales': 30000},
+    {'category': 'Clothing', 'sales': 45000},
+    {'category': 'Food', 'sales': 20000},
+    {'category': 'Books', 'sales': 15000},
+]
+
+market_data = [
+    {'name': 'Product A', 'share': 40},
+    {'name': 'Product B', 'share': 30},
+    {'name': 'Product C', 'share': 20},
+    {'name': 'Product D', 'share': 10},
+]
 
 with um.columns(2):
     with um.column():
         um.line_chart(
-            title='Revenue Over Time',
-            data=[10, 25, 45, 30, 55, 70],
-            height='200px'
+            revenue_data,
+            x='month',
+            y=['revenue', 'profit'],
+            title='Revenue & Profit Over Time',
+            height='250px'
         )
     with um.column():
         um.bar_chart(
+            sales_data,
+            x='category',
+            y='sales',
             title='Sales by Category',
-            data=[30, 45, 20, 60],
-            height='200px'
+            height='250px'
         )
 
 with um.columns(2):
     with um.column():
         um.area_chart(
-            title='User Growth',
-            data=[100, 150, 200, 180, 250],
-            height='200px'
+            revenue_data,
+            x='month',
+            y='revenue',
+            title='Revenue Trend',
+            height='250px'
         )
     with um.column():
         um.pie_chart(
+            market_data,
+            label='name',
+            value='share',
             title='Market Share',
-            data=[40, 30, 20, 10],
-            height='200px'
+            height='250px'
         )
 
 um.divider()
