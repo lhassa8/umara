@@ -1,0 +1,293 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Variables for theming */
+:root {
+  /* Primary colors */
+  --um-color-primary: #6366f1;
+  --um-color-primary-hover: #4f46e5;
+  --um-color-primary-active: #4338ca;
+  --um-color-primary-light: #e0e7ff;
+  --um-color-primary-dark: #3730a3;
+
+  /* Secondary colors */
+  --um-color-secondary: #64748b;
+  --um-color-secondary-hover: #475569;
+  --um-color-secondary-active: #334155;
+  --um-color-secondary-light: #f1f5f9;
+  --um-color-secondary-dark: #1e293b;
+
+  /* Accent */
+  --um-color-accent: #f59e0b;
+  --um-color-accent-hover: #d97706;
+  --um-color-accent-active: #b45309;
+  --um-color-accent-light: #fef3c7;
+
+  /* Semantic colors */
+  --um-color-success: #10b981;
+  --um-color-success-light: #d1fae5;
+  --um-color-success-dark: #047857;
+
+  --um-color-warning: #f59e0b;
+  --um-color-warning-light: #fef3c7;
+  --um-color-warning-dark: #b45309;
+
+  --um-color-error: #ef4444;
+  --um-color-error-light: #fee2e2;
+  --um-color-error-dark: #b91c1c;
+
+  --um-color-info: #3b82f6;
+  --um-color-info-light: #dbeafe;
+  --um-color-info-dark: #1d4ed8;
+
+  /* Background colors */
+  --um-color-background: #ffffff;
+  --um-color-background-secondary: #f8fafc;
+  --um-color-background-tertiary: #f1f5f9;
+
+  /* Surface colors */
+  --um-color-surface: #ffffff;
+  --um-color-surface-hover: #f8fafc;
+  --um-color-surface-active: #f1f5f9;
+
+  /* Border colors */
+  --um-color-border: #e2e8f0;
+  --um-color-border-hover: #cbd5e1;
+  --um-color-border-focus: #6366f1;
+
+  /* Text colors */
+  --um-color-text: #0f172a;
+  --um-color-text-secondary: #475569;
+  --um-color-text-tertiary: #94a3b8;
+  --um-color-text-inverse: #ffffff;
+  --um-color-text-disabled: #cbd5e1;
+
+  /* Shadows */
+  --um-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --um-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --um-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --um-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --um-shadow-primary: 0 4px 14px 0 rgba(99, 102, 241, 0.4);
+
+  /* Border radius */
+  --um-radius-sm: 4px;
+  --um-radius-md: 8px;
+  --um-radius-lg: 12px;
+  --um-radius-xl: 16px;
+
+  /* Transitions */
+  --um-duration-fast: 150ms;
+  --um-duration-normal: 200ms;
+  --um-duration-slow: 300ms;
+  --um-easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--um-color-background);
+  color: var(--um-color-text);
+  line-height: 1.5;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--um-color-background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--um-color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--um-color-border-hover);
+}
+
+/* Selection */
+::selection {
+  background-color: var(--um-color-primary-light);
+  color: var(--um-color-primary-dark);
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 2px solid var(--um-color-primary);
+  outline-offset: 2px;
+}
+
+/* Loading animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Utility classes */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Custom slider styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: var(--um-color-border);
+  height: 6px;
+  border-radius: 3px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--um-color-primary);
+  border-radius: 50%;
+  margin-top: -6px;
+  box-shadow: var(--um-shadow-sm);
+  transition: transform var(--um-duration-fast) var(--um-easing-default);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(0.95);
+}
+
+input[type="range"]::-moz-range-track {
+  background: var(--um-color-border);
+  height: 6px;
+  border-radius: 3px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--um-color-primary);
+  border: none;
+  border-radius: 50%;
+  box-shadow: var(--um-shadow-sm);
+  transition: transform var(--um-duration-fast) var(--um-easing-default);
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--um-color-primary);
+  cursor: pointer;
+}
+
+/* Toggle switch */
+.um-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--um-color-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background var(--um-duration-normal) var(--um-easing-default);
+}
+
+.um-toggle.active {
+  background: var(--um-color-primary);
+}
+
+.um-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: var(--um-shadow-sm);
+  transition: transform var(--um-duration-normal) var(--um-easing-default);
+}
+
+.um-toggle.active::after {
+  transform: translateX(20px);
+}
