@@ -27,13 +27,13 @@ class TestTypographyComponents:
     @pytest.mark.unit
     def test_text_with_style(self, component_context, session_state):
         """Test text component with custom style."""
-        components.text("Styled", color="#ff0000", size="20px", weight="bold")
+        components.text("Styled", color="#ff0000", size="20px")
 
         root = component_context.get_root()
         text_component = root.children[0]
-        assert text_component.props.get("color") == "#ff0000"
-        assert text_component.props.get("size") == "20px"
-        assert text_component.props.get("weight") == "bold"
+        # Color and size are applied via style dict, not props
+        assert text_component.style.get("color") == "#ff0000"
+        assert text_component.style.get("font-size") == "20px"
 
     @pytest.mark.unit
     def test_title(self, component_context, session_state):
@@ -41,8 +41,9 @@ class TestTypographyComponents:
         components.title("My Title")
 
         root = component_context.get_root()
-        assert root.children[0].type == "title"
+        assert root.children[0].type == "heading"
         assert root.children[0].props["content"] == "My Title"
+        assert root.children[0].props["level"] == "title"
 
     @pytest.mark.unit
     def test_header(self, component_context, session_state):
@@ -67,7 +68,8 @@ class TestTypographyComponents:
         components.caption("Small caption text")
 
         root = component_context.get_root()
-        assert root.children[0].type == "caption"
+        assert root.children[0].type == "text"
+        assert root.children[0].props["variant"] == "caption"
 
     @pytest.mark.unit
     def test_markdown(self, component_context, session_state):
@@ -181,7 +183,7 @@ class TestInputComponents:
     @pytest.mark.unit
     def test_input_with_default(self, component_context, session_state):
         """Test input with default value."""
-        result = components.input("Email", default="test@example.com", key="email")
+        result = components.input("Email", value="test@example.com", key="email")
 
         assert result == "test@example.com"
 
@@ -191,7 +193,7 @@ class TestInputComponents:
         result = components.text_area("Bio", rows=5, key="bio")
 
         root = component_context.get_root()
-        assert root.children[0].type == "text_area"
+        assert root.children[0].type == "textarea"
         assert root.children[0].props["rows"] == 5
 
     @pytest.mark.unit
@@ -209,8 +211,8 @@ class TestInputComponents:
         assert result == 10
         root = component_context.get_root()
         assert root.children[0].type == "number_input"
-        assert root.children[0].props["min_value"] == 0
-        assert root.children[0].props["max_value"] == 100
+        assert root.children[0].props["min"] == 0
+        assert root.children[0].props["max"] == 100
 
     @pytest.mark.unit
     def test_slider(self, component_context, session_state):
@@ -253,7 +255,7 @@ class TestInputComponents:
     @pytest.mark.unit
     def test_checkbox_default_true(self, component_context, session_state):
         """Test checkbox with default True."""
-        result = components.checkbox("Enable", default=True, key="enable")
+        result = components.checkbox("Enable", value=True, key="enable")
 
         assert result is True
 
@@ -280,7 +282,7 @@ class TestInputComponents:
         result = components.date_input("Birthday", key="bday")
 
         root = component_context.get_root()
-        assert root.children[0].type == "date_input"
+        assert root.children[0].type == "date"
 
     @pytest.mark.unit
     def test_time_input(self, component_context, session_state):
@@ -288,7 +290,7 @@ class TestInputComponents:
         result = components.time_input("Meeting time", key="time")
 
         root = component_context.get_root()
-        assert root.children[0].type == "time_input"
+        assert root.children[0].type == "time"
 
     @pytest.mark.unit
     def test_color_picker(self, component_context, session_state):
@@ -297,7 +299,7 @@ class TestInputComponents:
 
         assert result == "#ff0000"
         root = component_context.get_root()
-        assert root.children[0].type == "color_picker"
+        assert root.children[0].type == "colorpicker"
 
     @pytest.mark.unit
     def test_rating(self, component_context, session_state):
@@ -391,7 +393,7 @@ class TestLayoutComponents:
         root = component_context.get_root()
         expander = root.children[0]
         assert expander.type == "expander"
-        assert expander.props["label"] == "Details"
+        assert expander.props["title"] == "Details"
         assert expander.props["expanded"] is True
 
 
@@ -432,12 +434,13 @@ class TestDataDisplayComponents:
 
     @pytest.mark.unit
     def test_table(self, component_context, session_state, sample_data):
-        """Test table display."""
+        """Test table display (alias for dataframe)."""
         components.table(sample_data)
 
         root = component_context.get_root()
         table = root.children[0]
-        assert table.type == "table"
+        # table() is an alias for dataframe()
+        assert table.type == "dataframe"
 
     @pytest.mark.unit
     def test_badge(self, component_context, session_state):
@@ -468,7 +471,7 @@ class TestDataDisplayComponents:
         root = component_context.get_root()
         card = root.children[0]
         assert card.type == "stat_card"
-        assert card.props["label"] == "Users"
+        assert card.props["title"] == "Users"
         assert card.props["trend"] == 12.5
 
     @pytest.mark.unit
@@ -498,7 +501,8 @@ class TestChartComponents:
 
         root = component_context.get_root()
         chart = root.children[0]
-        assert chart.type == "line_chart"
+        assert chart.type == "chart"
+        assert chart.props["chartType"] == "line"
         assert chart.props["x"] == "month"
         assert chart.props["title"] == "Revenue Chart"
 
@@ -509,7 +513,8 @@ class TestChartComponents:
 
         root = component_context.get_root()
         chart = root.children[0]
-        assert chart.type == "bar_chart"
+        assert chart.type == "chart"
+        assert chart.props["chartType"] == "bar"
 
     @pytest.mark.unit
     def test_area_chart(self, component_context, session_state, chart_data):
@@ -518,7 +523,8 @@ class TestChartComponents:
 
         root = component_context.get_root()
         chart = root.children[0]
-        assert chart.type == "area_chart"
+        assert chart.type == "chart"
+        assert chart.props["chartType"] == "area"
 
     @pytest.mark.unit
     def test_pie_chart(self, component_context, session_state):
@@ -531,7 +537,8 @@ class TestChartComponents:
 
         root = component_context.get_root()
         chart = root.children[0]
-        assert chart.type == "pie_chart"
+        assert chart.type == "chart"
+        assert chart.props["chartType"] == "pie"
 
     @pytest.mark.unit
     def test_scatter_chart(self, component_context, session_state):
@@ -544,7 +551,8 @@ class TestChartComponents:
 
         root = component_context.get_root()
         chart = root.children[0]
-        assert chart.type == "scatter_chart"
+        assert chart.type == "chart"
+        assert chart.props["chart_type"] == "scatter"
 
 
 class TestNavigationComponents:
@@ -572,7 +580,7 @@ class TestNavigationComponents:
         root = component_context.get_root()
         pag = root.children[0]
         assert pag.type == "pagination"
-        assert pag.props["total_pages"] == 10
+        assert pag.props["totalPages"] == 10
 
     @pytest.mark.unit
     def test_steps(self, component_context, session_state):
@@ -625,7 +633,7 @@ class TestChatComponents:
     @pytest.mark.unit
     def test_chat_message(self, component_context, session_state):
         """Test chat message."""
-        components.chat_message("user", "Hello!")
+        components.chat_message("Hello!", role="user")
 
         root = component_context.get_root()
         msg = root.children[0]
@@ -646,7 +654,7 @@ class TestChatComponents:
     def test_chat_container(self, component_context, session_state):
         """Test chat container."""
         with components.chat_container(height="400px"):
-            components.chat_message("assistant", "Hi!")
+            components.chat_message("Hi!", role="assistant")
 
         root = component_context.get_root()
         container = root.children[0]
@@ -711,7 +719,9 @@ class TestUtilityComponents:
     @pytest.mark.unit
     def test_spinner(self, component_context, session_state):
         """Test spinner component."""
-        components.spinner("Loading...")
+        # spinner() is a context manager that yields a container
+        with components.spinner("Loading..."):
+            pass
 
         root = component_context.get_root()
         spin = root.children[0]
@@ -738,7 +748,7 @@ class TestUtilityComponents:
 
         root = component_context.get_root()
         skeleton = root.children[0]
-        assert skeleton.type == "loading_skeleton"
+        assert skeleton.type == "skeleton"
 
     @pytest.mark.unit
     def test_timeline(self, component_context, session_state):

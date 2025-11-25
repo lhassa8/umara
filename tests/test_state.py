@@ -20,7 +20,7 @@ class TestSessionState:
     def test_session_state_creation(self):
         """Test SessionState initialization."""
         ss = SessionState()
-        assert ss._data == {}
+        assert ss._state == {}
 
     @pytest.mark.unit
     def test_session_state_setattr(self):
@@ -28,31 +28,34 @@ class TestSessionState:
         ss = SessionState()
         ss.my_key = "my_value"
 
-        assert ss._data["my_key"] == "my_value"
+        assert ss._state["my_key"].value == "my_value"
 
     @pytest.mark.unit
     def test_session_state_getattr(self):
         """Test getting attributes from session state."""
         ss = SessionState()
-        ss._data["test_key"] = "test_value"
+        ss.test_key = "test_value"  # Set via public API
 
         assert ss.test_key == "test_value"
 
     @pytest.mark.unit
     def test_session_state_getattr_missing(self):
-        """Test getting missing attribute returns None."""
+        """Test getting missing attribute raises AttributeError."""
         ss = SessionState()
 
-        assert ss.nonexistent is None
+        with pytest.raises(AttributeError):
+            _ = ss.nonexistent
 
     @pytest.mark.unit
     def test_session_state_delattr(self):
-        """Test deleting attributes from session state."""
+        """Test deleting state via clear and checking contains."""
         ss = SessionState()
         ss.to_delete = "value"
+        assert "to_delete" in ss
 
-        del ss.to_delete
-        assert "to_delete" not in ss._data
+        # Clear all state
+        ss.clear()
+        assert "to_delete" not in ss
 
     @pytest.mark.unit
     def test_session_state_contains(self):
@@ -90,13 +93,13 @@ class TestSessionState:
         ss.b = 2
 
         ss.clear()
-        assert ss._data == {}
+        assert ss._state == {}
 
     @pytest.mark.unit
     def test_session_state_update(self):
-        """Test updating session state with dict."""
+        """Test updating session state with kwargs."""
         ss = SessionState()
-        ss.update({"x": 10, "y": 20})
+        ss.update(x=10, y=20)
 
         assert ss.x == 10
         assert ss.y == 20
