@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "umara"
-version = "0.1.0"
+version = "0.3.0"
 description = "A beautiful, modern Python framework for creating web UIs"
 readme = "README.md"
 license = "MIT"
@@ -41,8 +41,11 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
     "black>=23.0.0",
     "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "bandit>=1.7.0",
 ]
 
 [project.scripts]
