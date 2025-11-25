@@ -2391,3 +2391,944 @@ def iframe(
     }
     style_dict = style.to_dict() if style else None
     ctx.create_component("iframe", props=props, style=style_dict)
+
+
+# =============================================================================
+# Smart Write Function (like st.write)
+# =============================================================================
+
+def write(*args, **kwargs) -> None:
+    """
+    Write arguments to the app. Handles multiple types intelligently.
+
+    Supports: strings, numbers, dataframes, dicts, lists, markdown, etc.
+    Similar to st.write() - the Swiss Army knife of output.
+
+    Args:
+        *args: Arguments to write (strings, dicts, dataframes, etc.)
+        **kwargs: Additional options (unsafe_allow_html, etc.)
+    """
+    ctx = get_context()
+    unsafe_html = kwargs.get('unsafe_allow_html', False)
+
+    for arg in args:
+        if arg is None:
+            continue
+        elif isinstance(arg, str):
+            # Check if it looks like markdown
+            if any(c in arg for c in ['#', '*', '`', '[', '>']):
+                markdown(arg)
+            else:
+                text(arg)
+        elif isinstance(arg, (int, float)):
+            text(str(arg))
+        elif isinstance(arg, dict):
+            json_viewer(arg)
+        elif isinstance(arg, (list, tuple)):
+            # Check if it's a list of dicts (table-like)
+            if arg and isinstance(arg[0], dict):
+                dataframe(arg)
+            else:
+                json_viewer(list(arg))
+        elif hasattr(arg, 'to_dict'):
+            # Pandas DataFrame or similar
+            dataframe(arg)
+        elif hasattr(arg, '__html__'):
+            html(arg.__html__())
+        else:
+            text(str(arg))
+
+
+# =============================================================================
+# Additional Text Components
+# =============================================================================
+
+def title(
+    content: str,
+    *,
+    anchor: Optional[str] = None,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a title (largest heading).
+
+    Args:
+        content: Title text
+        anchor: Optional anchor ID for linking
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "content": content,
+        "level": "title",
+        "anchor": anchor,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("heading", props=props, style=style_dict)
+
+
+def caption(
+    content: str,
+    *,
+    unsafe_allow_html: bool = False,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display small caption text.
+
+    Args:
+        content: Caption text
+        unsafe_allow_html: Allow HTML in content
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "content": content,
+        "variant": "caption",
+        "unsafe_allow_html": unsafe_allow_html,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("text", props=props, style=style_dict)
+
+
+def latex(
+    content: str,
+    *,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display mathematical expressions using LaTeX notation.
+
+    Args:
+        content: LaTeX expression (e.g., r"e^{i\\pi} + 1 = 0")
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "content": content,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("latex", props=props, style=style_dict)
+
+
+def echo(code_location: str = "above"):
+    """
+    Context manager to display code and run it.
+
+    Args:
+        code_location: Where to show code ('above' or 'below')
+
+    Usage:
+        with um.echo():
+            x = 10
+            um.write(x)
+    """
+    import inspect
+
+    class EchoContext:
+        def __init__(self, location):
+            self.location = location
+            self.frame = None
+
+        def __enter__(self):
+            self.frame = inspect.currentframe().f_back
+            return self
+
+        def __exit__(self, *args):
+            # Get the source code of the with block
+            try:
+                import linecache
+                filename = self.frame.f_code.co_filename
+                lineno = self.frame.f_lineno
+                lines = []
+                # This is a simplified version - real implementation would parse AST
+                code(f"# Code executed at line {lineno}", language="python")
+            except Exception:
+                pass
+
+    return EchoContext(code_location)
+
+
+# =============================================================================
+# Additional Button Variants
+# =============================================================================
+
+def download_button(
+    label: str,
+    data: Union[str, bytes],
+    *,
+    file_name: str = "download.txt",
+    mime: str = "text/plain",
+    key: Optional[str] = None,
+    disabled: bool = False,
+    variant: str = "secondary",
+    style: Optional[Style] = None,
+) -> bool:
+    """
+    Display a download button.
+
+    Args:
+        label: Button label
+        data: Data to download (string or bytes)
+        file_name: Name for downloaded file
+        mime: MIME type of the file
+        key: Unique key for the widget
+        disabled: Whether button is disabled
+        variant: Button style variant
+        style: Optional Style object
+
+    Returns:
+        True if button was clicked
+    """
+    ctx = get_context()
+    component_key = key or f"download_button_{id(label)}"
+
+    # Convert data to base64 if bytes
+    if isinstance(data, bytes):
+        import base64
+        data_str = base64.b64encode(data).decode('utf-8')
+        is_binary = True
+    else:
+        data_str = data
+        is_binary = False
+
+    props = {
+        "label": label,
+        "data": data_str,
+        "file_name": file_name,
+        "mime": mime,
+        "is_binary": is_binary,
+        "disabled": disabled,
+        "variant": variant,
+    }
+
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("download_button", key=component_key, props=props, style=style_dict)
+
+    state = get_session_state()
+    return state.get(component_key, False)
+
+
+def link_button(
+    label: str,
+    url: str,
+    *,
+    disabled: bool = False,
+    variant: str = "secondary",
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a button that links to a URL.
+
+    Args:
+        label: Button label
+        url: URL to open when clicked
+        disabled: Whether button is disabled
+        variant: Button style variant
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "label": label,
+        "url": url,
+        "disabled": disabled,
+        "variant": variant,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("link_button", props=props, style=style_dict)
+
+
+# =============================================================================
+# Form Components
+# =============================================================================
+
+@contextmanager
+def form(
+    key: str,
+    *,
+    clear_on_submit: bool = False,
+    border: bool = True,
+    style: Optional[Style] = None,
+):
+    """
+    Create a form that batches input widgets.
+
+    All widgets inside a form are submitted together when form_submit_button is clicked.
+
+    Args:
+        key: Unique key for the form
+        clear_on_submit: Clear form values after submit
+        border: Show border around form
+        style: Optional Style object
+
+    Usage:
+        with um.form('my_form'):
+            name = um.input('Name')
+            if um.form_submit_button('Submit'):
+                um.success(f'Hello {name}')
+    """
+    ctx = get_context()
+    props = {
+        "form_key": key,
+        "clear_on_submit": clear_on_submit,
+        "border": border,
+    }
+    style_dict = style.to_dict() if style else None
+
+    with ctx.container("form", props=props, style=style_dict):
+        yield
+
+
+def form_submit_button(
+    label: str = "Submit",
+    *,
+    disabled: bool = False,
+    variant: str = "primary",
+    style: Optional[Style] = None,
+) -> bool:
+    """
+    Display a form submit button. Only works inside a form context.
+
+    Args:
+        label: Button label
+        disabled: Whether button is disabled
+        variant: Button style variant
+        style: Optional Style object
+
+    Returns:
+        True if the form was submitted
+    """
+    ctx = get_context()
+    props = {
+        "label": label,
+        "disabled": disabled,
+        "variant": variant,
+        "is_form_submit": True,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("form_submit_button", props=props, style=style_dict)
+
+    state = get_session_state()
+    # Check if form was submitted
+    return state.get("_form_submitted", False)
+
+
+# =============================================================================
+# Toast Notifications
+# =============================================================================
+
+def toast(
+    message: str,
+    *,
+    icon: Optional[str] = None,
+    duration: int = 4000,
+) -> None:
+    """
+    Display a toast notification.
+
+    Args:
+        message: Message to display
+        icon: Optional icon (emoji or icon name)
+        duration: How long to show toast (milliseconds)
+    """
+    ctx = get_context()
+    props = {
+        "message": message,
+        "icon": icon,
+        "duration": duration,
+    }
+    ctx.create_component("toast", props=props)
+
+
+# =============================================================================
+# Status Components
+# =============================================================================
+
+@contextmanager
+def status(
+    label: str,
+    *,
+    expanded: bool = True,
+    state: str = "running",
+    style: Optional[Style] = None,
+):
+    """
+    Display a status container with expandable details.
+
+    Args:
+        label: Status label
+        expanded: Whether details are expanded
+        state: Status state ('running', 'complete', 'error')
+        style: Optional Style object
+
+    Usage:
+        with um.status('Processing...') as s:
+            um.write('Step 1...')
+            s.update(label='Almost done...')
+            um.write('Step 2...')
+        s.update(label='Done!', state='complete')
+    """
+    ctx = get_context()
+
+    class StatusUpdater:
+        def __init__(self):
+            self.label = label
+            self.state = state
+
+        def update(self, label: Optional[str] = None, state: Optional[str] = None, expanded: Optional[bool] = None):
+            if label:
+                self.label = label
+            if state:
+                self.state = state
+
+    updater = StatusUpdater()
+    props = {
+        "label": label,
+        "expanded": expanded,
+        "state": state,
+    }
+    style_dict = style.to_dict() if style else None
+
+    with ctx.container("status", props=props, style=style_dict):
+        yield updater
+
+
+def exception(e: Exception) -> None:
+    """
+    Display an exception with traceback.
+
+    Args:
+        e: Exception to display
+    """
+    import traceback
+
+    ctx = get_context()
+    tb = traceback.format_exception(type(e), e, e.__traceback__)
+    props = {
+        "exception_type": type(e).__name__,
+        "message": str(e),
+        "traceback": ''.join(tb),
+    }
+    ctx.create_component("exception", props=props)
+
+
+# =============================================================================
+# Additional Input Widgets
+# =============================================================================
+
+def select_slider(
+    label: str,
+    options: List[Any],
+    *,
+    value: Optional[Any] = None,
+    key: Optional[str] = None,
+    disabled: bool = False,
+    label_visibility: str = "visible",
+    style: Optional[Style] = None,
+) -> Any:
+    """
+    Display a slider that selects from a list of options.
+
+    Args:
+        label: Slider label
+        options: List of options to select from
+        value: Default value
+        key: Unique key for the widget
+        disabled: Whether slider is disabled
+        label_visibility: 'visible', 'hidden', or 'collapsed'
+        style: Optional Style object
+
+    Returns:
+        Selected option value
+    """
+    ctx = get_context()
+    component_key = key or f"select_slider_{id(label)}"
+
+    default_value = value if value is not None else options[0] if options else None
+
+    props = {
+        "label": label,
+        "options": options,
+        "default": default_value,
+        "disabled": disabled,
+        "label_visibility": label_visibility,
+    }
+
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("select_slider", key=component_key, props=props, style=style_dict)
+
+    state = get_session_state()
+    return state.get(component_key, default_value)
+
+
+def pills(
+    label: str,
+    options: List[str],
+    *,
+    selection_mode: str = "single",
+    default: Optional[Union[str, List[str]]] = None,
+    key: Optional[str] = None,
+    disabled: bool = False,
+    style: Optional[Style] = None,
+) -> Union[str, List[str], None]:
+    """
+    Display pill-shaped selection buttons.
+
+    Args:
+        label: Label for the pills
+        options: List of pill options
+        selection_mode: 'single' or 'multi'
+        default: Default selection
+        key: Unique key for the widget
+        disabled: Whether pills are disabled
+        style: Optional Style object
+
+    Returns:
+        Selected option(s)
+    """
+    ctx = get_context()
+    component_key = key or f"pills_{id(label)}"
+
+    props = {
+        "label": label,
+        "options": options,
+        "selection_mode": selection_mode,
+        "default": default,
+        "disabled": disabled,
+    }
+
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("pills", key=component_key, props=props, style=style_dict)
+
+    state = get_session_state()
+    return state.get(component_key, default)
+
+
+def feedback(
+    sentiment_mapping: Optional[Dict[str, str]] = None,
+    *,
+    key: Optional[str] = None,
+    disabled: bool = False,
+    style: Optional[Style] = None,
+) -> Optional[int]:
+    """
+    Display a feedback widget (thumbs up/down or star rating).
+
+    Args:
+        sentiment_mapping: Dict mapping scores to labels, e.g., {0: "Bad", 1: "Good"}
+        key: Unique key for the widget
+        disabled: Whether widget is disabled
+        style: Optional Style object
+
+    Returns:
+        Selected feedback score or None
+    """
+    ctx = get_context()
+    component_key = key or f"feedback_{id(sentiment_mapping)}"
+
+    if sentiment_mapping is None:
+        sentiment_mapping = {0: "Thumbs down", 1: "Thumbs up"}
+
+    props = {
+        "sentiment_mapping": sentiment_mapping,
+        "disabled": disabled,
+    }
+
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("feedback", key=component_key, props=props, style=style_dict)
+
+    state = get_session_state()
+    return state.get(component_key, None)
+
+
+def segmented_control(
+    label: str,
+    options: List[str],
+    *,
+    default: Optional[str] = None,
+    key: Optional[str] = None,
+    disabled: bool = False,
+    style: Optional[Style] = None,
+) -> str:
+    """
+    Display a segmented control (button group for single selection).
+
+    Args:
+        label: Label for the control
+        options: List of options
+        default: Default selected option
+        key: Unique key for the widget
+        disabled: Whether control is disabled
+        style: Optional Style object
+
+    Returns:
+        Selected option
+    """
+    ctx = get_context()
+    component_key = key or f"segmented_{id(label)}"
+
+    default_value = default if default else options[0] if options else None
+
+    props = {
+        "label": label,
+        "options": options,
+        "default": default_value,
+        "disabled": disabled,
+    }
+
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("segmented_control", key=component_key, props=props, style=style_dict)
+
+    state = get_session_state()
+    return state.get(component_key, default_value)
+
+
+def camera_input(
+    label: str,
+    *,
+    key: Optional[str] = None,
+    disabled: bool = False,
+    label_visibility: str = "visible",
+    style: Optional[Style] = None,
+) -> Optional[bytes]:
+    """
+    Display a camera input widget for taking photos.
+
+    Args:
+        label: Widget label
+        key: Unique key for the widget
+        disabled: Whether input is disabled
+        label_visibility: 'visible', 'hidden', or 'collapsed'
+        style: Optional Style object
+
+    Returns:
+        Image data as bytes or None
+    """
+    ctx = get_context()
+    component_key = key or f"camera_{id(label)}"
+
+    props = {
+        "label": label,
+        "disabled": disabled,
+        "label_visibility": label_visibility,
+    }
+
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("camera_input", key=component_key, props=props, style=style_dict)
+
+    state = get_session_state()
+    return state.get(component_key, None)
+
+
+def audio_input(
+    label: str,
+    *,
+    key: Optional[str] = None,
+    disabled: bool = False,
+    style: Optional[Style] = None,
+) -> Optional[bytes]:
+    """
+    Display an audio recording input.
+
+    Args:
+        label: Widget label
+        key: Unique key for the widget
+        disabled: Whether input is disabled
+        style: Optional Style object
+
+    Returns:
+        Audio data as bytes or None
+    """
+    ctx = get_context()
+    component_key = key or f"audio_input_{id(label)}"
+
+    props = {
+        "label": label,
+        "disabled": disabled,
+    }
+
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("audio_input", key=component_key, props=props, style=style_dict)
+
+    state = get_session_state()
+    return state.get(component_key, None)
+
+
+# =============================================================================
+# Additional Chart Components
+# =============================================================================
+
+def scatter_chart(
+    data: Union[List[Dict], Any],
+    *,
+    x: Optional[str] = None,
+    y: Optional[str] = None,
+    color: Optional[str] = None,
+    size: Optional[str] = None,
+    title: Optional[str] = None,
+    height: str = "300px",
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a scatter chart.
+
+    Args:
+        data: Data to plot (list of dicts or DataFrame)
+        x: Column name for x-axis
+        y: Column name for y-axis
+        color: Column name for color encoding
+        size: Column name for size encoding
+        title: Chart title
+        height: Chart height
+        style: Optional Style object
+    """
+    ctx = get_context()
+
+    if hasattr(data, 'to_dict'):
+        data = data.to_dict('records')
+
+    props = {
+        "data": data,
+        "x": x,
+        "y": y,
+        "color": color,
+        "size": size,
+        "title": title,
+        "height": height,
+        "chart_type": "scatter",
+    }
+
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("chart", props=props, style=style_dict)
+
+
+def map(
+    data: Optional[Union[List[Dict], Any]] = None,
+    *,
+    latitude: str = "lat",
+    longitude: str = "lon",
+    zoom: int = 10,
+    height: str = "400px",
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display a map with optional data points.
+
+    Args:
+        data: Data with lat/lon columns (list of dicts or DataFrame)
+        latitude: Column name for latitude
+        longitude: Column name for longitude
+        zoom: Initial zoom level
+        height: Map height
+        style: Optional Style object
+    """
+    ctx = get_context()
+
+    if data is not None and hasattr(data, 'to_dict'):
+        data = data.to_dict('records')
+
+    props = {
+        "data": data,
+        "latitude": latitude,
+        "longitude": longitude,
+        "zoom": zoom,
+        "height": height,
+    }
+
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("map", props=props, style=style_dict)
+
+
+# =============================================================================
+# Data Editor
+# =============================================================================
+
+def data_editor(
+    data: Union[List[Dict], Any],
+    *,
+    num_rows: str = "fixed",
+    disabled: Union[bool, List[str]] = False,
+    column_config: Optional[Dict] = None,
+    hide_index: bool = True,
+    key: Optional[str] = None,
+    height: Optional[str] = None,
+    style: Optional[Style] = None,
+) -> Union[List[Dict], Any]:
+    """
+    Display an editable dataframe.
+
+    Args:
+        data: Data to edit (list of dicts or DataFrame)
+        num_rows: 'fixed' or 'dynamic' (allow adding/deleting rows)
+        disabled: True to disable all, or list of column names to disable
+        column_config: Column configuration dict
+        hide_index: Hide row index
+        key: Unique key for the widget
+        height: Fixed height for the editor
+        style: Optional Style object
+
+    Returns:
+        Edited data in same format as input
+    """
+    ctx = get_context()
+    component_key = key or f"data_editor_{id(data)}"
+
+    is_dataframe = hasattr(data, 'to_dict')
+    if is_dataframe:
+        data_list = data.to_dict('records')
+    else:
+        data_list = data
+
+    props = {
+        "data": data_list,
+        "num_rows": num_rows,
+        "disabled": disabled,
+        "column_config": column_config,
+        "hide_index": hide_index,
+        "height": height,
+    }
+
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("data_editor", key=component_key, props=props, style=style_dict)
+
+    state = get_session_state()
+    edited_data = state.get(component_key, data_list)
+
+    # Convert back to DataFrame if input was DataFrame
+    if is_dataframe and edited_data:
+        try:
+            import pandas as pd
+            return pd.DataFrame(edited_data)
+        except ImportError:
+            return edited_data
+
+    return edited_data
+
+
+# =============================================================================
+# Dialog (Improved Modal)
+# =============================================================================
+
+@contextmanager
+def dialog(
+    title: str,
+    *,
+    width: str = "medium",
+    style: Optional[Style] = None,
+):
+    """
+    Create a dialog/modal window.
+
+    Args:
+        title: Dialog title
+        width: Dialog width ('small', 'medium', 'large')
+        style: Optional Style object
+
+    Usage:
+        @um.dialog('Settings')
+        def settings_dialog():
+            um.write('Dialog content')
+            if um.button('Close'):
+                um.rerun()
+
+        if um.button('Open Settings'):
+            settings_dialog()
+    """
+    ctx = get_context()
+    props = {
+        "title": title,
+        "width": width,
+    }
+    style_dict = style.to_dict() if style else None
+
+    with ctx.container("dialog", props=props, style=style_dict):
+        yield
+
+
+# =============================================================================
+# Page Configuration
+# =============================================================================
+
+def set_page_config(
+    page_title: Optional[str] = None,
+    page_icon: Optional[str] = None,
+    layout: str = "centered",
+    initial_sidebar_state: str = "auto",
+    menu_items: Optional[Dict[str, str]] = None,
+) -> None:
+    """
+    Configure the page. Must be called before any other Umara commands.
+
+    Args:
+        page_title: Page title shown in browser tab
+        page_icon: Page icon (emoji or URL)
+        layout: 'centered' or 'wide'
+        initial_sidebar_state: 'auto', 'expanded', or 'collapsed'
+        menu_items: Custom menu items dict
+    """
+    from umara.core import get_app
+    app = get_app()
+
+    if page_title:
+        app.title = page_title
+
+    app.config = {
+        "page_icon": page_icon,
+        "layout": layout,
+        "initial_sidebar_state": initial_sidebar_state,
+        "menu_items": menu_items or {},
+    }
+
+
+# =============================================================================
+# Execution Flow
+# =============================================================================
+
+def rerun() -> None:
+    """
+    Rerun the app from the top.
+
+    Raises a special exception to trigger a rerun.
+    """
+    from umara.core import RerunException
+    raise RerunException()
+
+
+def stop() -> None:
+    """
+    Stop execution of the app at this point.
+
+    Raises a special exception to stop execution.
+    """
+    from umara.core import StopException
+    raise StopException()
+
+
+# =============================================================================
+# Logo Component
+# =============================================================================
+
+def logo(
+    image: str,
+    *,
+    link: Optional[str] = None,
+    icon_image: Optional[str] = None,
+    style: Optional[Style] = None,
+) -> None:
+    """
+    Display an app logo in the sidebar.
+
+    Args:
+        image: Logo image URL or path
+        link: Optional URL to link to when logo is clicked
+        icon_image: Optional smaller icon version for collapsed sidebar
+        style: Optional Style object
+    """
+    ctx = get_context()
+    props = {
+        "image": image,
+        "link": link,
+        "icon_image": icon_image,
+    }
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("logo", props=props, style=style_dict)

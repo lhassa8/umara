@@ -22,6 +22,16 @@ from umara.state import SessionState, set_session_state, get_session_state
 from umara.themes import get_theme, Theme
 
 
+class RerunException(Exception):
+    """Raised to trigger a rerun of the app."""
+    pass
+
+
+class StopException(Exception):
+    """Raised to stop execution of the app."""
+    pass
+
+
 @dataclass
 class Component:
     """Base component representation."""

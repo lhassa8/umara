@@ -21,17 +21,25 @@ from umara.core import (
     run,
 )
 from umara.components import (
+    # Smart Write (like st.write)
+    write,
     # Typography
     text,
+    title,
     header,
     subheader,
+    caption,
     markdown,
     code,
+    latex,
+    echo,
     # Feedback
     success,
     error,
     warning,
     info,
+    toast,
+    exception,
     # Layout
     container,
     columns,
@@ -44,9 +52,12 @@ from umara.components import (
     spacer,
     # Widgets
     button,
+    download_button,
+    link_button,
     input,
     text_area,
     slider,
+    select_slider,
     select,
     multiselect,
     checkbox,
@@ -56,8 +67,17 @@ from umara.components import (
     time_input,
     file_uploader,
     color_picker,
+    pills,
+    feedback,
+    segmented_control,
+    camera_input,
+    audio_input,
+    # Forms
+    form,
+    form_submit_button,
     # Data Display
     dataframe,
+    data_editor,
     table,
     metric,
     progress,
@@ -66,6 +86,7 @@ from umara.components import (
     image,
     video,
     audio,
+    logo,
     # Chat/Conversation
     chat,
     chat_message,
@@ -81,10 +102,12 @@ from umara.components import (
     expander,
     accordion,
     modal,
+    dialog,
     open_modal,
     close_modal,
     popover,
     tooltip,
+    status,
     # Additional Inputs
     number_input,
     search_input,
@@ -104,11 +127,18 @@ from umara.components import (
     bar_chart,
     area_chart,
     pie_chart,
+    scatter_chart,
+    map,
     # Utility Components
     copy_button,
     json_viewer,
     html,
     iframe,
+    # Execution Flow
+    rerun,
+    stop,
+    # Page Config
+    set_page_config,
 )
 from umara.themes import (
     set_theme,
@@ -123,23 +153,31 @@ from umara.state import (
 )
 from umara.style import style
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = [
     # Core
     "UmaraApp",
     "get_app",
     "run",
+    # Smart Write
+    "write",
     # Typography
     "text",
+    "title",
     "header",
     "subheader",
+    "caption",
     "markdown",
     "code",
+    "latex",
+    "echo",
     # Feedback
     "success",
     "error",
     "warning",
     "info",
+    "toast",
+    "exception",
     # Layout
     "container",
     "columns",
@@ -152,9 +190,12 @@ __all__ = [
     "spacer",
     # Widgets
     "button",
+    "download_button",
+    "link_button",
     "input",
     "text_area",
     "slider",
+    "select_slider",
     "select",
     "multiselect",
     "checkbox",
@@ -164,8 +205,17 @@ __all__ = [
     "time_input",
     "file_uploader",
     "color_picker",
+    "pills",
+    "feedback",
+    "segmented_control",
+    "camera_input",
+    "audio_input",
+    # Forms
+    "form",
+    "form_submit_button",
     # Data Display
     "dataframe",
+    "data_editor",
     "table",
     "metric",
     "progress",
@@ -174,6 +224,7 @@ __all__ = [
     "image",
     "video",
     "audio",
+    "logo",
     # Chat/Conversation
     "chat",
     "chat_message",
@@ -189,10 +240,12 @@ __all__ = [
     "expander",
     "accordion",
     "modal",
+    "dialog",
     "open_modal",
     "close_modal",
     "popover",
     "tooltip",
+    "status",
     # Additional Inputs
     "number_input",
     "search_input",
@@ -212,11 +265,18 @@ __all__ = [
     "bar_chart",
     "area_chart",
     "pie_chart",
+    "scatter_chart",
+    "map",
     # Utility Components
     "copy_button",
     "json_viewer",
     "html",
     "iframe",
+    # Execution Flow
+    "rerun",
+    "stop",
+    # Page Config
+    "set_page_config",
     # Themes
     "set_theme",
     "get_theme",
