@@ -79,6 +79,17 @@ class SessionState:
     def __contains__(self, key: str) -> bool:
         return key in self._state
 
+    def __getitem__(self, key: str) -> Any:
+        """Get a state value using bracket notation."""
+        with self._lock:
+            if key in self._state:
+                return self._state[key].value
+            raise KeyError(key)
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        """Set a state value using bracket notation."""
+        setattr(self, key, value)
+
     def get(self, key: str, default: T | None = None) -> T | None:
         """Get a state value with optional default."""
         with self._lock:
