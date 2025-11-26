@@ -86,19 +86,17 @@ else:
 
 ### Typography
 ```python
-um.title('Page Title')
-um.header('Section Header')
+um.header('Section Header', level=1)  # level 1-6
 um.subheader('Subsection')
 um.text('Regular text')
-um.caption('Small caption text')
+um.text('Colored text', color='#6366f1')
 um.markdown('**bold** and *italic*')
 um.code('print("hello")', language='python')
-um.latex(r'E = mc^2')
 ```
 
 ### Input Components
 
-All inputs return their current value. Use `key` parameter for persistence.
+All inputs return their current value. Use `key` parameter for persistence outside forms.
 
 ```python
 # Text input
@@ -108,23 +106,11 @@ text = um.input(
     value='',           # Default value
     placeholder='',
     type='text',        # 'text', 'password', 'email', 'number'
-    disabled=False,
-    label_position='top',  # 'top' or 'left'
-    label_width='120px'    # Width when label_position='left'
+    disabled=False
 )
 
 # Multi-line text
 text = um.text_area(label='', key=None, value='', placeholder='', rows=4)
-
-# Number input
-num = um.number_input(
-    label='',
-    min_value=None,
-    max_value=None,
-    value=0,
-    key=None,
-    step=1
-)
 
 # Slider
 num = um.slider(label='', min_value=0, max_value=100, value=None, key=None, step=1)
@@ -132,7 +118,7 @@ num = um.slider(label='', min_value=0, max_value=100, value=None, key=None, step
 # Select dropdown
 choice = um.select(
     label='',
-    options=['A', 'B', 'C'],  # List of strings or dicts
+    options=['A', 'B', 'C'],  # List of strings
     key=None,
     default=None,
     placeholder='Select an option...'
@@ -149,27 +135,6 @@ checked = um.checkbox(label='', key=None, value=False)
 
 # Toggle switch (returns bool)
 enabled = um.toggle(label='', key=None, value=False)
-
-# Date picker (returns string)
-date = um.date_input(label='', key=None, value=None)
-
-# Time picker (returns string)
-time = um.time_input(label='', key=None, value=None)
-
-# Color picker (returns hex string)
-color = um.color_picker(label='', key=None, value='#6366f1')
-
-# Star rating (returns int)
-stars = um.rating(label='', key=None, value=0, max_value=5)
-
-# File upload (returns file dict or None)
-file = um.file_uploader(
-    label='',
-    key=None,
-    accept=['.csv', '.pdf'],  # File types
-    multiple=False,
-    max_file_size=10*1024*1024  # bytes
-)
 ```
 
 ### Buttons
@@ -180,22 +145,9 @@ if um.button(
     key=None,
     variant='primary',  # 'primary', 'secondary', 'outline', 'ghost', 'danger'
     disabled=False,
-    loading=False,      # Shows spinner, disables button
     full_width=False
 ):
     um.success('Clicked!')
-
-# Download button
-um.download_button(
-    label='Download',
-    data='file content',     # str, bytes, or callable
-    file_name='data.csv',
-    mime=None,               # Auto-detected from filename
-    variant='secondary'
-)
-
-# Link button
-um.link_button(label='Go to Google', url='https://google.com')
 ```
 
 ### Forms
@@ -248,40 +200,15 @@ with um.sidebar():
 # Expander (collapsible)
 with um.expander('Click to expand', expanded=False):
     um.text('Hidden content')
-
-# Modal dialog
-if um.button('Open Modal'):
-    um.open_modal('my_modal')
-
-with um.modal('Dialog Title', key='my_modal'):
-    um.text('Modal content')
-    if um.button('Close'):
-        um.close_modal('my_modal')
 ```
 
 ### Data Display
 ```python
 um.metric(label='Users', value='12,543', delta=12.5)  # With trend indicator
 um.progress(value=75, label='Completion')
-um.dataframe(data, sortable=True)  # Works with pandas DataFrames
-um.json_viewer({'key': 'value'})
-um.badge('New', variant='success')  # success, warning, error, info
-um.avatar(name='John Doe')  # Shows initials
-um.avatar(src='https://example.com/photo.jpg', size='lg')  # sm, md, lg, xl
+um.dataframe(data, sortable=True)  # Works with pandas DataFrames or list of dicts
 um.divider()
 um.spacer(height='24px')
-```
-
-### Navigation
-```python
-um.breadcrumbs([
-    {'label': 'Home', 'href': '/'},
-    {'label': 'Products', 'href': '/products'},
-    {'label': 'Detail'}
-])
-
-um.steps(['Cart', 'Shipping', 'Payment', 'Confirm'], current=1)
-page = um.pagination(total_pages=10, current_page=1, key='page')
 ```
 
 ### Feedback
@@ -290,27 +217,6 @@ um.success('Done!')
 um.error('Failed')
 um.warning('Caution')
 um.info('Note')
-um.toast('Quick notification', icon='✅', duration=4000)
-
-# Loading spinner (context manager)
-with um.spinner('Processing...'):
-    result = slow_function()
-
-# Exception display
-try:
-    risky_operation()
-except Exception as e:
-    um.exception(e)
-
-# Force rerun
-um.rerun()
-```
-
-### Media
-```python
-um.image(src='https://example.com/img.png', caption='Photo', width='300px')
-um.video(src='video.mp4', autoplay=False, controls=True)
-um.audio(src='audio.mp3', controls=True)
 ```
 
 ### State Management
@@ -332,112 +238,6 @@ um.set_theme('dark')      # dark mode
 um.set_theme('ocean')     # blues
 um.set_theme('forest')    # greens
 # Also: slate, nord, midnight, rose, copper, lavender, sunset, mint
-
-# Custom theme
-my_theme = um.create_theme('my_theme', base='light',
-    colors={'primary': '#ff6b6b', 'secondary': '#4ecdc4'})
-um.set_theme(my_theme)
-```
-
-### Page Configuration
-```python
-um.set_page_config(
-    page_title='My App',
-    page_icon='📊',
-    layout='wide',  # 'centered' or 'wide'
-    initial_sidebar_state='auto'  # 'auto', 'expanded', 'collapsed'
-)
-```
-
-### Custom Styling
-```python
-my_style = um.style(
-    color='#ff0000',
-    fontSize='18px',
-    padding='16px',
-    backgroundColor='#f0f0f0',
-    borderRadius='8px'
-)
-um.text('Styled text', style=my_style)
-```
-
-### Chat Interface
-```python
-um.session_state.setdefault('messages', [])
-
-with um.chat_container(height='400px'):
-    for msg in um.session_state.messages:
-        um.chat_message(msg['content'], role=msg['role'])
-
-user_input = um.chat_input('Type message...')
-if user_input:
-    um.session_state.messages.append({'role': 'user', 'content': user_input})
-    # Add AI response here
-```
-
-### Charts
-```python
-data = [{'month': 'Jan', 'value': 100}, {'month': 'Feb', 'value': 200}]
-um.line_chart(data, x='month', y='value')
-um.bar_chart(data, x='month', y='value')
-um.area_chart(data, x='month', y='value')
-um.pie_chart(data, label='month', value='value')
-um.scatter_chart(data, x='month', y='value')
-
-# Plotly charts
-import plotly.express as px
-fig = px.scatter(df, x='x', y='y', color='category')
-um.plotly_chart(fig)
-```
-
-### Caching
-```python
-@um.cache_data  # Cache function results forever
-def load_data():
-    return pd.read_csv('large.csv')
-
-@um.cache_data(ttl=3600)  # Cache for 1 hour
-def fetch_api_data(url):
-    return requests.get(url).json()
-
-@um.cache_resource  # Cache connections/models (shared across users)
-def get_db():
-    return sqlite3.connect('app.db')
-```
-
-### Fragments (Partial Reruns)
-```python
-@um.fragment
-def chart_section():
-    points = um.slider('Points', 10, 100, 50, key='points')
-    um.line_chart(generate_data(points))
-
-@um.fragment(run_every=5)  # Auto-refresh every 5 seconds
-def live_metrics():
-    data = fetch_live_data()
-    um.metric('Active Users', data['users'])
-
-# Use in app
-chart_section()
-live_metrics()
-```
-
-### Database & API Connections
-```python
-# SQL database
-conn = um.connection.sql('mydb', url='sqlite:///data.db')
-users = conn.query('SELECT * FROM users WHERE age > ?', params=(18,))
-conn.execute('INSERT INTO users (name) VALUES (?)', params=('Alice',))
-
-# HTTP/REST API
-api = um.connection.http(
-    'github',
-    base_url='https://api.github.com',
-    headers={'Authorization': f'token {token}'},
-    timeout=30
-)
-repos = api.get('/users/octocat/repos')
-api.post('/endpoint', json={'key': 'value'})
 ```
 
 ---
@@ -463,7 +263,7 @@ with um.card():
                 um.success('Message sent!')
 ```
 
-### Dashboard
+### Dashboard with Metrics
 ```python
 import umara as um
 
@@ -480,8 +280,12 @@ with um.columns(4):
     with um.column():
         um.metric('Conversion', '3.24%', delta=0.5)
 
-um.line_chart(data, x='date', y='value')
-um.dataframe(recent_orders, sortable=True)
+# Data table
+sample_data = [
+    {'Name': 'Alice', 'Age': 28, 'City': 'New York'},
+    {'Name': 'Bob', 'Age': 34, 'City': 'San Francisco'},
+]
+um.dataframe(sample_data, sortable=True)
 ```
 
 ### Search with Live Filtering
@@ -496,10 +300,10 @@ search = um.input('Search fruits', key='search')
 filtered = [item for item in items if search.lower() in item.lower()]
 
 for item in filtered:
-    um.text(f'• {item}')
+    um.text(f'- {item}')
 ```
 
-### Settings with Immediate Effect
+### Settings with Sidebar
 ```python
 import umara as um
 
@@ -510,6 +314,8 @@ with um.sidebar():
 
 if dark:
     um.set_theme('dark')
+else:
+    um.set_theme('light')
 
 um.header('Content')
 um.text('Main content here')
@@ -517,6 +323,25 @@ um.text('Main content here')
 if show_details:
     with um.expander('Details', expanded=True):
         um.text('Extra information...')
+```
+
+### Counter with State
+```python
+import umara as um
+
+um.header('Counter Example')
+
+um.session_state.setdefault('counter', 0)
+
+um.text(f'Count: {um.session_state.counter}')
+
+with um.columns(2):
+    with um.column():
+        if um.button('Increment', key='inc'):
+            um.session_state.counter += 1
+    with um.column():
+        if um.button('Reset', variant='outline', key='reset'):
+            um.session_state.counter = 0
 ```
 
 ---

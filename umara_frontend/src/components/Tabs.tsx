@@ -13,7 +13,7 @@ interface TabsProps {
 export function Tabs({
   tabs,
   activeTab,
-  children,
+  children: _children,
   onChange,
   style,
 }: TabsProps) {

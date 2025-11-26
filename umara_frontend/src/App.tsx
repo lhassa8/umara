@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useWebSocket } from './hooks/useWebSocket'
 import { ComponentRenderer } from './components/ComponentRenderer'
 import { Theme, applyTheme } from './styles/theme'
