@@ -414,7 +414,7 @@ export function ComponentRenderer({
           variant={(props.variant as 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger') || 'primary'}
           disabled={props.disabled as boolean}
           fullWidth={props.fullWidth as boolean}
-          onClick={() => onEvent(id, 'click')}
+          onClick={() => onEvent(id, 'click', { is_form_submit: true })}
           style={customStyle}
         />
       )

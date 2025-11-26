@@ -78,6 +78,28 @@ Open **http://localhost:8501** in your browser. Hot reload is enabled by default
 3. **Component-Based**: Build UIs from reusable components
 4. **WebSocket-Powered**: Real-time updates without page refreshes
 
+### Immediate-Mode UI Pattern
+
+Umara uses an **immediate-mode** rendering model: your entire script re-runs on every interaction. This is important to understand:
+
+```python
+import umara as um
+
+um.session_state.setdefault('count', 0)
+
+# IMPORTANT: Handle button clicks BEFORE displaying state
+clicked = um.button('Increment', key='inc')
+if clicked:
+    um.session_state.count += 1
+
+# Display AFTER state changes to show accurate values
+um.text(f'Count: {um.session_state.count}')
+```
+
+**Why order matters:** When a button is clicked, the script re-runs from top to bottom. If you display the counter before checking the button, it will show the old value.
+
+**Best Practice:** Handle state-changing interactions first, then display the updated state.
+
 ### Import Convention
 
 ```python
@@ -477,8 +499,16 @@ um.button(
 **Examples:**
 
 ```python
-# Basic button
-if um.button("Click Me"):
+# Basic button with state update
+um.session_state.setdefault('count', 0)
+
+# Handle click FIRST, then display (immediate-mode pattern)
+clicked = um.button("Click Me", key="btn")
+if clicked:
+    um.session_state.count += 1
+
+um.text(f"Clicked {um.session_state.count} times")  # Shows accurate count
+if clicked:
     um.success("Button clicked!")
 
 # Different variants
@@ -494,6 +524,8 @@ um.button("Processing...", loading=True)
 # Disabled button
 um.button("Disabled", disabled=True)
 ```
+
+**Note:** Buttons return `True` only during the render cycle when clicked. The click state is ephemeral. See [Immediate-Mode UI Pattern](#immediate-mode-ui-pattern) for best practices.
 
 ### input()
 

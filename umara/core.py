@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
-from umara.state import SessionState, set_session_state
+from umara.state import SessionState, StateValue, set_session_state
 from umara.themes import get_theme
 
 
@@ -306,6 +306,14 @@ class UmaraApp:
         # Add theme information
         theme = get_theme()
 
+        # Clean up ephemeral click states after render
+        # These should only be True for one render cycle
+        keys_to_reset = [k for k in session.state._state.keys()
+                        if k.endswith('_clicked') or k == '_form_submitted']
+        for key in keys_to_reset:
+            if key in session.state._state:
+                session.state._state[key].value = False
+
         return {
             "tree": tree,
             "theme": theme.to_dict(),
@@ -324,6 +332,18 @@ class UmaraApp:
 
         Returns updated component tree if needed.
         """
+        # Handle click events by setting clicked state
+        if event_type == "click":
+            # Set the clicked state for this component
+            # Button components use {state_key}_clicked pattern
+            clicked_key = f"{component_id}_clicked"
+            session.state._state[clicked_key] = StateValue(True)
+
+            # Check if this is a form submit button by checking payload
+            if payload.get("is_form_submit"):
+                session.state._state["_form_submitted"] = StateValue(True)
+
+        # Look for custom registered handler
         handler = session.get_handler(f"{component_id}:{event_type}")
         if handler:
             try:

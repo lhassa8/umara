@@ -499,6 +499,7 @@ def button(
 
     ctx.create_component(
         "button",
+        key=state_key,
         props=props,
         style=style_dict or None,
         events={"click": f"{state_key}:click"},
