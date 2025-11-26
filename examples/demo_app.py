@@ -145,7 +145,7 @@ um.text('Umara comes with beautiful built-in themes. Switch themes instantly!')
 
 theme = um.select(
     'Select Theme',
-    options=['light', 'dark', 'ocean', 'forest'],
+    options=['light', 'dark', 'ocean', 'forest', 'slate', 'nord', 'midnight', 'rose', 'copper', 'lavender', 'sunset', 'mint'],
     default='light',
     key='theme_select'
 )
@@ -176,6 +176,33 @@ with um.columns(2):
     with um.column():
         um.warning('Please review before continuing.')
         um.error('An error occurred. Please try again.')
+
+# ============================================================================
+# File Upload
+# ============================================================================
+
+um.subheader('File Upload')
+um.text('Drag and drop files or click to upload.', color='#64748b')
+
+with um.columns(2):
+    with um.column():
+        uploaded_file = um.file_uploader(
+            'Upload Document',
+            accept=['.pdf', '.doc', '.docx', '.txt'],
+            key='doc_upload'
+        )
+        if uploaded_file:
+            um.success(f'Uploaded: {uploaded_file["name"]} ({uploaded_file["size"]} bytes)')
+
+    with um.column():
+        uploaded_images = um.file_uploader(
+            'Upload Images',
+            accept=['.png', '.jpg', '.jpeg', '.gif'],
+            multiple=True,
+            key='image_upload'
+        )
+        if uploaded_images:
+            um.info(f'Uploaded {len(uploaded_images)} image(s)')
 
 # ============================================================================
 # Button Variants
