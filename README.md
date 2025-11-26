@@ -37,7 +37,7 @@ if um.button('Say Hello'):
 | Feature | Umara | Streamlit |
 |---------|-------|-----------|
 | **Default Styling** | Modern, polished design | Basic styling |
-| **Theming** | 4 built-in themes + custom | Limited |
+| **Theming** | 12 built-in themes + custom | Limited |
 | **Layout Control** | Flexbox, Grid, precise positioning | Column-based only |
 | **State Management** | Component-level, efficient | Full script re-runs |
 | **Animations** | Smooth transitions built-in | None |
@@ -47,7 +47,7 @@ if um.button('Say Hello'):
 
 - **Beautiful by Default** — Components look polished out of the box
 - **Fast & Reactive** — WebSocket-based for instant UI updates
-- **Flexible Theming** — Light, dark, ocean, forest + custom themes
+- **Flexible Theming** — 12 professional themes + custom themes
 - **Powerful Layouts** — Columns, grids, cards, tabs with precise control
 - **Hot Reload** — See changes instantly during development
 - **Smart State** — Efficient updates without full re-runs
@@ -105,11 +105,19 @@ The server runs with hot reload enabled by default, so any changes you make to `
 ### Themes
 
 ```python
-# Built-in themes
-um.set_theme('light')   # Clean, professional
-um.set_theme('dark')    # Modern dark mode
-um.set_theme('ocean')   # Calming blues
-um.set_theme('forest')  # Earthy greens
+# 12 built-in professional themes
+um.set_theme('light')     # Clean, minimal
+um.set_theme('dark')      # Modern dark mode
+um.set_theme('ocean')     # Calming blues
+um.set_theme('forest')    # Earthy greens
+um.set_theme('slate')     # Corporate gray
+um.set_theme('nord')      # Arctic, Scandinavian
+um.set_theme('midnight')  # Deep purple dark
+um.set_theme('rose')      # Warm pink, fintech
+um.set_theme('copper')    # Premium bronze
+um.set_theme('lavender')  # Soft purple, calming
+um.set_theme('sunset')    # Warm orange
+um.set_theme('mint')      # Fresh teal
 
 # Create custom themes
 um.create_theme(
