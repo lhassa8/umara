@@ -144,10 +144,12 @@ from umara.core import (
     get_app,
     run,
 )
+from umara.connection import connection
 from umara.state import (
     cache,
     cache_data,
     cache_resource,
+    fragment,
     session_state,
     state,
 )
@@ -295,6 +297,10 @@ __all__ = [
     "cache",
     "cache_data",
     "cache_resource",
+    # Fragments (partial reruns)
+    "fragment",
+    # Connections
+    "connection",
     # Streaming
     "write_stream",
     # Styling

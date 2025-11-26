@@ -513,6 +513,8 @@ def get_frontend_html(title: str) -> str:
                         return this.createCard(children, props, animate);
                     case 'container':
                         return this.createContainer(children, animate);
+                    case 'fragment':
+                        return this.createFragment(props, children, id);
                     case 'columns':
                         return this.createColumns(props, children, animate);
                     case 'column':
@@ -898,6 +900,38 @@ def get_frontend_html(title: str) -> str:
                 const el = document.createElement('div');
                 el.style.cssText = 'margin-bottom: 16px;';
                 children?.forEach(child => el.appendChild(this.renderComponent(child, animate)));
+                return el;
+            }}
+
+            createFragment(props, children, id) {{
+                // Fragment container - enables partial reruns
+                const el = document.createElement('div');
+                el.className = 'um-fragment';
+                el.dataset.fragmentId = props.fragment_id || id;
+                el.style.cssText = 'display: contents;'; // Transparent container
+
+                // Render children
+                children?.forEach(child => el.appendChild(this.renderComponent(child, true)));
+
+                // Set up auto-refresh if run_every is specified
+                if (props.run_every) {{
+                    const intervalMs = props.run_every * 1000;
+                    const fragmentId = props.fragment_id || id;
+
+                    // Store interval ID for cleanup
+                    if (!this._fragmentIntervals) this._fragmentIntervals = {{}};
+
+                    // Clear any existing interval for this fragment
+                    if (this._fragmentIntervals[fragmentId]) {{
+                        clearInterval(this._fragmentIntervals[fragmentId]);
+                    }}
+
+                    // Set up new interval
+                    this._fragmentIntervals[fragmentId] = setInterval(() => {{
+                        this.sendEvent('fragment_refresh', {{ fragment_id: fragmentId }});
+                    }}, intervalMs);
+                }}
+
                 return el;
             }}
 

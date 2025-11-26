@@ -518,6 +518,130 @@ class CacheResource:
 cache_resource = CacheResource()
 
 
+class Fragment:
+    """
+    Decorator for creating rerunnable fragments.
+
+    Fragments allow partial reruns of your app - only the decorated function
+    reruns when its inputs change, rather than the entire script.
+
+    This is useful for:
+    - Interactive components that update frequently
+    - Expensive computations that should only run when specific inputs change
+    - Creating independent "islands" of reactivity
+
+    Example:
+        @um.fragment
+        def chart_section():
+            data = um.slider("Data points", 10, 100, 50)
+            um.line_chart(generate_data(data))
+
+        @um.fragment(run_every=5)
+        def live_metrics():
+            um.metric("Users", get_live_count())
+
+    Args:
+        func: The function to wrap (when used without parentheses)
+        run_every: Auto-rerun interval in seconds (for live data)
+    """
+
+    def __init__(self):
+        self._fragments: dict[str, dict[str, Any]] = {}
+        self._lock = threading.RLock()
+
+    def __call__(
+        self,
+        func: Callable[..., T] | None = None,
+        *,
+        run_every: int | float | None = None,
+    ) -> Callable[..., T] | Callable[[Callable[..., T]], Callable[..., T]]:
+        """
+        Decorator to create a fragment.
+
+        Args:
+            func: The function to wrap
+            run_every: Auto-rerun interval in seconds
+
+        Usage:
+            @um.fragment
+            def my_section(): ...
+
+            @um.fragment(run_every=5)
+            def live_data(): ...
+        """
+
+        def decorator(fn: Callable[..., T]) -> Callable[..., T]:
+            import uuid
+
+            fragment_id = f"_fragment_{fn.__module__}_{fn.__qualname__}_{uuid.uuid4().hex[:8]}"
+
+            @functools.wraps(fn)
+            def wrapper(*args: Any, **kwargs: Any) -> T:
+                from umara.core import get_context
+
+                ctx = get_context()
+
+                # Store fragment metadata
+                with self._lock:
+                    self._fragments[fragment_id] = {
+                        "func": fn,
+                        "args": args,
+                        "kwargs": kwargs,
+                        "run_every": run_every,
+                    }
+
+                # Create a fragment container component
+                fragment_props = {
+                    "fragment_id": fragment_id,
+                    "run_every": run_every,
+                }
+
+                # Create fragment wrapper component
+                from umara.core import Component
+
+                fragment_component = ctx.create_component(
+                    "fragment",
+                    props=fragment_props,
+                )
+
+                # Push fragment onto stack so children are nested
+                ctx.push(fragment_component)
+
+                try:
+                    # Execute the fragment function
+                    result = fn(*args, **kwargs)
+                finally:
+                    ctx.pop()
+
+                return result
+
+            # Attach rerun method
+            def rerun_fragment() -> None:
+                """Trigger a rerun of just this fragment."""
+                with self._lock:
+                    if fragment_id in self._fragments:
+                        frag = self._fragments[fragment_id]
+                        frag["func"](*frag["args"], **frag["kwargs"])
+
+            wrapper.rerun = rerun_fragment  # type: ignore
+            wrapper.fragment_id = fragment_id  # type: ignore
+
+            return wrapper
+
+        if func is not None:
+            return decorator(func)
+        return decorator
+
+    def get_fragment(self, fragment_id: str) -> dict[str, Any] | None:
+        """Get fragment metadata by ID."""
+        with self._lock:
+            return self._fragments.get(fragment_id)
+
+
+# Fragment decorator instance
+fragment = Fragment()
+
+
 def state(default: T | None = None) -> T | None:
     """
     Create a reactive state value.

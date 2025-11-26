@@ -2570,43 +2570,80 @@ def echo(code_location: str = "above"):
 
 def download_button(
     label: str,
-    data: str | bytes,
+    data: str | bytes | Callable[[], str | bytes],
     *,
     file_name: str = "download.txt",
-    mime: str = "text/plain",
+    mime: str | None = None,
     key: str | None = None,
     disabled: bool = False,
     variant: str = "secondary",
+    on_click: Callable[[], None] | None = None,
     style: Style | None = None,
 ) -> bool:
     """
     Display a download button.
 
+    Supports static data, bytes, or a callable that generates data on-demand.
+    Common use cases include generating CSVs, PDFs, or other files dynamically.
+
     Args:
         label: Button label
-        data: Data to download (string or bytes)
+        data: Data to download. Can be:
+            - str: Text content
+            - bytes: Binary content
+            - Callable: Function that returns str or bytes (called on click)
         file_name: Name for downloaded file
-        mime: MIME type of the file
+        mime: MIME type of the file (auto-detected if None)
         key: Unique key for the widget
         disabled: Whether button is disabled
         variant: Button style variant
+        on_click: Optional callback when button is clicked
         style: Optional Style object
 
     Returns:
         True if button was clicked
+
+    Example:
+        # Static data
+        um.download_button("Download", "Hello, World!", file_name="hello.txt")
+
+        # Dynamic CSV generation
+        def generate_csv():
+            import io
+            df.to_csv(buf := io.StringIO())
+            return buf.getvalue()
+
+        um.download_button("Export CSV", generate_csv, file_name="data.csv")
+
+        # Dynamic PDF
+        def generate_pdf():
+            return create_pdf_bytes()
+
+        um.download_button("Export PDF", generate_pdf, file_name="report.pdf")
     """
+    import base64
+
     ctx = get_context()
     component_key = key or f"download_button_{id(label)}"
 
-    # Convert data to base64 if bytes
-    if isinstance(data, bytes):
-        import base64
+    # Handle callable data (dynamic generation)
+    if callable(data):
+        # Generate data now (will be re-generated on each render)
+        actual_data = data()
+    else:
+        actual_data = data
 
-        data_str = base64.b64encode(data).decode("utf-8")
+    # Convert data to base64 if bytes
+    if isinstance(actual_data, bytes):
+        data_str = base64.b64encode(actual_data).decode("utf-8")
         is_binary = True
     else:
-        data_str = data
+        data_str = actual_data
         is_binary = False
+
+    # Auto-detect MIME type from file extension if not provided
+    if mime is None:
+        mime = _get_mime_type(file_name)
 
     props = {
         "label": label,
@@ -2622,7 +2659,63 @@ def download_button(
     ctx.create_component("download_button", key=component_key, props=props, style=style_dict)
 
     state = get_session_state()
-    return bool(state.get(component_key, False))
+    was_clicked = bool(state.get(component_key, False))
+
+    # Execute on_click callback if provided
+    if was_clicked and on_click:
+        on_click()
+
+    return was_clicked
+
+
+def _get_mime_type(filename: str) -> str:
+    """Auto-detect MIME type from file extension."""
+    ext = filename.lower().rsplit(".", 1)[-1] if "." in filename else ""
+    mime_types = {
+        # Text
+        "txt": "text/plain",
+        "csv": "text/csv",
+        "json": "application/json",
+        "xml": "application/xml",
+        "html": "text/html",
+        "htm": "text/html",
+        "css": "text/css",
+        "js": "application/javascript",
+        "md": "text/markdown",
+        # Images
+        "png": "image/png",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "gif": "image/gif",
+        "svg": "image/svg+xml",
+        "webp": "image/webp",
+        "ico": "image/x-icon",
+        # Documents
+        "pdf": "application/pdf",
+        "doc": "application/msword",
+        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "xls": "application/vnd.ms-excel",
+        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "ppt": "application/vnd.ms-powerpoint",
+        "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        # Archives
+        "zip": "application/zip",
+        "tar": "application/x-tar",
+        "gz": "application/gzip",
+        "rar": "application/vnd.rar",
+        "7z": "application/x-7z-compressed",
+        # Audio/Video
+        "mp3": "audio/mpeg",
+        "wav": "audio/wav",
+        "mp4": "video/mp4",
+        "webm": "video/webm",
+        # Data
+        "parquet": "application/octet-stream",
+        "feather": "application/octet-stream",
+        "pickle": "application/octet-stream",
+        "pkl": "application/octet-stream",
+    }
+    return mime_types.get(ext, "application/octet-stream")
 
 
 def link_button(
