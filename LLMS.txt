@@ -2,10 +2,6 @@
 
 > Beautiful Python UI framework for building web applications without HTML, CSS, or JavaScript.
 
-## Overview
-
-Umara is a Python framework that lets you create modern web UIs with pure Python code. It's similar to Streamlit but with better styling, themes, and more layout control.
-
 ## Installation
 
 ```bash
@@ -17,88 +13,232 @@ pip install umara
 ```python
 import umara as um
 
-um.set_theme('ocean')  # 12 built-in themes available
+um.set_theme('ocean')
 um.header('My App')
 
-# Use form for input + button patterns (ensures value is captured)
+# IMPORTANT: Use forms for input + button patterns
 with um.form('greeting_form'):
-    name = um.input('Your name', key='user_name')
-
+    name = um.input('Your name')
     if um.form_submit_button('Greet'):
         um.success(f'Hello, {name}!')
 ```
 
-Run with: `umara run app.py`
+Run: `umara run app.py`
 Open: http://localhost:8501
 
-## Core Patterns
+---
 
-### Display Text
+## CRITICAL PATTERNS
+
+### Pattern 1: Input + Button (USE FORMS!)
+
+**WRONG** - Button may fire before input value is synced (50ms debounce):
 ```python
-um.title('Page Title')
-um.header('Section')
-um.subheader('Subsection')
-um.text('Regular text')
-um.markdown('**bold** and *italic*')
-um.code('print("hello")', language='python')
+# DON'T DO THIS - race condition possible
+name = um.input('Name', key='name')
+if um.button('Submit'):
+    um.success(f'Hello {name}')  # name might be stale!
 ```
 
-### Get User Input
+**CORRECT** - Form batches values and submits together:
 ```python
-# IMPORTANT: Always use key= for standalone inputs to persist values across reruns
-text = um.input('Label', placeholder='hint', key='my_text')
-text_long = um.text_area('Bio', rows=4, key='my_bio')
-num = um.number_input('Age', min_value=0, max_value=120, key='my_num')
-num2 = um.slider('Value', 0, 100, 50, key='my_slider')
-choice = um.select('Pick', ['A', 'B', 'C'], key='my_select')
-choices = um.multiselect('Tags', ['Red', 'Green', 'Blue'], key='my_multi')
-option = um.radio('Size', ['S', 'M', 'L'], key='my_radio')
-checked = um.checkbox('Agree', key='my_checkbox')
-enabled = um.toggle('Feature', key='my_toggle')
-date = um.date_input('Date', key='my_date')
-time = um.time_input('Time', key='my_time')
-color = um.color_picker('Color', value='#6366f1', key='my_color')
-rating = um.rating('Rate', value=3, max_value=5, key='my_rating')
-file = um.file_uploader('Upload', accept=['.csv'], max_file_size=5*1024*1024, key='my_file')
+# DO THIS - values guaranteed to be current
+with um.form('my_form'):
+    name = um.input('Name')
+    email = um.input('Email')
+    if um.form_submit_button('Submit'):
+        um.success(f'Submitted: {name}, {email}')
+```
+
+### Pattern 2: Real-time Updates (Standalone + Key)
+
+Use standalone inputs with `key` only for real-time filtering/search:
+```python
+# Good for search - updates on every keystroke
+search = um.input('Search', key='search_query')
+filtered = [item for item in items if search.lower() in item.lower()]
+for item in filtered:
+    um.text(item)
+```
+
+### Pattern 3: Toggle/Checkbox Immediate Effect
+
+```python
+dark_mode = um.toggle('Dark mode', key='dark_mode')
+if dark_mode:
+    um.set_theme('dark')
+else:
+    um.set_theme('light')
+```
+
+### When to Use What
+
+| Scenario | Solution |
+|----------|----------|
+| Input + submit button | `um.form()` + `um.form_submit_button()` |
+| Multi-field data entry | `um.form()` |
+| Real-time search/filter | Standalone input with `key` |
+| Toggle/checkbox immediate effect | Standalone with `key` |
+
+---
+
+## API Reference
+
+### Typography
+```python
+um.title('Page Title')
+um.header('Section Header')
+um.subheader('Subsection')
+um.text('Regular text')
+um.caption('Small caption text')
+um.markdown('**bold** and *italic*')
+um.code('print("hello")', language='python')
+um.latex(r'E = mc^2')
+```
+
+### Input Components
+
+All inputs return their current value. Use `key` parameter for persistence.
+
+```python
+# Text input
+text = um.input(
+    label='',
+    key=None,           # State key for persistence
+    value='',           # Default value
+    placeholder='',
+    type='text',        # 'text', 'password', 'email', 'number'
+    disabled=False,
+    label_position='top',  # 'top' or 'left'
+    label_width='120px'    # Width when label_position='left'
+)
+
+# Multi-line text
+text = um.text_area(label='', key=None, value='', placeholder='', rows=4)
+
+# Number input
+num = um.number_input(
+    label='',
+    min_value=None,
+    max_value=None,
+    value=0,
+    key=None,
+    step=1
+)
+
+# Slider
+num = um.slider(label='', min_value=0, max_value=100, value=None, key=None, step=1)
+
+# Select dropdown
+choice = um.select(
+    label='',
+    options=['A', 'B', 'C'],  # List of strings or dicts
+    key=None,
+    default=None,
+    placeholder='Select an option...'
+)
+
+# Multi-select
+choices = um.multiselect(label='', options=[], key=None, default=[])
+
+# Radio buttons
+option = um.radio(label='', options=['S', 'M', 'L'], key=None, default=None, horizontal=False)
+
+# Checkbox (returns bool)
+checked = um.checkbox(label='', key=None, value=False)
+
+# Toggle switch (returns bool)
+enabled = um.toggle(label='', key=None, value=False)
+
+# Date picker (returns string)
+date = um.date_input(label='', key=None, value=None)
+
+# Time picker (returns string)
+time = um.time_input(label='', key=None, value=None)
+
+# Color picker (returns hex string)
+color = um.color_picker(label='', key=None, value='#6366f1')
+
+# Star rating (returns int)
+stars = um.rating(label='', key=None, value=0, max_value=5)
+
+# File upload (returns file dict or None)
+file = um.file_uploader(
+    label='',
+    key=None,
+    accept=['.csv', '.pdf'],  # File types
+    multiple=False,
+    max_file_size=10*1024*1024  # bytes
+)
 ```
 
 ### Buttons
 ```python
-if um.button('Click', variant='primary'):  # primary, secondary, outline, ghost, danger
+# Click button (returns True when clicked)
+if um.button(
+    label='Click me',
+    key=None,
+    variant='primary',  # 'primary', 'secondary', 'outline', 'ghost', 'danger'
+    disabled=False,
+    loading=False,      # Shows spinner, disables button
+    full_width=False
+):
     um.success('Clicked!')
 
-um.button('Loading...', loading=True)  # Show spinner
-
 # Download button
-um.download_button('Download CSV', csv_data, file_name='data.csv')
+um.download_button(
+    label='Download',
+    data='file content',     # str, bytes, or callable
+    file_name='data.csv',
+    mime=None,               # Auto-detected from filename
+    variant='secondary'
+)
+
+# Link button
+um.link_button(label='Go to Google', url='https://google.com')
+```
+
+### Forms
+```python
+with um.form(
+    key='my_form',
+    clear_on_submit=False,  # Clear values after submit
+    border=True             # Show border around form
+):
+    name = um.input('Name')
+    email = um.input('Email')
+
+    if um.form_submit_button(label='Submit', variant='primary'):
+        # All values guaranteed to be current here
+        um.success(f'Got: {name}, {email}')
 ```
 
 ### Layouts
 ```python
 # Columns
-with um.columns(3):
+with um.columns(3):  # Number of columns
     with um.column():
-        um.text('Col 1')
+        um.text('Column 1')
     with um.column():
-        um.text('Col 2')
+        um.text('Column 2')
     with um.column():
-        um.text('Col 3')
-
-# Cards
-with um.card(title='Title'):
-    um.text('Content')
-
-# Tabs
-with um.tabs(['Tab 1', 'Tab 2']) as t:
-    with t.tab(0):
-        um.text('Content 1')
-    with t.tab(1):
-        um.text('Content 2')
+        um.text('Column 3')
 
 # Grid
 with um.grid(columns=4, gap='16px'):
     for i in range(8):
         um.text(f'Item {i}')
+
+# Card
+with um.card(title='Card Title', subtitle='Optional subtitle'):
+    um.text('Card content')
+
+# Tabs
+with um.tabs(['Tab 1', 'Tab 2']) as t:
+    with t.tab(0):
+        um.text('Content for tab 1')
+    with t.tab(1):
+        um.text('Content for tab 2')
 
 # Sidebar
 with um.sidebar():
@@ -106,7 +246,7 @@ with um.sidebar():
     um.text('Sidebar content')
 
 # Expander (collapsible)
-with um.expander('Click to expand'):
+with um.expander('Click to expand', expanded=False):
     um.text('Hidden content')
 
 # Modal dialog
@@ -121,17 +261,15 @@ with um.modal('Dialog Title', key='my_modal'):
 
 ### Data Display
 ```python
-um.metric('Users', '12,543', delta=12.5)  # With trend indicator
-um.progress(75, label='Completion')
+um.metric(label='Users', value='12,543', delta=12.5)  # With trend indicator
+um.progress(value=75, label='Completion')
 um.dataframe(data, sortable=True)  # Works with pandas DataFrames
 um.json_viewer({'key': 'value'})
 um.badge('New', variant='success')  # success, warning, error, info
-um.avatar(name='John Doe')  # Shows initials "JD"
-um.avatar(src='https://example.com/avatar.jpg', size='lg')  # sm, md, lg, xl
-um.divider()  # Horizontal line
-um.spacer('24px')  # Vertical space
-um.caption('Figure 1: Sample data')  # Small caption text
-um.latex(r'E = mc^2')  # LaTeX math
+um.avatar(name='John Doe')  # Shows initials
+um.avatar(src='https://example.com/photo.jpg', size='lg')  # sm, md, lg, xl
+um.divider()
+um.spacer(height='24px')
 ```
 
 ### Navigation
@@ -139,10 +277,10 @@ um.latex(r'E = mc^2')  # LaTeX math
 um.breadcrumbs([
     {'label': 'Home', 'href': '/'},
     {'label': 'Products', 'href': '/products'},
-    {'label': 'Detail', 'href': '#'}
+    {'label': 'Detail'}
 ])
 
-step = um.steps(['Cart', 'Shipping', 'Payment', 'Confirm'], current=1)
+um.steps(['Cart', 'Shipping', 'Payment', 'Confirm'], current=1)
 page = um.pagination(total_pages=10, current_page=1, key='page')
 ```
 
@@ -152,7 +290,7 @@ um.success('Done!')
 um.error('Failed')
 um.warning('Caution')
 um.info('Note')
-um.toast('Quick notification', type='success', duration=3000)
+um.toast('Quick notification', icon='✅', duration=4000)
 
 # Loading spinner (context manager)
 with um.spinner('Processing...'):
@@ -164,15 +302,15 @@ try:
 except Exception as e:
     um.exception(e)
 
-# Force app rerun
+# Force rerun
 um.rerun()
 ```
 
 ### Media
 ```python
-um.image('https://example.com/img.png', caption='Photo')
-um.video('video.mp4')
-um.audio('audio.mp3')
+um.image(src='https://example.com/img.png', caption='Photo', width='300px')
+um.video(src='video.mp4', autoplay=False, controls=True)
+um.audio(src='audio.mp3', controls=True)
 ```
 
 ### State Management
@@ -180,46 +318,20 @@ um.audio('audio.mp3')
 # Persist data across reruns
 um.session_state.setdefault('counter', 0)
 um.session_state.counter += 1
+
+# Both notations work:
+um.session_state.counter = 5
+um.session_state['counter'] = 5
 ```
-
-### Keys vs Forms
-
-**Standalone inputs (with key)** - Use for real-time updates (filtering, search):
-```python
-# Value updates on every keystroke (50ms debounce)
-search = um.input('Search', key='search_query')
-# Filter results in real-time
-results = [item for item in items if search.lower() in item.lower()]
-```
-
-**Forms** - Use for input + button patterns (RECOMMENDED):
-```python
-# IMPORTANT: Use forms when you have inputs + a submit button
-# Forms batch values and submit together, avoiding race conditions
-with um.form('my_form'):
-    name = um.input('Name', key='name')
-    email = um.input('Email', key='email')
-    if um.form_submit_button('Submit'):
-        # Both values guaranteed to be current
-        um.success(f'Submitted: {name}, {email}')
-```
-
-**When to use which:**
-- Forms: input + button (reliable value capture)
-- Standalone with key: real-time search/filter, toggles, checkboxes
-
-**Why forms for input + button?** Standalone inputs have 50ms debounce. If user clicks button immediately after typing, value may not be synced. Forms guarantee all values are captured.
 
 ### Themes
 ```python
 # 12 built-in themes
-um.set_theme('light')   # default
-um.set_theme('dark')    # dark mode
-um.set_theme('ocean')   # blues
-um.set_theme('forest')  # greens
+um.set_theme('light')     # default
+um.set_theme('dark')      # dark mode
+um.set_theme('ocean')     # blues
+um.set_theme('forest')    # greens
 # Also: slate, nord, midnight, rose, copper, lavender, sunset, mint
-
-# Themes auto-persist to localStorage and respect system dark/light mode
 
 # Custom theme
 my_theme = um.create_theme('my_theme', base='light',
@@ -231,25 +343,22 @@ um.set_theme(my_theme)
 ```python
 um.set_page_config(
     page_title='My App',
-    page_icon='📊',  # Emoji or URL
-    layout='wide',   # 'centered' or 'wide'
+    page_icon='📊',
+    layout='wide',  # 'centered' or 'wide'
     initial_sidebar_state='auto'  # 'auto', 'expanded', 'collapsed'
 )
 ```
 
 ### Custom Styling
 ```python
-# Apply custom styles to any component
 my_style = um.style(
     color='#ff0000',
     fontSize='18px',
-    fontWeight='bold',
     padding='16px',
     backgroundColor='#f0f0f0',
     borderRadius='8px'
 )
 um.text('Styled text', style=my_style)
-um.card(style=um.style(boxShadow='0 4px 6px rgba(0,0,0,0.1)'))
 ```
 
 ### Chat Interface
@@ -263,6 +372,7 @@ with um.chat_container(height='400px'):
 user_input = um.chat_input('Type message...')
 if user_input:
     um.session_state.messages.append({'role': 'user', 'content': user_input})
+    # Add AI response here
 ```
 
 ### Charts
@@ -274,7 +384,7 @@ um.area_chart(data, x='month', y='value')
 um.pie_chart(data, label='month', value='value')
 um.scatter_chart(data, x='month', y='value')
 
-# Plotly charts (full Plotly.js support)
+# Plotly charts
 import plotly.express as px
 fig = px.scatter(df, x='x', y='y', color='category')
 um.plotly_chart(fig)
@@ -282,25 +392,27 @@ um.plotly_chart(fig)
 
 ### Caching
 ```python
-@um.cache_data  # Cache function results
+@um.cache_data  # Cache function results forever
 def load_data():
     return pd.read_csv('large.csv')
 
-@um.cache_resource  # Cache connections/models
+@um.cache_data(ttl=3600)  # Cache for 1 hour
+def fetch_api_data(url):
+    return requests.get(url).json()
+
+@um.cache_resource  # Cache connections/models (shared across users)
 def get_db():
     return sqlite3.connect('app.db')
 ```
 
 ### Fragments (Partial Reruns)
 ```python
-# Only this section reruns when its inputs change
 @um.fragment
 def chart_section():
     points = um.slider('Points', 10, 100, 50, key='points')
     um.line_chart(generate_data(points))
 
-# Auto-refresh every 5 seconds
-@um.fragment(run_every=5)
+@um.fragment(run_every=5)  # Auto-refresh every 5 seconds
 def live_metrics():
     data = fetch_live_data()
     um.metric('Active Users', data['users'])
@@ -310,7 +422,7 @@ chart_section()
 live_metrics()
 ```
 
-### Connections (Database & API)
+### Database & API Connections
 ```python
 # SQL database
 conn = um.connection.sql('mydb', url='sqlite:///data.db')
@@ -318,38 +430,96 @@ users = conn.query('SELECT * FROM users WHERE age > ?', params=(18,))
 conn.execute('INSERT INTO users (name) VALUES (?)', params=('Alice',))
 
 # HTTP/REST API
-api = um.connection.http('github', base_url='https://api.github.com',
-                          headers={'Authorization': f'token {token}'})
+api = um.connection.http(
+    'github',
+    base_url='https://api.github.com',
+    headers={'Authorization': f'token {token}'},
+    timeout=30
+)
 repos = api.get('/users/octocat/repos')
 api.post('/endpoint', json={'key': 'value'})
 ```
 
-## Key Features
+---
 
-- **100+ Components**: Inputs, layouts, charts, data display, chat, navigation
-- **12 Themes**: Light, dark, ocean, forest, slate, nord, midnight, rose, copper, lavender, sunset, mint
-- **WebSocket-based**: Real-time updates without page refresh
-- **Hot Reload**: Changes reflected instantly during development
-- **State Management**: session_state persists data across reruns
-- **Pandas Support**: DataFrames render as interactive tables
-- **Accessibility**: ARIA labels on all interactive components
-- **Theme Persistence**: Saves to localStorage, respects system dark mode
+## Common Examples
 
-## File Structure
-
-```
+### Contact Form
+```python
 import umara as um
 
-# 1. Configure page (optional)
-um.set_page_config(page_title='My App', layout='wide')
+um.header('Contact Us')
 
-# 2. Set theme (optional)
-um.set_theme('ocean')
+with um.card():
+    with um.form('contact'):
+        name = um.input('Name')
+        email = um.input('Email', type='email')
+        message = um.text_area('Message', rows=5)
 
-# 3. Build UI with components
-um.header('My App')
-# ... more components
+        if um.form_submit_button('Send Message'):
+            if not all([name, email, message]):
+                um.error('Please fill all fields')
+            else:
+                um.success('Message sent!')
 ```
+
+### Dashboard
+```python
+import umara as um
+
+um.set_theme('dark')
+um.header('Dashboard')
+
+with um.columns(4):
+    with um.column():
+        um.metric('Users', '12,543', delta=12.5)
+    with um.column():
+        um.metric('Revenue', '$48.2K', delta=8.2)
+    with um.column():
+        um.metric('Sessions', '1,892', delta=-2.4)
+    with um.column():
+        um.metric('Conversion', '3.24%', delta=0.5)
+
+um.line_chart(data, x='date', y='value')
+um.dataframe(recent_orders, sortable=True)
+```
+
+### Search with Live Filtering
+```python
+import umara as um
+
+items = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry']
+
+# Real-time search - use key, no form needed
+search = um.input('Search fruits', key='search')
+
+filtered = [item for item in items if search.lower() in item.lower()]
+
+for item in filtered:
+    um.text(f'• {item}')
+```
+
+### Settings with Immediate Effect
+```python
+import umara as um
+
+with um.sidebar():
+    um.header('Settings')
+    dark = um.toggle('Dark mode', key='dark_mode')
+    show_details = um.checkbox('Show details', key='show_details')
+
+if dark:
+    um.set_theme('dark')
+
+um.header('Content')
+um.text('Main content here')
+
+if show_details:
+    with um.expander('Details', expanded=True):
+        um.text('Extra information...')
+```
+
+---
 
 ## CLI Commands
 
@@ -360,36 +530,8 @@ umara init my_project         # Create new project
 umara themes                  # List themes
 ```
 
-## Common Patterns
-
-### Dashboard
-```python
-with um.columns(4):
-    for label, val, delta in [('Users', '1K', 5), ('Rev', '$10K', -2)]:
-        with um.column():
-            um.metric(label, val, delta=delta)
-```
-
-### Form Validation
-```python
-with um.form('contact'):
-    name = um.input('Name', key='name')
-    if um.form_submit_button('Submit'):
-        if not name:
-            um.error('Name required')
-        else:
-            um.success('Submitted!')
-```
-
-### File Upload
-```python
-file = um.file_uploader('Upload', accept=['.csv'], max_file_size=10*1024*1024)
-if file:
-    um.success(f'Got: {file["name"]} ({file["size"]} bytes)')
-```
-
 ## Documentation
 
-Full API reference: docs/UMARA_COMPLETE_REFERENCE.md
+Full API: docs/UMARA_COMPLETE_REFERENCE.md
 GitHub: https://github.com/lhassa8/umara
 PyPI: https://pypi.org/project/umara/

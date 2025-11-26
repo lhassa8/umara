@@ -22,10 +22,11 @@
 import umara as um
 
 um.header('Hello, Umara!')
-name = um.input('Your name')
 
-if um.button('Greet'):
-    um.success(f'Welcome, {name}!')
+with um.form('greeting'):
+    name = um.input('Your name')
+    if um.form_submit_button('Greet'):
+        um.success(f'Welcome, {name}!')
 ```
 
 **Why Umara?**
@@ -60,10 +61,11 @@ um.header('My First App')
 um.text('Building beautiful UIs is easy!')
 
 with um.card():
-    name = um.input('Enter your name', placeholder='John Doe')
+    with um.form('hello_form'):
+        name = um.input('Enter your name', placeholder='John Doe')
 
-    if um.button('Say Hello', variant='primary'):
-        um.success(f'Hello, {name}!')
+        if um.form_submit_button('Say Hello'):
+            um.success(f'Hello, {name}!')
 ```
 
 ### 3. Run Your App
