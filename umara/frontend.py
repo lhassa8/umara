@@ -512,13 +512,13 @@ def get_frontend_html(title: str) -> str:
                     case 'card':
                         return this.createCard(children, props, animate);
                     case 'container':
-                        return this.createContainer(children, animate);
+                        return this.createContainer(children, props, animate);
                     case 'fragment':
                         return this.createFragment(props, children, id);
                     case 'columns':
                         return this.createColumns(props, children, animate);
                     case 'column':
-                        return this.createColumn(children, animate);
+                        return this.createColumn(children, props, animate);
                     case 'grid':
                         return this.createGrid(props, children, animate);
                     case 'divider':
@@ -887,20 +887,40 @@ def get_frontend_html(title: str) -> str:
             createCard(children, props, animate) {{
                 const el = document.createElement('div');
                 el.className = animate ? 'um-animate-scale' : '';
-                el.style.cssText = `
+                const alignMap = {{ start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch' }};
+                const justifyMap = {{ start: 'flex-start', center: 'center', end: 'flex-end', 'space-between': 'space-between' }};
+
+                let styles = `
                     background: var(--um-color-surface); border-radius: var(--um-radius-lg);
-                    padding: 24px; box-shadow: var(--um-shadow-md); margin-bottom: 16px;
+                    padding: ${{props?.padding || '24px'}}; box-shadow: var(--um-shadow-${{props?.shadow || 'md'}}); margin-bottom: 16px;
                     border: 1px solid var(--um-color-border); transition: box-shadow var(--um-transition-fast);
                 `;
+                if (props?.align || props?.justify || props?.gap) {{
+                    styles += ' display: flex; flex-direction: column;';
+                    if (props?.align) styles += ` align-items: ${{alignMap[props.align] || props.align}};`;
+                    if (props?.justify) styles += ` justify-content: ${{justifyMap[props.justify] || props.justify}};`;
+                    if (props?.gap) styles += ` gap: ${{props.gap}};`;
+                }}
+                el.style.cssText = styles;
                 el.onmouseenter = () => {{ el.style.boxShadow = 'var(--um-shadow-lg)'; }};
-                el.onmouseleave = () => {{ el.style.boxShadow = 'var(--um-shadow-md)'; }};
+                el.onmouseleave = () => {{ el.style.boxShadow = `var(--um-shadow-${{props?.shadow || 'md'}})`; }};
                 children?.forEach(child => el.appendChild(this.renderComponent(child, false)));
                 return el;
             }}
 
-            createContainer(children, animate) {{
+            createContainer(children, props, animate) {{
                 const el = document.createElement('div');
-                el.style.cssText = 'margin-bottom: 16px;';
+                const alignMap = {{ start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch' }};
+                const justifyMap = {{ start: 'flex-start', center: 'center', end: 'flex-end', 'space-between': 'space-between', 'space-around': 'space-around' }};
+
+                let styles = 'margin-bottom: 16px;';
+                if (props?.align || props?.justify || props?.gap) {{
+                    styles += ' display: flex; flex-direction: column;';
+                    if (props?.align) styles += ` align-items: ${{alignMap[props.align] || props.align}};`;
+                    if (props?.justify) styles += ` justify-content: ${{justifyMap[props.justify] || props.justify}};`;
+                    if (props?.gap) styles += ` gap: ${{props.gap}};`;
+                }}
+                el.style.cssText = styles;
                 children?.forEach(child => el.appendChild(this.renderComponent(child, animate)));
                 return el;
             }}
@@ -940,20 +960,37 @@ def get_frontend_html(title: str) -> str:
             createColumns(props, children, animate) {{
                 const el = document.createElement('div');
                 el.className = 'um-columns';
-                el.style.cssText = `display: grid; grid-template-columns: repeat(${{props.count || 2}}, 1fr); gap: ${{props.gap || '16px'}}; margin-bottom: 16px;`;
+                const alignMap = {{ start: 'start', center: 'center', end: 'end', stretch: 'stretch' }};
+                let styles = `display: grid; grid-template-columns: repeat(${{props.count || 2}}, 1fr); gap: ${{props.gap || '16px'}}; margin-bottom: 16px;`;
+                if (props.verticalAlign) styles += ` align-items: ${{alignMap[props.verticalAlign] || props.verticalAlign}};`;
+                el.style.cssText = styles;
                 children?.forEach(child => el.appendChild(this.renderComponent(child, animate)));
                 return el;
             }}
 
-            createColumn(children, animate) {{
+            createColumn(children, props, animate) {{
                 const el = document.createElement('div');
+                const alignMap = {{ start: 'flex-start', center: 'center', end: 'flex-end', stretch: 'stretch' }};
+                const justifyMap = {{ start: 'flex-start', center: 'center', end: 'flex-end', 'space-between': 'space-between' }};
+
+                if (props?.align || props?.justify || props?.gap) {{
+                    let styles = 'display: flex; flex-direction: column;';
+                    if (props?.align) styles += ` align-items: ${{alignMap[props.align] || props.align}};`;
+                    if (props?.justify) styles += ` justify-content: ${{justifyMap[props.justify] || props.justify}};`;
+                    if (props?.gap) styles += ` gap: ${{props.gap}};`;
+                    el.style.cssText = styles;
+                }}
                 children?.forEach(child => el.appendChild(this.renderComponent(child, animate)));
                 return el;
             }}
 
             createGrid(props, children, animate) {{
                 const el = document.createElement('div');
-                el.style.cssText = `display: grid; grid-template-columns: repeat(${{props.columns || 3}}, 1fr); gap: ${{props.gap || '16px'}}; margin-bottom: 16px;`;
+                const alignMap = {{ start: 'start', center: 'center', end: 'end', stretch: 'stretch' }};
+                let styles = `display: grid; grid-template-columns: repeat(${{props.columns || 3}}, 1fr); gap: ${{props.gap || '16px'}}; margin-bottom: 16px;`;
+                if (props.align) styles += ` align-items: ${{alignMap[props.align] || props.align}};`;
+                if (props.justify) styles += ` justify-items: ${{alignMap[props.justify] || props.justify}};`;
+                el.style.cssText = styles;
                 children?.forEach(child => el.appendChild(this.renderComponent(child, animate)));
                 return el;
             }}

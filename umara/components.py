@@ -177,6 +177,9 @@ def container(
     *,
     padding: str | None = None,
     margin: str | None = None,
+    align: str | None = None,
+    justify: str | None = None,
+    gap: str | None = None,
     style: Style | None = None,
 ):
     """
@@ -185,16 +188,24 @@ def container(
     Args:
         padding: Container padding
         margin: Container margin
+        align: Horizontal alignment ('start', 'center', 'end', 'stretch')
+        justify: Vertical alignment ('start', 'center', 'end', 'space-between', 'space-around')
+        gap: Gap between child elements
         style: Optional Style object
     """
     ctx = get_context()
+    props = {
+        "align": align,
+        "justify": justify,
+        "gap": gap,
+    }
     style_dict = style.to_dict() if style else {}
     if padding:
         style_dict["padding"] = padding
     if margin:
         style_dict["margin"] = margin
 
-    component = ctx.create_component("container", style=style_dict or None)
+    component = ctx.create_component("container", props=props, style=style_dict or None)
     with ContainerContext(component):
         yield
 
@@ -204,6 +215,7 @@ def columns(
     count: int = 2,
     *,
     gap: str = "16px",
+    vertical_align: str | None = None,
     style: Style | None = None,
 ):
     """
@@ -212,10 +224,11 @@ def columns(
     Args:
         count: Number of columns
         gap: Gap between columns
+        vertical_align: Vertical alignment of items ('start', 'center', 'end', 'stretch')
         style: Optional Style object
     """
     ctx = get_context()
-    props = {"count": count, "gap": gap}
+    props = {"count": count, "gap": gap, "verticalAlign": vertical_align}
     style_dict = style.to_dict() if style else None
     component = ctx.create_component("columns", props=props, style=style_dict)
     with ContainerContext(component):
@@ -223,11 +236,26 @@ def columns(
 
 
 @contextmanager
-def column(*, style: Style | None = None):
-    """Create a single column within a columns layout."""
+def column(
+    *,
+    align: str | None = None,
+    justify: str | None = None,
+    gap: str | None = None,
+    style: Style | None = None,
+):
+    """
+    Create a single column within a columns layout.
+
+    Args:
+        align: Horizontal alignment ('start', 'center', 'end', 'stretch')
+        justify: Vertical alignment ('start', 'center', 'end', 'space-between')
+        gap: Gap between child elements
+        style: Optional Style object
+    """
     ctx = get_context()
+    props = {"align": align, "justify": justify, "gap": gap}
     style_dict = style.to_dict() if style else None
-    component = ctx.create_component("column", style=style_dict)
+    component = ctx.create_component("column", props=props, style=style_dict)
     with ContainerContext(component):
         yield
 
@@ -238,6 +266,8 @@ def grid(
     *,
     gap: str = "16px",
     row_gap: str | None = None,
+    align: str | None = None,
+    justify: str | None = None,
     style: Style | None = None,
 ):
     """
@@ -247,6 +277,8 @@ def grid(
         columns: Number of columns or CSS grid-template-columns value
         gap: Gap between items
         row_gap: Vertical gap (defaults to gap)
+        align: Align items within cells ('start', 'center', 'end', 'stretch')
+        justify: Justify items within cells ('start', 'center', 'end', 'stretch')
         style: Optional Style object
     """
     ctx = get_context()
@@ -254,6 +286,8 @@ def grid(
         "columns": columns,
         "gap": gap,
         "rowGap": row_gap or gap,
+        "align": align,
+        "justify": justify,
     }
     style_dict = style.to_dict() if style else None
     component = ctx.create_component("grid", props=props, style=style_dict)
@@ -268,6 +302,9 @@ def card(
     subtitle: str | None = None,
     padding: str = "24px",
     shadow: str = "md",
+    align: str | None = None,
+    justify: str | None = None,
+    gap: str | None = None,
     style: Style | None = None,
 ):
     """
@@ -278,6 +315,9 @@ def card(
         subtitle: Optional card subtitle
         padding: Card padding
         shadow: Shadow size (sm, md, lg, xl)
+        align: Horizontal alignment ('start', 'center', 'end', 'stretch')
+        justify: Vertical alignment ('start', 'center', 'end', 'space-between')
+        gap: Gap between child elements
         style: Optional Style object
     """
     ctx = get_context()
@@ -286,6 +326,9 @@ def card(
         "subtitle": subtitle,
         "padding": padding,
         "shadow": shadow,
+        "align": align,
+        "justify": justify,
+        "gap": gap,
     }
     style_dict = style.to_dict() if style else None
     component = ctx.create_component("card", props=props, style=style_dict)

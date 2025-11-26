@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "umara"
-version = "0.4.1"
+version = "0.4.2"
 description = "A beautiful, modern Python framework for creating web UIs"
 readme = "README.md"
 license = "MIT"
