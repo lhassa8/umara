@@ -52,9 +52,9 @@ dev = [
 umara = "umara.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/umara-framework/umara"
-Documentation = "https://umara.dev/docs"
-Repository = "https://github.com/umara-framework/umara"
+Homepage = "https://github.com/lhassa8/umara"
+Documentation = "https://github.com/lhassa8/umara#readme"
+Repository = "https://github.com/lhassa8/umara"
 
 [tool.hatch.build.targets.wheel]
 packages = ["umara"]

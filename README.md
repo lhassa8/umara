@@ -88,13 +88,17 @@ with um.columns(3):
         um.metric('Growth', '23%', delta=-2.4)
 ```
 
-Run it:
+### Run Your App
+
+Start the development server:
 
 ```bash
 umara run app.py
 ```
 
-Open http://localhost:8501
+Then open your browser to **http://localhost:8501** to see your app.
+
+The server runs with hot reload enabled by default, so any changes you make to `app.py` will automatically refresh in the browser.
 
 ## Documentation
 
@@ -432,14 +436,19 @@ Contributions are welcome. Here's how to get started:
 git clone https://github.com/lhassa8/umara.git
 cd umara
 
-# Install in dev mode
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install in dev mode with development dependencies
 pip install -e ".[dev]"
 
 # Run tests
 pytest
 
-# Run the demo
-umara run examples/components_showcase.py
+# Run the demo app
+umara run examples/demo_app.py
+# Then open http://localhost:8501 in your browser
 ```
 
 ## Roadmap

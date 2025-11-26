@@ -58,13 +58,17 @@ if um.button("Say Hello"):
     um.success(f"Hello, {name}! Welcome to Umara!")
 ```
 
-Run it:
+### Run Your App
+
+Start the development server:
 
 ```bash
 umara run app.py
 ```
 
-Open http://localhost:8501 in your browser.
+Then open your browser to **http://localhost:8501** to see your app.
+
+The server runs with hot reload enabled by default, so changes to your code will automatically refresh in the browser.
 
 ---
 
