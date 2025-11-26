@@ -2,7 +2,7 @@
 
 > **A beautiful, modern Python framework for creating web UIs without HTML, CSS, or JavaScript.**
 
-Version: 0.4.4
+Version: 0.4.5
 
 ---
 
@@ -2679,6 +2679,7 @@ um.text("More content...")
 
 ## Version History
 
+- **0.4.5** - Fixed SessionState bracket notation support, updated documentation
 - **0.4.4** - Added max_file_size for file_uploader, sortable dataframes, ARIA accessibility labels, system theme detection, localStorage theme persistence
 - **0.4.3** - Added button loading states, modal focus trap, chat auto-scroll
 - **0.4.2** - Added horizontal input labels, right-aligned numbers in tables
@@ -2689,4 +2690,4 @@ um.text("More content...")
 
 ---
 
-*Documentation generated for Umara v0.4.4*
+*Documentation generated for Umara v0.4.5*

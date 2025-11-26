@@ -47,11 +47,18 @@ um.code('print("hello")', language='python')
 ```python
 # IMPORTANT: Always use key= for standalone inputs to persist values across reruns
 text = um.input('Label', placeholder='hint', key='my_text')
-num = um.slider('Value', 0, 100, 50, key='my_slider')
+text_long = um.text_area('Bio', rows=4, key='my_bio')
+num = um.number_input('Age', min_value=0, max_value=120, key='my_num')
+num2 = um.slider('Value', 0, 100, 50, key='my_slider')
 choice = um.select('Pick', ['A', 'B', 'C'], key='my_select')
+choices = um.multiselect('Tags', ['Red', 'Green', 'Blue'], key='my_multi')
+option = um.radio('Size', ['S', 'M', 'L'], key='my_radio')
 checked = um.checkbox('Agree', key='my_checkbox')
 enabled = um.toggle('Feature', key='my_toggle')
 date = um.date_input('Date', key='my_date')
+time = um.time_input('Time', key='my_time')
+color = um.color_picker('Color', value='#6366f1', key='my_color')
+rating = um.rating('Rate', value=3, max_value=5, key='my_rating')
 file = um.file_uploader('Upload', accept=['.csv'], max_file_size=5*1024*1024, key='my_file')
 ```
 
@@ -61,6 +68,9 @@ if um.button('Click', variant='primary'):  # primary, secondary, outline, ghost,
     um.success('Clicked!')
 
 um.button('Loading...', loading=True)  # Show spinner
+
+# Download button
+um.download_button('Download CSV', csv_data, file_name='data.csv')
 ```
 
 ### Layouts
@@ -89,6 +99,24 @@ with um.tabs(['Tab 1', 'Tab 2']) as t:
 with um.grid(columns=4, gap='16px'):
     for i in range(8):
         um.text(f'Item {i}')
+
+# Sidebar
+with um.sidebar():
+    um.header('Navigation')
+    um.text('Sidebar content')
+
+# Expander (collapsible)
+with um.expander('Click to expand'):
+    um.text('Hidden content')
+
+# Modal dialog
+if um.button('Open Modal'):
+    um.open_modal('my_modal')
+
+with um.modal('Dialog Title', key='my_modal'):
+    um.text('Modal content')
+    if um.button('Close'):
+        um.close_modal('my_modal')
 ```
 
 ### Data Display
@@ -97,6 +125,25 @@ um.metric('Users', '12,543', delta=12.5)  # With trend indicator
 um.progress(75, label='Completion')
 um.dataframe(data, sortable=True)  # Works with pandas DataFrames
 um.json_viewer({'key': 'value'})
+um.badge('New', variant='success')  # success, warning, error, info
+um.avatar(name='John Doe')  # Shows initials "JD"
+um.avatar(src='https://example.com/avatar.jpg', size='lg')  # sm, md, lg, xl
+um.divider()  # Horizontal line
+um.spacer('24px')  # Vertical space
+um.caption('Figure 1: Sample data')  # Small caption text
+um.latex(r'E = mc^2')  # LaTeX math
+```
+
+### Navigation
+```python
+um.breadcrumbs([
+    {'label': 'Home', 'href': '/'},
+    {'label': 'Products', 'href': '/products'},
+    {'label': 'Detail', 'href': '#'}
+])
+
+step = um.steps(['Cart', 'Shipping', 'Payment', 'Confirm'], current=1)
+page = um.pagination(total_pages=10, current_page=1, key='page')
 ```
 
 ### Feedback
@@ -105,7 +152,27 @@ um.success('Done!')
 um.error('Failed')
 um.warning('Caution')
 um.info('Note')
-um.toast('Quick notification')
+um.toast('Quick notification', type='success', duration=3000)
+
+# Loading spinner (context manager)
+with um.spinner('Processing...'):
+    result = slow_function()
+
+# Exception display
+try:
+    risky_operation()
+except Exception as e:
+    um.exception(e)
+
+# Force app rerun
+um.rerun()
+```
+
+### Media
+```python
+um.image('https://example.com/img.png', caption='Photo')
+um.video('video.mp4')
+um.audio('audio.mp3')
 ```
 
 ### State Management
@@ -153,6 +220,36 @@ um.set_theme('forest')  # greens
 # Also: slate, nord, midnight, rose, copper, lavender, sunset, mint
 
 # Themes auto-persist to localStorage and respect system dark/light mode
+
+# Custom theme
+my_theme = um.create_theme('my_theme', base='light',
+    colors={'primary': '#ff6b6b', 'secondary': '#4ecdc4'})
+um.set_theme(my_theme)
+```
+
+### Page Configuration
+```python
+um.set_page_config(
+    page_title='My App',
+    page_icon='📊',  # Emoji or URL
+    layout='wide',   # 'centered' or 'wide'
+    initial_sidebar_state='auto'  # 'auto', 'expanded', 'collapsed'
+)
+```
+
+### Custom Styling
+```python
+# Apply custom styles to any component
+my_style = um.style(
+    color='#ff0000',
+    fontSize='18px',
+    fontWeight='bold',
+    padding='16px',
+    backgroundColor='#f0f0f0',
+    borderRadius='8px'
+)
+um.text('Styled text', style=my_style)
+um.card(style=um.style(boxShadow='0 4px 6px rgba(0,0,0,0.1)'))
 ```
 
 ### Chat Interface
@@ -173,7 +270,14 @@ if user_input:
 data = [{'month': 'Jan', 'value': 100}, {'month': 'Feb', 'value': 200}]
 um.line_chart(data, x='month', y='value')
 um.bar_chart(data, x='month', y='value')
+um.area_chart(data, x='month', y='value')
 um.pie_chart(data, label='month', value='value')
+um.scatter_chart(data, x='month', y='value')
+
+# Plotly charts (full Plotly.js support)
+import plotly.express as px
+fig = px.scatter(df, x='x', y='y', color='category')
+um.plotly_chart(fig)
 ```
 
 ### Caching
@@ -185,6 +289,39 @@ def load_data():
 @um.cache_resource  # Cache connections/models
 def get_db():
     return sqlite3.connect('app.db')
+```
+
+### Fragments (Partial Reruns)
+```python
+# Only this section reruns when its inputs change
+@um.fragment
+def chart_section():
+    points = um.slider('Points', 10, 100, 50, key='points')
+    um.line_chart(generate_data(points))
+
+# Auto-refresh every 5 seconds
+@um.fragment(run_every=5)
+def live_metrics():
+    data = fetch_live_data()
+    um.metric('Active Users', data['users'])
+
+# Use in app
+chart_section()
+live_metrics()
+```
+
+### Connections (Database & API)
+```python
+# SQL database
+conn = um.connection.sql('mydb', url='sqlite:///data.db')
+users = conn.query('SELECT * FROM users WHERE age > ?', params=(18,))
+conn.execute('INSERT INTO users (name) VALUES (?)', params=('Alice',))
+
+# HTTP/REST API
+api = um.connection.http('github', base_url='https://api.github.com',
+                          headers={'Authorization': f'token {token}'})
+repos = api.get('/users/octocat/repos')
+api.post('/endpoint', json={'key': 'value'})
 ```
 
 ## Key Features
