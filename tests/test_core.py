@@ -3,19 +3,18 @@ Unit tests for umara.core module.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from umara.core import (
     Component,
     ComponentContext,
     ContainerContext,
+    RerunException,
     Session,
+    StopException,
     UmaraApp,
     get_app,
     get_context,
     set_context,
-    RerunException,
-    StopException,
 )
 
 
@@ -216,7 +215,9 @@ class TestSession:
     def test_register_handler(self):
         """Test event handler registration."""
         session = Session("test")
-        handler = lambda x: x
+
+        def handler(x):
+            return x
 
         session.register_handler("btn-1:click", handler)
 
@@ -321,6 +322,7 @@ class TestUmaraApp:
     @pytest.mark.unit
     def test_set_app_function(self, app):
         """Test setting the app function."""
+
         def my_app():
             pass
 
@@ -340,8 +342,10 @@ class TestUmaraApp:
     @pytest.mark.asyncio
     async def test_render_session_with_app_func(self, app, session):
         """Test rendering with app function."""
+
         def simple_app():
             from umara import text
+
             text("Hello World")
 
         app.set_app_function(simple_app)
@@ -354,6 +358,7 @@ class TestUmaraApp:
     @pytest.mark.unit
     def test_on_start_decorator(self, app):
         """Test on_start decorator."""
+
         @app.on_start
         def startup():
             pass
@@ -363,6 +368,7 @@ class TestUmaraApp:
     @pytest.mark.unit
     def test_on_stop_decorator(self, app):
         """Test on_stop decorator."""
+
         @app.on_stop
         def shutdown():
             pass
@@ -373,12 +379,13 @@ class TestUmaraApp:
     @pytest.mark.asyncio
     async def test_handle_state_update(self, app, session):
         """Test handling state updates."""
+
         def simple_app():
             pass
 
         app.set_app_function(simple_app)
 
-        result = await app.handle_state_update(session, "my_key", "my_value")
+        await app.handle_state_update(session, "my_key", "my_value")
 
         assert hasattr(session.state, "my_key")
         assert session.state.my_key == "my_value"

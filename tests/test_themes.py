@@ -3,13 +3,14 @@ Unit tests for umara.themes module.
 """
 
 import pytest
+
 from umara.themes import (
-    Theme,
-    ColorPalette,
-    set_theme,
-    get_theme,
-    create_theme,
     BUILTIN_THEMES,
+    ColorPalette,
+    Theme,
+    create_theme,
+    get_theme,
+    set_theme,
 )
 
 

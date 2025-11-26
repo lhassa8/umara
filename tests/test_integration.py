@@ -3,11 +3,8 @@ Integration tests for Umara WebSocket communication and server.
 """
 
 import pytest
-import asyncio
-import json
-from unittest.mock import AsyncMock, MagicMock, patch
 
-from umara.core import UmaraApp, Session, get_app
+from umara.core import UmaraApp
 from umara.server import create_fastapi_app
 
 
@@ -36,7 +33,8 @@ class TestWebSocketIntegration:
         def test_app():
             nonlocal render_count
             render_count += 1
-            from umara import text, button
+            from umara import button, text
+
             text("Hello")
             button("Click")
 
@@ -49,16 +47,18 @@ class TestWebSocketIntegration:
         assert render_count == 1
 
         # Second render (simulating re-render)
-        result2 = await app.render_session(session)
+        await app.render_session(session)
         assert render_count == 2
 
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_state_update_triggers_rerender(self, app, session):
         """Test that state updates trigger re-renders."""
+
         def test_app():
             from umara import text
             from umara.state import get_session_state
+
             ss = get_session_state()
             count = ss.get("count", 0)
             text(f"Count: {count}")
@@ -67,11 +67,11 @@ class TestWebSocketIntegration:
 
         # Initial render
         result1 = await app.render_session(session)
-        tree1 = result1["tree"]
+        result1["tree"]
 
         # Update state
         result2 = await app.handle_state_update(session, "count", 5)
-        tree2 = result2["tree"]
+        result2["tree"]
 
         # Verify state was updated
         assert session.state.count == 5
@@ -91,7 +91,7 @@ class TestWebSocketIntegration:
         session.register_handler("btn-1:click", my_handler)
 
         # Simulate event
-        result = await app.handle_event(
+        await app.handle_event(
             session,
             event_type="click",
             component_id="btn-1",
@@ -144,6 +144,7 @@ class TestWebSocketIntegration:
     @pytest.mark.asyncio
     async def test_error_handling_in_app(self, app, session):
         """Test error handling when app function raises."""
+
         def buggy_app():
             raise ValueError("Something went wrong!")
 
@@ -154,10 +155,7 @@ class TestWebSocketIntegration:
 
         # Find error component in tree
         tree = result["tree"]
-        error_found = any(
-            child.get("type") == "error"
-            for child in tree.get("children", [])
-        )
+        error_found = any(child.get("type") == "error" for child in tree.get("children", []))
         assert error_found
 
 
@@ -191,8 +189,9 @@ class TestComponentIntegration:
     @pytest.mark.asyncio
     async def test_nested_components_render(self, app, session):
         """Test deeply nested components render correctly."""
+
         def nested_app():
-            from umara import container, card, columns, column, text
+            from umara import card, column, columns, container, text
 
             with container():
                 with card(title="Card 1"):
@@ -212,8 +211,9 @@ class TestComponentIntegration:
     @pytest.mark.asyncio
     async def test_interactive_component_state(self, app, session):
         """Test interactive components maintain state."""
+
         def interactive_app():
-            from umara import input, button
+            from umara import button, input
             from umara.state import get_session_state
 
             ss = get_session_state()
@@ -225,13 +225,13 @@ class TestComponentIntegration:
         app.set_app_function(interactive_app)
 
         # Initial render
-        result1 = await app.render_session(session)
+        await app.render_session(session)
 
         # Simulate state update
         await app.handle_state_update(session, "name", "Alice")
 
         # Re-render
-        result2 = await app.render_session(session)
+        await app.render_session(session)
 
         assert session.state.name == "Alice"
 
@@ -243,6 +243,7 @@ class TestComponentIntegration:
 
         def themed_app():
             from umara import text
+
             text("Themed text")
 
         app.set_app_function(themed_app)
@@ -261,11 +262,9 @@ class TestEndToEndScenarios:
     @pytest.mark.asyncio
     async def test_dashboard_app_scenario(self, app, session):
         """Test a dashboard-like application."""
+
         def dashboard_app():
-            from umara import (
-                header, columns, column, stat_card,
-                line_chart, dataframe
-            )
+            from umara import column, columns, dataframe, header, line_chart, stat_card
 
             header("Dashboard")
 
@@ -283,10 +282,12 @@ class TestEndToEndScenarios:
             ]
             line_chart(data, x="month", y="value")
 
-            dataframe([
-                {"Name": "Alice", "Role": "Engineer"},
-                {"Name": "Bob", "Role": "Designer"},
-            ])
+            dataframe(
+                [
+                    {"Name": "Alice", "Role": "Engineer"},
+                    {"Name": "Bob", "Role": "Designer"},
+                ]
+            )
 
         app.set_app_function(dashboard_app)
         result = await app.render_session(session)
@@ -298,8 +299,9 @@ class TestEndToEndScenarios:
     @pytest.mark.asyncio
     async def test_form_submission_scenario(self, app, session):
         """Test a form submission scenario."""
+
         def form_app():
-            from umara import card, input, button, success
+            from umara import button, card, input, success
             from umara.state import get_session_state
 
             ss = get_session_state()
@@ -332,27 +334,23 @@ class TestEndToEndScenarios:
     @pytest.mark.asyncio
     async def test_chat_interface_scenario(self, app, session):
         """Test a chat interface scenario."""
+
         def chat_app():
-            from umara import chat_container, chat_message, chat_input
+            from umara import chat_container, chat_input, chat_message
             from umara.state import get_session_state
 
             ss = get_session_state()
-            messages = ss.get("messages", [
-                {"role": "assistant", "content": "Hello!"}
-            ])
+            messages = ss.get("messages", [{"role": "assistant", "content": "Hello!"}])
 
             with chat_container(height="400px"):
                 for msg in messages:
                     chat_message(msg["role"], msg["content"])
 
-            new_msg = chat_input("Type a message...", key="chat_input")
+            chat_input("Type a message...", key="chat_input")
 
         app.set_app_function(chat_app)
         result = await app.render_session(session)
 
         tree = result["tree"]
         # Should have chat_container as first child
-        assert any(
-            child.get("type") == "chat_container"
-            for child in tree.get("children", [])
-        )
+        assert any(child.get("type") == "chat_container" for child in tree.get("children", []))

@@ -6,11 +6,9 @@ Provides commands for running Umara apps and development tools.
 
 from __future__ import annotations
 
-import sys
-import os
 import importlib.util
+import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 from rich.console import Console
@@ -27,11 +25,13 @@ def print_banner():
     ║ ║│││├─┤├┬┘├─┤
     ╚═╝┴ ┴┴ ┴┴└─┴ ┴
     """
-    console.print(Panel(
-        Text(banner, style="bold magenta", justify="center"),
-        subtitle="Beautiful Python UIs",
-        border_style="magenta",
-    ))
+    console.print(
+        Panel(
+            Text(banner, style="bold magenta", justify="center"),
+            subtitle="Beautiful Python UIs",
+            border_style="magenta",
+        )
+    )
 
 
 @click.group(invoke_without_command=True)
@@ -65,16 +65,16 @@ def run(script: str, host: str, port: int, reload: bool, debug: bool):
         sys.exit(1)
 
     if not script_path.suffix == ".py":
-        console.print(f"[red]Error:[/red] Script must be a Python file (.py)")
+        console.print("[red]Error:[/red] Script must be a Python file (.py)")
         sys.exit(1)
 
     print_banner()
-    console.print(f"\n  [green]Starting Umara server...[/green]")
+    console.print("\n  [green]Starting Umara server...[/green]")
     console.print(f"  [dim]Script:[/dim] {script_path}")
     console.print(f"  [dim]URL:[/dim] [cyan]http://{host}:{port}[/cyan]")
 
     if reload:
-        console.print(f"  [dim]Hot reload:[/dim] [green]enabled[/green]")
+        console.print("  [dim]Hot reload:[/dim] [green]enabled[/green]")
 
     console.print()
 
@@ -228,15 +228,15 @@ A beautiful web UI built with Umara.
     console.print()
     console.print("  Get started:")
     console.print(f"    [cyan]cd {name}[/cyan]")
-    console.print(f"    [cyan]pip install -r requirements.txt[/cyan]")
-    console.print(f"    [cyan]umara run app.py[/cyan]")
+    console.print("    [cyan]pip install -r requirements.txt[/cyan]")
+    console.print("    [cyan]umara run app.py[/cyan]")
     console.print()
 
 
 @main.command()
 def themes():
     """List available themes."""
-    from umara.themes import list_themes, BUILTIN_THEMES
+    from umara.themes import BUILTIN_THEMES, list_themes
 
     print_banner()
     console.print("\n  [bold]Available Themes:[/bold]\n")
@@ -257,6 +257,7 @@ def themes():
 def docs():
     """Open Umara documentation in browser."""
     import webbrowser
+
     webbrowser.open("https://umara.dev/docs")
     console.print("  Opening documentation in browser...")
 

@@ -3,10 +3,7 @@ Unit tests for umara.components module.
 """
 
 import pytest
-from unittest.mock import patch, MagicMock
 
-from umara.core import get_context, set_context, ComponentContext
-from umara.state import SessionState, set_session_state
 import umara.components as components
 
 
@@ -190,7 +187,7 @@ class TestInputComponents:
     @pytest.mark.unit
     def test_text_area(self, component_context, session_state):
         """Test text area component."""
-        result = components.text_area("Bio", rows=5, key="bio")
+        components.text_area("Bio", rows=5, key="bio")
 
         root = component_context.get_root()
         assert root.children[0].type == "textarea"
@@ -200,12 +197,7 @@ class TestInputComponents:
     def test_number_input(self, component_context, session_state):
         """Test number input."""
         result = components.number_input(
-            "Quantity",
-            min_value=0,
-            max_value=100,
-            value=10,
-            step=1,
-            key="qty"
+            "Quantity", min_value=0, max_value=100, value=10, step=1, key="qty"
         )
 
         assert result == 10
@@ -227,7 +219,7 @@ class TestInputComponents:
     def test_select(self, component_context, session_state):
         """Test select dropdown."""
         options = ["Option A", "Option B", "Option C"]
-        result = components.select("Choose", options=options, key="choice")
+        components.select("Choose", options=options, key="choice")
 
         root = component_context.get_root()
         assert root.children[0].type == "select"
@@ -262,7 +254,7 @@ class TestInputComponents:
     @pytest.mark.unit
     def test_toggle(self, component_context, session_state):
         """Test toggle switch."""
-        result = components.toggle("Dark mode", key="dark")
+        components.toggle("Dark mode", key="dark")
 
         root = component_context.get_root()
         assert root.children[0].type == "toggle"
@@ -271,7 +263,7 @@ class TestInputComponents:
     def test_radio(self, component_context, session_state):
         """Test radio buttons."""
         options = ["Small", "Medium", "Large"]
-        result = components.radio("Size", options=options, key="size")
+        components.radio("Size", options=options, key="size")
 
         root = component_context.get_root()
         assert root.children[0].type == "radio"
@@ -279,7 +271,7 @@ class TestInputComponents:
     @pytest.mark.unit
     def test_date_input(self, component_context, session_state):
         """Test date input."""
-        result = components.date_input("Birthday", key="bday")
+        components.date_input("Birthday", key="bday")
 
         root = component_context.get_root()
         assert root.children[0].type == "date"
@@ -287,7 +279,7 @@ class TestInputComponents:
     @pytest.mark.unit
     def test_time_input(self, component_context, session_state):
         """Test time input."""
-        result = components.time_input("Meeting time", key="time")
+        components.time_input("Meeting time", key="time")
 
         root = component_context.get_root()
         assert root.children[0].type == "time"
@@ -492,12 +484,7 @@ class TestChartComponents:
     @pytest.mark.unit
     def test_line_chart(self, component_context, session_state, chart_data):
         """Test line chart."""
-        components.line_chart(
-            chart_data,
-            x="month",
-            y=["revenue", "profit"],
-            title="Revenue Chart"
-        )
+        components.line_chart(chart_data, x="month", y=["revenue", "profit"], title="Revenue Chart")
 
         root = component_context.get_root()
         chart = root.children[0]
@@ -575,7 +562,7 @@ class TestNavigationComponents:
     @pytest.mark.unit
     def test_pagination(self, component_context, session_state):
         """Test pagination."""
-        result = components.pagination(total_pages=10, current_page=3, key="page")
+        components.pagination(total_pages=10, current_page=3, key="page")
 
         root = component_context.get_root()
         pag = root.children[0]
@@ -644,7 +631,7 @@ class TestChatComponents:
     @pytest.mark.unit
     def test_chat_input(self, component_context, session_state):
         """Test chat input."""
-        result = components.chat_input("Type a message...", key="chat")
+        components.chat_input("Type a message...", key="chat")
 
         root = component_context.get_root()
         inp = root.children[0]
@@ -705,7 +692,7 @@ class TestFormComponents:
     @pytest.mark.unit
     def test_form_submit_button(self, component_context, session_state):
         """Test form submit button."""
-        result = components.form_submit_button("Submit")
+        components.form_submit_button("Submit")
 
         root = component_context.get_root()
         btn = root.children[0]
@@ -731,9 +718,7 @@ class TestUtilityComponents:
     def test_empty_state(self, component_context, session_state):
         """Test empty state component."""
         components.empty_state(
-            title="No results",
-            description="Try a different search",
-            icon="search"
+            title="No results", description="Try a different search", icon="search"
         )
 
         root = component_context.get_root()

@@ -2,21 +2,20 @@
 Pytest configuration and shared fixtures for Umara tests.
 """
 
+from collections.abc import Generator
+from unittest.mock import AsyncMock
+
 import pytest
-import asyncio
-from typing import Generator, AsyncGenerator
-from unittest.mock import MagicMock, AsyncMock
 
 from umara.core import (
-    UmaraApp,
-    Session,
-    ComponentContext,
     Component,
-    get_context,
+    ComponentContext,
+    Session,
+    UmaraApp,
     set_context,
 )
 from umara.state import SessionState, set_session_state
-from umara.themes import set_theme, get_theme
+from umara.themes import set_theme
 
 
 @pytest.fixture

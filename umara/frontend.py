@@ -13,7 +13,7 @@ Features:
 
 def get_frontend_html(title: str) -> str:
     """Generate the complete frontend HTML with modern JavaScript."""
-    return f'''<!DOCTYPE html>
+    return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -400,11 +400,12 @@ def get_frontend_html(title: str) -> str:
                 const root = document.getElementById('root');
                 if (!data.tree) return;
 
-                // Save focus state
+                // Save focus state and current value (to preserve user input during re-render)
                 const activeEl = document.activeElement;
                 const activeId = activeEl?.dataset?.umId || '';
                 const selectionStart = activeEl?.selectionStart;
                 const selectionEnd = activeEl?.selectionEnd;
+                const activeValue = (activeEl?.tagName === 'INPUT' || activeEl?.tagName === 'TEXTAREA') ? activeEl.value : null;
                 const scrollPositions = new Map();
 
                 // Save scroll positions
@@ -420,10 +421,19 @@ def get_frontend_html(title: str) -> str:
                 // Apply theme
                 this.applyTheme(data.theme);
 
-                // Restore focus
+                // Restore focus and preserve user's current input value
                 if (activeId) {{
                     const newActiveEl = document.querySelector(`[data-um-id="${{activeId}}"]`);
                     if (newActiveEl && (newActiveEl.tagName === 'INPUT' || newActiveEl.tagName === 'TEXTAREA')) {{
+                        // Restore the value the user had typed (not the server's stale value)
+                        if (activeValue !== null && activeValue !== newActiveEl.value) {{
+                            newActiveEl.value = activeValue;
+                            // Send updated state to sync with server
+                            const stateKey = newActiveEl.dataset?.stateKey;
+                            if (stateKey) {{
+                                this.sendStateUpdate(stateKey, activeValue);
+                            }}
+                        }}
                         newActiveEl.focus();
                         if (typeof selectionStart === 'number') {{
                             try {{ newActiveEl.setSelectionRange(selectionStart, selectionEnd); }} catch (e) {{}}
@@ -663,6 +673,7 @@ def get_frontend_html(title: str) -> str:
                 input.value = props.value || '';
                 input.placeholder = props.placeholder || '';
                 input.dataset.umId = id;
+                input.dataset.stateKey = props.stateKey || id;
                 input.style.cssText = `
                     width: 100%; padding: 10px 14px; border: 1px solid var(--um-color-border);
                     border-radius: var(--um-radius-md); font-size: 14px; transition: all var(--um-transition-fast);
@@ -693,6 +704,7 @@ def get_frontend_html(title: str) -> str:
                 textarea.placeholder = props.placeholder || '';
                 textarea.rows = props.rows || 4;
                 textarea.dataset.umId = id;
+                textarea.dataset.stateKey = props.stateKey || id;
                 textarea.style.cssText = `
                     width: 100%; padding: 10px 14px; border: 1px solid var(--um-color-border);
                     border-radius: var(--um-radius-md); font-size: 14px; resize: vertical; font-family: inherit;
@@ -1985,4 +1997,4 @@ def get_frontend_html(title: str) -> str:
         window.UmaraClient = client;
     </script>
 </body>
-</html>'''
+</html>"""

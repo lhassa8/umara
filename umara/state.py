@@ -7,13 +7,13 @@ Only components that depend on changed state will re-render.
 
 from __future__ import annotations
 
-import hashlib
 import functools
-from typing import Any, Callable, Dict, Generic, Optional, TypeVar
-from dataclasses import dataclass, field
-from contextvars import ContextVar
-from collections import defaultdict
+import hashlib
 import threading
+from collections import defaultdict
+from contextvars import ContextVar
+from dataclasses import dataclass, field
+from typing import Any, Callable, Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -44,20 +44,25 @@ class SessionState:
     """
 
     def __init__(self):
-        self._state: Dict[str, StateValue] = {}
+        self._state: dict[str, StateValue] = {}
         self._lock = threading.RLock()
         self._change_callbacks: list[Callable[[str, Any], None]] = []
 
     def __getattr__(self, key: str) -> Any:
-        if key.startswith("_"):
+        # Only treat truly internal attributes as object attributes
+        if key.startswith("__") or key in ("_state", "_lock", "_change_callbacks"):
             return object.__getattribute__(self, key)
         with self._lock:
             if key in self._state:
                 return self._state[key].value
-            raise AttributeError(f"State key '{key}' not found. Set it first with session_state.{key} = value")
+            raise AttributeError(
+                f"State key '{key}' not found. Set it first with session_state.{key} = value"
+            )
 
     def __setattr__(self, key: str, value: Any) -> None:
-        if key.startswith("_"):
+        # Only treat truly internal attributes (double underscore or specific internal names)
+        # as object attributes. Single underscore keys like "_input_Name" are state keys.
+        if key.startswith("__") or key in ("_state", "_lock", "_change_callbacks"):
             object.__setattr__(self, key, value)
             return
         with self._lock:
@@ -74,7 +79,7 @@ class SessionState:
     def __contains__(self, key: str) -> bool:
         return key in self._state
 
-    def get(self, key: str, default: T = None) -> T:
+    def get(self, key: str, default: T | None = None) -> T | None:
         """Get a state value with optional default."""
         with self._lock:
             if key in self._state:
@@ -115,11 +120,11 @@ class SessionState:
         """Register a callback for state changes."""
         self._change_callbacks.append(callback)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Export state as dictionary."""
         return {k: sv.value for k, sv in self._state.items()}
 
-    def from_dict(self, data: Dict[str, Any]) -> None:
+    def from_dict(self, data: dict[str, Any]) -> None:
         """Import state from dictionary."""
         with self._lock:
             for key, value in data.items():
@@ -130,9 +135,7 @@ class SessionState:
 
 
 # Context variable for session state (per-request/session)
-_session_state_var: ContextVar[Optional[SessionState]] = ContextVar(
-    "session_state", default=None
-)
+_session_state_var: ContextVar[SessionState | None] = ContextVar("session_state", default=None)
 
 
 def get_session_state() -> SessionState:
@@ -189,7 +192,7 @@ class ComponentState:
 
     def __init__(self, component_id: str):
         self._component_id = component_id
-        self._state: Dict[str, Any] = {}
+        self._state: dict[str, Any] = {}
 
     def __getitem__(self, key: str) -> Any:
         return self._state.get(key)
@@ -208,7 +211,7 @@ class ComponentState:
 
 
 # Component state registry
-_component_states: Dict[str, Dict[str, ComponentState]] = defaultdict(dict)
+_component_states: dict[str, dict[str, ComponentState]] = defaultdict(dict)
 
 
 def get_component_state(session_id: str, component_id: str) -> ComponentState:
@@ -232,7 +235,7 @@ class Cache:
     """
 
     def __init__(self):
-        self._cache: Dict[str, Dict[str, Any]] = {}
+        self._cache: dict[str, dict[str, Any]] = {}
 
     def _make_key(self, func: Callable, args: tuple, kwargs: dict) -> str:
         """Create a cache key from function and arguments."""
@@ -258,6 +261,7 @@ class Cache:
 
     def __call__(self, func: Callable[..., T]) -> Callable[..., T]:
         """Decorator to cache function results."""
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> T:
             key = self._make_key(func, args, kwargs)
@@ -267,6 +271,7 @@ class Cache:
             result = func(*args, **kwargs)
             self.set(key, result)
             return result
+
         return wrapper
 
 
@@ -274,7 +279,7 @@ class Cache:
 cache = Cache()
 
 
-def state(default: T = None) -> T:
+def state(default: T | None = None) -> T | None:
     """
     Create a reactive state value.
 
@@ -292,7 +297,6 @@ def state(default: T = None) -> T:
     frame = inspect.currentframe()
     if frame and frame.f_back:
         # Try to find the variable name being assigned
-        import dis
         code = frame.f_back.f_code
         # Use a simple approach: hash the call location
         key = f"_state_{code.co_filename}_{frame.f_back.f_lineno}"

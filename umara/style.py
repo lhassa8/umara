@@ -7,8 +7,8 @@ needing to know CSS.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Union
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -19,7 +19,7 @@ class Style:
     Provides a Pythonic way to define CSS-like styles.
     """
 
-    _properties: Dict[str, str] = field(default_factory=dict)
+    _properties: dict[str, str] = field(default_factory=dict)
 
     def __init__(self, **kwargs):
         self._properties = {}
@@ -47,13 +47,13 @@ class Style:
             css_key = self._to_css_key(key)
             self._properties[css_key] = self._to_css_value(value)
 
-    def __getattr__(self, key: str) -> Optional[str]:
+    def __getattr__(self, key: str) -> str | None:
         if key.startswith("_"):
             return object.__getattribute__(self, key)
         css_key = self._to_css_key(key)
         return self._properties.get(css_key)
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> dict[str, str]:
         """Convert to dictionary for JSON serialization."""
         return self._properties.copy()
 
@@ -61,13 +61,13 @@ class Style:
         """Convert to inline CSS string."""
         return "; ".join(f"{k}: {v}" for k, v in self._properties.items())
 
-    def merge(self, other: "Style") -> "Style":
+    def merge(self, other: Style) -> Style:
         """Merge with another style, other takes precedence."""
         merged = Style()
         merged._properties = {**self._properties, **other._properties}
         return merged
 
-    def __or__(self, other: "Style") -> "Style":
+    def __or__(self, other: Style) -> Style:
         """Allow style1 | style2 syntax for merging."""
         return self.merge(other)
 
@@ -122,11 +122,7 @@ class Presets:
     """Pre-built style presets for common patterns."""
 
     @staticmethod
-    def card(
-        padding: str = "24px",
-        radius: str = "12px",
-        shadow: str = "md"
-    ) -> Style:
+    def card(padding: str = "24px", radius: str = "12px", shadow: str = "md") -> Style:
         """Card preset with shadow and rounded corners."""
         shadow_values = {
             "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",

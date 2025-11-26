@@ -46,12 +46,6 @@ export function ComponentRenderer({
     ))
   }
 
-  // Get value from state
-  const getValue = (key: string, defaultValue: unknown = undefined) => {
-    const stateKey = props.stateKey as string || key
-    return state[stateKey] !== undefined ? state[stateKey] : defaultValue
-  }
-
   // Apply custom styles
   const customStyle = style ? Object.entries(style).reduce((acc, [key, value]) => {
     // Convert kebab-case to camelCase
@@ -143,7 +137,7 @@ export function ComponentRenderer({
       return (
         <Input
           label={props.label as string}
-          value={getValue(id, props.value || '') as string}
+          value={(props.value ?? '') as string}
           placeholder={props.placeholder as string}
           type={props.type as string}
           disabled={props.disabled as boolean}
@@ -156,7 +150,7 @@ export function ComponentRenderer({
       return (
         <TextArea
           label={props.label as string}
-          value={getValue(id, props.value || '') as string}
+          value={(props.value ?? '') as string}
           placeholder={props.placeholder as string}
           rows={props.rows as number}
           disabled={props.disabled as boolean}
@@ -169,7 +163,7 @@ export function ComponentRenderer({
       return (
         <Slider
           label={props.label as string}
-          value={getValue(id, props.value || props.min || 0) as number}
+          value={(props.value ?? props.min ?? 0) as number}
           min={props.min as number}
           max={props.max as number}
           step={props.step as number}
@@ -183,7 +177,7 @@ export function ComponentRenderer({
       return (
         <Select
           label={props.label as string}
-          value={getValue(id, props.value) as string}
+          value={props.value as string}
           options={props.options as Array<string | { value: string; label: string }>}
           placeholder={props.placeholder as string}
           disabled={props.disabled as boolean}
@@ -196,7 +190,7 @@ export function ComponentRenderer({
       return (
         <MultiSelect
           label={props.label as string}
-          value={getValue(id, props.value || []) as string[]}
+          value={(props.value ?? []) as string[]}
           options={props.options as Array<string | { value: string; label: string }>}
           placeholder={props.placeholder as string}
           disabled={props.disabled as boolean}
@@ -209,7 +203,7 @@ export function ComponentRenderer({
       return (
         <Checkbox
           label={props.label as string}
-          checked={getValue(id, props.value || false) as boolean}
+          checked={(props.value ?? false) as boolean}
           disabled={props.disabled as boolean}
           onChange={(checked) => onStateUpdate(props.stateKey as string || id, checked)}
           style={customStyle}
@@ -220,7 +214,7 @@ export function ComponentRenderer({
       return (
         <Toggle
           label={props.label as string}
-          checked={getValue(id, props.value || false) as boolean}
+          checked={(props.value ?? false) as boolean}
           disabled={props.disabled as boolean}
           onChange={(checked) => onStateUpdate(props.stateKey as string || id, checked)}
           style={customStyle}
@@ -231,7 +225,7 @@ export function ComponentRenderer({
       return (
         <Radio
           label={props.label as string}
-          value={getValue(id, props.value) as string}
+          value={props.value as string}
           options={props.options as string[]}
           horizontal={props.horizontal as boolean}
           disabled={props.disabled as boolean}
@@ -293,7 +287,7 @@ export function ComponentRenderer({
       return (
         <Tabs
           tabs={props.tabs as string[]}
-          activeTab={getValue(id, props.activeTab || 0) as number}
+          activeTab={(props.activeTab ?? 0) as number}
           onChange={(index) => onStateUpdate(props.stateKey as string || id, index)}
           style={customStyle}
         >

@@ -7,29 +7,25 @@ support for different output formats and log levels.
 
 from __future__ import annotations
 
-import logging
+import contextvars
 import json
+import logging
 import sys
 import time
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Optional, Union
-from dataclasses import dataclass, field, asdict
 from enum import Enum
 from functools import wraps
-import traceback
-import contextvars
+from typing import Any
 
 # Context variable for request/session tracking
-_request_id: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
-    "request_id", default=None
-)
-_session_id: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
-    "session_id", default=None
-)
+_request_id: contextvars.ContextVar[str | None] = contextvars.ContextVar("request_id", default=None)
+_session_id: contextvars.ContextVar[str | None] = contextvars.ContextVar("session_id", default=None)
 
 
 class LogLevel(Enum):
     """Log levels matching Python's logging module."""
+
     DEBUG = logging.DEBUG
     INFO = logging.INFO
     WARNING = logging.WARNING
@@ -40,25 +36,27 @@ class LogLevel(Enum):
 @dataclass
 class LogContext:
     """Context information for structured logging."""
-    request_id: Optional[str] = None
-    session_id: Optional[str] = None
-    component: Optional[str] = None
-    action: Optional[str] = None
-    duration_ms: Optional[float] = None
-    extra: Dict[str, Any] = field(default_factory=dict)
+
+    request_id: str | None = None
+    session_id: str | None = None
+    component: str | None = None
+    action: str | None = None
+    duration_ms: float | None = None
+    extra: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class LogRecord:
     """Structured log record."""
+
     timestamp: str
     level: str
     message: str
     logger: str
     context: LogContext
-    exception: Optional[str] = None
+    exception: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         result = {
             "timestamp": self.timestamp,
@@ -133,11 +131,11 @@ class PrettyFormatter(logging.Formatter):
     """Formatter for human-readable console output."""
 
     COLORS = {
-        "DEBUG": "\033[36m",      # Cyan
-        "INFO": "\033[32m",       # Green
-        "WARNING": "\033[33m",    # Yellow
-        "ERROR": "\033[31m",      # Red
-        "CRITICAL": "\033[35m",   # Magenta
+        "DEBUG": "\033[36m",  # Cyan
+        "INFO": "\033[32m",  # Green
+        "WARNING": "\033[33m",  # Yellow
+        "ERROR": "\033[31m",  # Red
+        "CRITICAL": "\033[35m",  # Magenta
     }
     RESET = "\033[0m"
 
@@ -196,7 +194,7 @@ class UmaraLogger:
     def __init__(
         self,
         name: str = "umara",
-        level: Union[LogLevel, int, str] = LogLevel.INFO,
+        level: LogLevel | int | str = LogLevel.INFO,
         json_output: bool = False,
     ):
         self.name = name
@@ -214,7 +212,7 @@ class UmaraLogger:
 
         self._logger.addHandler(handler)
 
-    def _resolve_level(self, level: Union[LogLevel, int, str]) -> int:
+    def _resolve_level(self, level: LogLevel | int | str) -> int:
         """Resolve log level to integer."""
         if isinstance(level, LogLevel):
             return level.value
@@ -277,7 +275,7 @@ class UmaraLogger:
 
 
 # Global logger instance
-_logger: Optional[UmaraLogger] = None
+_logger: UmaraLogger | None = None
 
 
 def get_logger(name: str = "umara") -> UmaraLogger:
@@ -289,7 +287,7 @@ def get_logger(name: str = "umara") -> UmaraLogger:
 
 
 def configure_logging(
-    level: Union[LogLevel, int, str] = LogLevel.INFO,
+    level: LogLevel | int | str = LogLevel.INFO,
     json_output: bool = False,
     name: str = "umara",
 ) -> UmaraLogger:
@@ -325,7 +323,7 @@ def clear_context() -> None:
     _session_id.set(None)
 
 
-def log_timing(logger: Optional[UmaraLogger] = None, component: str = "unknown"):
+def log_timing(logger: UmaraLogger | None = None, component: str = "unknown"):
     """
     Decorator to log function execution time.
 
@@ -338,6 +336,7 @@ def log_timing(logger: Optional[UmaraLogger] = None, component: str = "unknown")
         def fetch_data():
             ...
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -390,6 +389,7 @@ def log_timing(logger: Optional[UmaraLogger] = None, component: str = "unknown")
                 raise
 
         import asyncio
+
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         return wrapper
@@ -398,8 +398,21 @@ def log_timing(logger: Optional[UmaraLogger] = None, component: str = "unknown")
 
 
 # Convenience aliases
-debug = lambda msg, **kw: get_logger().debug(msg, **kw)
-info = lambda msg, **kw: get_logger().info(msg, **kw)
-warning = lambda msg, **kw: get_logger().warning(msg, **kw)
-error = lambda msg, **kw: get_logger().error(msg, **kw)
-critical = lambda msg, **kw: get_logger().critical(msg, **kw)
+def debug(msg, **kw):
+    return get_logger().debug(msg, **kw)
+
+
+def info(msg, **kw):
+    return get_logger().info(msg, **kw)
+
+
+def warning(msg, **kw):
+    return get_logger().warning(msg, **kw)
+
+
+def error(msg, **kw):
+    return get_logger().error(msg, **kw)
+
+
+def critical(msg, **kw):
+    return get_logger().critical(msg, **kw)

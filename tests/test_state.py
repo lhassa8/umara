@@ -3,13 +3,13 @@ Unit tests for umara.state module.
 """
 
 import pytest
+
 from umara.state import (
     SessionState,
-    set_session_state,
-    get_session_state,
-    state,
-    session_state,
     cache,
+    get_session_state,
+    set_session_state,
+    state,
 )
 
 

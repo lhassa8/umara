@@ -7,10 +7,10 @@ design tokens for colors, spacing, typography, and more.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Dict, Any, Optional
-from contextvars import ContextVar
 import copy
+from contextvars import ContextVar
+from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -103,15 +103,15 @@ class Typography:
     font_family_mono: str = "'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace"
 
     # Font sizes
-    text_xs: str = "0.75rem"    # 12px
-    text_sm: str = "0.875rem"   # 14px
-    text_base: str = "1rem"     # 16px
-    text_lg: str = "1.125rem"   # 18px
-    text_xl: str = "1.25rem"    # 20px
-    text_2xl: str = "1.5rem"    # 24px
+    text_xs: str = "0.75rem"  # 12px
+    text_sm: str = "0.875rem"  # 14px
+    text_base: str = "1rem"  # 16px
+    text_lg: str = "1.125rem"  # 18px
+    text_xl: str = "1.25rem"  # 20px
+    text_2xl: str = "1.5rem"  # 24px
     text_3xl: str = "1.875rem"  # 30px
-    text_4xl: str = "2.25rem"   # 36px
-    text_5xl: str = "3rem"      # 48px
+    text_4xl: str = "2.25rem"  # 36px
+    text_5xl: str = "3rem"  # 48px
 
     # Font weights
     font_light: int = 300
@@ -200,7 +200,7 @@ class Theme:
     shadows: Shadows = field(default_factory=Shadows)
     transitions: Transitions = field(default_factory=Transitions)
 
-    def to_css_variables(self) -> Dict[str, str]:
+    def to_css_variables(self) -> dict[str, str]:
         """Convert theme to CSS custom properties."""
         variables = {}
 
@@ -246,7 +246,7 @@ class Theme:
 
         return variables
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert theme to dictionary for JSON serialization."""
         return {
             "name": self.name,
@@ -274,59 +274,48 @@ def _create_dark_theme() -> Theme:
         primary_active="#6366f1",
         primary_light="#312e81",
         primary_dark="#c7d2fe",
-
         # Secondary colors
         secondary="#94a3b8",
         secondary_hover="#cbd5e1",
         secondary_active="#64748b",
         secondary_light="#1e293b",
         secondary_dark="#e2e8f0",
-
         # Accent
         accent="#fbbf24",
         accent_hover="#fcd34d",
         accent_active="#f59e0b",
         accent_light="#451a03",
-
         # Semantic colors
         success="#34d399",
         success_light="#064e3b",
         success_dark="#6ee7b7",
-
         warning="#fbbf24",
         warning_light="#451a03",
         warning_dark="#fcd34d",
-
         error="#f87171",
         error_light="#450a0a",
         error_dark="#fca5a5",
-
         info="#60a5fa",
         info_light="#1e3a5f",
         info_dark="#93c5fd",
-
         # Backgrounds
         background="#0f172a",
         background_secondary="#1e293b",
         background_tertiary="#334155",
-
         # Surfaces
         surface="#1e293b",
         surface_hover="#334155",
         surface_active="#475569",
-
         # Borders
         border="#334155",
         border_hover="#475569",
         border_focus="#818cf8",
-
         # Text
         text="#f8fafc",
         text_secondary="#cbd5e1",
         text_tertiary="#64748b",
         text_inverse="#0f172a",
         text_disabled="#475569",
-
         # Overlay
         overlay="rgba(0, 0, 0, 0.7)",
     )
@@ -354,35 +343,29 @@ def _create_ocean_theme() -> Theme:
         primary_active="#0369a1",
         primary_light="#e0f2fe",
         primary_dark="#075985",
-
         # Secondary - Teal
         secondary="#14b8a6",
         secondary_hover="#0d9488",
         secondary_active="#0f766e",
         secondary_light="#ccfbf1",
         secondary_dark="#115e59",
-
         # Accent - Coral
         accent="#f97316",
         accent_hover="#ea580c",
         accent_active="#c2410c",
         accent_light="#ffedd5",
-
         # Backgrounds - Subtle blue tint
         background="#f0f9ff",
         background_secondary="#e0f2fe",
         background_tertiary="#bae6fd",
-
         # Surfaces
         surface="#ffffff",
         surface_hover="#f0f9ff",
         surface_active="#e0f2fe",
-
         # Borders
         border="#bae6fd",
         border_hover="#7dd3fc",
         border_focus="#0ea5e9",
-
         # Text
         text="#0c4a6e",
         text_secondary="#0369a1",
@@ -406,35 +389,29 @@ def _create_forest_theme() -> Theme:
         primary_active="#065f46",
         primary_light="#d1fae5",
         primary_dark="#064e3b",
-
         # Secondary - Earthy brown
         secondary="#78716c",
         secondary_hover="#57534e",
         secondary_active="#44403c",
         secondary_light="#f5f5f4",
         secondary_dark="#292524",
-
         # Accent - Golden
         accent="#ca8a04",
         accent_hover="#a16207",
         accent_active="#854d0e",
         accent_light="#fef9c3",
-
         # Backgrounds - Warm cream
         background="#fefdf8",
         background_secondary="#fef9e7",
         background_tertiary="#fef3c7",
-
         # Surfaces
         surface="#ffffff",
         surface_hover="#fefdf8",
         surface_active="#fef9e7",
-
         # Borders
         border="#d6d3d1",
         border_hover="#a8a29e",
         border_focus="#059669",
-
         # Text
         text="#1c1917",
         text_secondary="#44403c",
@@ -449,7 +426,7 @@ def _create_forest_theme() -> Theme:
 
 
 # Theme registry
-BUILTIN_THEMES: Dict[str, Theme] = {
+BUILTIN_THEMES: dict[str, Theme] = {
     "light": _create_light_theme(),
     "dark": _create_dark_theme(),
     "ocean": _create_ocean_theme(),
@@ -457,7 +434,7 @@ BUILTIN_THEMES: Dict[str, Theme] = {
 }
 
 # Custom themes added by users
-_custom_themes: Dict[str, Theme] = {}
+_custom_themes: dict[str, Theme] = {}
 
 # Current theme context
 _current_theme: ContextVar[Theme] = ContextVar("current_theme", default=BUILTIN_THEMES["light"])
@@ -490,11 +467,7 @@ def get_theme() -> Theme:
     return _current_theme.get()
 
 
-def create_theme(
-    name: str,
-    base: str = "light",
-    **overrides
-) -> Theme:
+def create_theme(name: str, base: str = "light", **overrides) -> Theme:
     """
     Create a custom theme based on an existing theme.
 

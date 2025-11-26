@@ -7,23 +7,21 @@ with support for hot reload during development.
 
 from __future__ import annotations
 
-import asyncio
-import json
-import os
-import sys
 import importlib
 import importlib.util
-from pathlib import Path
-from typing import Any, Dict, Optional, Callable
+import os
+import sys
 import uuid
+from pathlib import Path
+from typing import Any
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, FileResponse
-from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
-from umara.core import UmaraApp, get_app, Session
+from umara.core import Session, UmaraApp, get_app
 from umara.frontend import get_frontend_html
 
 
@@ -42,7 +40,7 @@ def create_fastapi_app(umara_app: UmaraApp) -> FastAPI:
 
     # Get the frontend dist directory
     frontend_dist = Path(__file__).parent.parent / "umara_frontend" / "dist"
-    frontend_dev = Path(__file__).parent.parent / "umara_frontend"
+    Path(__file__).parent.parent / "umara_frontend"
 
     @app.get("/")
     async def index():
@@ -67,11 +65,13 @@ def create_fastapi_app(umara_app: UmaraApp) -> FastAPI:
         try:
             # Send initial render
             initial_data = await umara_app.render_session(session)
-            await websocket.send_json({
-                "type": "init",
-                "sessionId": session_id,
-                "data": initial_data,
-            })
+            await websocket.send_json(
+                {
+                    "type": "init",
+                    "sessionId": session_id,
+                    "data": initial_data,
+                }
+            )
 
             # Handle incoming messages
             while True:
@@ -84,11 +84,14 @@ def create_fastapi_app(umara_app: UmaraApp) -> FastAPI:
             umara_app.remove_session(session_id)
         except Exception as e:
             try:
-                await websocket.send_json({
-                    "type": "error",
-                    "error": str(e),
-                })
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "error": str(e),
+                    }
+                )
             except Exception:
+                # WebSocket connection already closed, cannot send error
                 pass
             umara_app.remove_session(session_id)
 
@@ -107,8 +110,8 @@ def create_fastapi_app(umara_app: UmaraApp) -> FastAPI:
 async def handle_message(
     umara_app: UmaraApp,
     session: Session,
-    data: Dict[str, Any],
-) -> Optional[Dict[str, Any]]:
+    data: dict[str, Any],
+) -> dict[str, Any] | None:
     """Handle incoming WebSocket messages."""
     msg_type = data.get("type")
 
@@ -1542,16 +1545,17 @@ def start_server(
 
 
 def run_with_reload(
-    script_path: str,
+    script_path_str: str,
     host: str = "127.0.0.1",
     port: int = 8501,
     debug: bool = False,
 ) -> None:
     """Run server with file watching for hot reload."""
     import subprocess
+
     from watchfiles import watch
 
-    script_path = Path(script_path).resolve()
+    script_path = Path(script_path_str).resolve()
     script_dir = script_path.parent
 
     def run_server():

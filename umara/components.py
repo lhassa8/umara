@@ -7,25 +7,25 @@ polished styling out of the box.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Union
 from contextlib import contextmanager
 from dataclasses import dataclass
+from typing import Any, Callable
 
-from umara.core import get_context, ContainerContext, Component
+from umara.core import Component, ContainerContext, get_context
 from umara.state import get_session_state
 from umara.style import Style
-
 
 # =============================================================================
 # Typography Components
 # =============================================================================
 
+
 def text(
     content: str,
     *,
-    style: Optional[Style] = None,
-    color: Optional[str] = None,
-    size: Optional[str] = None,
+    style: Style | None = None,
+    color: str | None = None,
+    size: str | None = None,
 ) -> None:
     """
     Display text content.
@@ -52,7 +52,7 @@ def header(
     content: str,
     *,
     level: int = 1,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a header.
@@ -71,7 +71,7 @@ def header(
 def subheader(
     content: str,
     *,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a subheader (h3).
@@ -89,7 +89,7 @@ def subheader(
 def markdown(
     content: str,
     *,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display markdown content.
@@ -109,7 +109,7 @@ def code(
     *,
     language: str = "python",
     line_numbers: bool = True,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display code with syntax highlighting.
@@ -134,7 +134,8 @@ def code(
 # Feedback Components
 # =============================================================================
 
-def success(message: str, *, style: Optional[Style] = None) -> None:
+
+def success(message: str, *, style: Style | None = None) -> None:
     """Display a success message."""
     ctx = get_context()
     props = {"message": message}
@@ -142,7 +143,7 @@ def success(message: str, *, style: Optional[Style] = None) -> None:
     ctx.create_component("success", props=props, style=style_dict)
 
 
-def error(message: str, *, style: Optional[Style] = None) -> None:
+def error(message: str, *, style: Style | None = None) -> None:
     """Display an error message."""
     ctx = get_context()
     props = {"message": message}
@@ -150,7 +151,7 @@ def error(message: str, *, style: Optional[Style] = None) -> None:
     ctx.create_component("error", props=props, style=style_dict)
 
 
-def warning(message: str, *, style: Optional[Style] = None) -> None:
+def warning(message: str, *, style: Style | None = None) -> None:
     """Display a warning message."""
     ctx = get_context()
     props = {"message": message}
@@ -158,7 +159,7 @@ def warning(message: str, *, style: Optional[Style] = None) -> None:
     ctx.create_component("warning", props=props, style=style_dict)
 
 
-def info(message: str, *, style: Optional[Style] = None) -> None:
+def info(message: str, *, style: Style | None = None) -> None:
     """Display an info message."""
     ctx = get_context()
     props = {"message": message}
@@ -170,12 +171,13 @@ def info(message: str, *, style: Optional[Style] = None) -> None:
 # Layout Components
 # =============================================================================
 
+
 @contextmanager
 def container(
     *,
-    padding: Optional[str] = None,
-    margin: Optional[str] = None,
-    style: Optional[Style] = None,
+    padding: str | None = None,
+    margin: str | None = None,
+    style: Style | None = None,
 ):
     """
     Create a container for grouping elements.
@@ -202,7 +204,7 @@ def columns(
     count: int = 2,
     *,
     gap: str = "16px",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ):
     """
     Create a column layout.
@@ -221,7 +223,7 @@ def columns(
 
 
 @contextmanager
-def column(*, style: Optional[Style] = None):
+def column(*, style: Style | None = None):
     """Create a single column within a columns layout."""
     ctx = get_context()
     style_dict = style.to_dict() if style else None
@@ -232,11 +234,11 @@ def column(*, style: Optional[Style] = None):
 
 @contextmanager
 def grid(
-    columns: Union[int, str] = 3,
+    columns: int | str = 3,
     *,
     gap: str = "16px",
-    row_gap: Optional[str] = None,
-    style: Optional[Style] = None,
+    row_gap: str | None = None,
+    style: Style | None = None,
 ):
     """
     Create a CSS grid layout.
@@ -262,11 +264,11 @@ def grid(
 @contextmanager
 def card(
     *,
-    title: Optional[str] = None,
-    subtitle: Optional[str] = None,
+    title: str | None = None,
+    subtitle: str | None = None,
     padding: str = "24px",
     shadow: str = "md",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ):
     """
     Create a card component with beautiful default styling.
@@ -315,11 +317,11 @@ class TabContext:
 
 @contextmanager
 def tabs(
-    tab_names: List[str],
+    tab_names: list[str],
     *,
     default: int = 0,
-    key: Optional[str] = None,
-    style: Optional[Style] = None,
+    key: str | None = None,
+    style: Style | None = None,
 ):
     """
     Create a tabbed interface.
@@ -382,7 +384,7 @@ def tab(index: int):
         yield
 
 
-def divider(*, style: Optional[Style] = None) -> None:
+def divider(*, style: Style | None = None) -> None:
     """Create a horizontal divider."""
     ctx = get_context()
     style_dict = style.to_dict() if style else None
@@ -399,15 +401,16 @@ def spacer(height: str = "24px") -> None:
 # Widget Components
 # =============================================================================
 
+
 def button(
     label: str,
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     variant: str = "primary",
     disabled: bool = False,
     full_width: bool = False,
-    icon: Optional[str] = None,
-    style: Optional[Style] = None,
+    icon: str | None = None,
+    style: Style | None = None,
 ) -> bool:
     """
     Create a button.
@@ -429,7 +432,7 @@ def button(
 
     # Generate state key
     state_key = key or f"_btn_{label}"
-    was_clicked = state.get(f"{state_key}_clicked", False)
+    was_clicked = bool(state.get(f"{state_key}_clicked", False))
 
     # Reset click state
     if was_clicked:
@@ -447,7 +450,7 @@ def button(
     if full_width:
         style_dict["width"] = "100%"
 
-    component = ctx.create_component(
+    ctx.create_component(
         "button",
         props=props,
         style=style_dict or None,
@@ -460,12 +463,12 @@ def button(
 def input(
     label: str = "",
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     value: str = "",
     placeholder: str = "",
     type: str = "text",
     disabled: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> str:
     """
     Create a text input.
@@ -505,12 +508,12 @@ def input(
 def text_area(
     label: str = "",
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     value: str = "",
     placeholder: str = "",
     rows: int = 4,
     disabled: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> str:
     """
     Create a text area for multi-line input.
@@ -551,12 +554,12 @@ def slider(
     label: str = "",
     min_value: float = 0,
     max_value: float = 100,
-    value: Optional[float] = None,
+    value: float | None = None,
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     step: float = 1,
     disabled: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> float:
     """
     Create a range slider.
@@ -598,14 +601,14 @@ def slider(
 
 def select(
     label: str = "",
-    options: List[Union[str, Dict[str, str]]] = None,
+    options: list[str | dict[str, str]] | None = None,
     *,
-    key: Optional[str] = None,
-    default: Optional[str] = None,
+    key: str | None = None,
+    default: str | None = None,
     placeholder: str = "Select an option...",
     disabled: bool = False,
-    style: Optional[Style] = None,
-) -> Optional[str]:
+    style: Style | None = None,
+) -> str | None:
     """
     Create a dropdown select.
 
@@ -644,14 +647,14 @@ def select(
 
 def multiselect(
     label: str = "",
-    options: List[Union[str, Dict[str, str]]] = None,
+    options: list[str | dict[str, str]] | None = None,
     *,
-    key: Optional[str] = None,
-    default: Optional[List[str]] = None,
+    key: str | None = None,
+    default: list[str] | None = None,
     placeholder: str = "Select options...",
     disabled: bool = False,
-    style: Optional[Style] = None,
-) -> List[str]:
+    style: Style | None = None,
+) -> list[str]:
     """
     Create a multi-select dropdown.
 
@@ -693,10 +696,10 @@ def multiselect(
 def checkbox(
     label: str,
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     value: bool = False,
     disabled: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> bool:
     """
     Create a checkbox.
@@ -732,10 +735,10 @@ def checkbox(
 def toggle(
     label: str,
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     value: bool = False,
     disabled: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> bool:
     """
     Create a toggle switch.
@@ -770,14 +773,14 @@ def toggle(
 
 def radio(
     label: str,
-    options: List[str],
+    options: list[str],
     *,
-    key: Optional[str] = None,
-    default: Optional[str] = None,
+    key: str | None = None,
+    default: str | None = None,
     horizontal: bool = False,
     disabled: bool = False,
-    style: Optional[Style] = None,
-) -> Optional[str]:
+    style: Style | None = None,
+) -> str | None:
     """
     Create radio buttons.
 
@@ -816,13 +819,13 @@ def radio(
 def date_input(
     label: str = "",
     *,
-    key: Optional[str] = None,
-    value: Optional[str] = None,
-    min_date: Optional[str] = None,
-    max_date: Optional[str] = None,
+    key: str | None = None,
+    value: str | None = None,
+    min_date: str | None = None,
+    max_date: str | None = None,
     disabled: bool = False,
-    style: Optional[Style] = None,
-) -> Optional[str]:
+    style: Style | None = None,
+) -> str | None:
     """
     Create a date input.
 
@@ -861,11 +864,11 @@ def date_input(
 def time_input(
     label: str = "",
     *,
-    key: Optional[str] = None,
-    value: Optional[str] = None,
+    key: str | None = None,
+    value: str | None = None,
     disabled: bool = False,
-    style: Optional[Style] = None,
-) -> Optional[str]:
+    style: Style | None = None,
+) -> str | None:
     """
     Create a time input.
 
@@ -900,12 +903,12 @@ def time_input(
 def file_uploader(
     label: str = "",
     *,
-    key: Optional[str] = None,
-    accept: Optional[List[str]] = None,
+    key: str | None = None,
+    accept: list[str] | None = None,
     multiple: bool = False,
     disabled: bool = False,
-    style: Optional[Style] = None,
-) -> Optional[Any]:
+    style: Style | None = None,
+) -> Any | None:
     """
     Create a file uploader.
 
@@ -942,10 +945,10 @@ def file_uploader(
 def color_picker(
     label: str = "",
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     value: str = "#6366f1",
     disabled: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> str:
     """
     Create a color picker.
@@ -982,12 +985,13 @@ def color_picker(
 # Data Display Components
 # =============================================================================
 
+
 def dataframe(
     data: Any,
     *,
-    columns: Optional[List[str]] = None,
-    height: Optional[str] = None,
-    style: Optional[Style] = None,
+    columns: list[str] | None = None,
+    height: str | None = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a dataframe or table data.
@@ -1024,8 +1028,8 @@ def dataframe(
 def table(
     data: Any,
     *,
-    columns: Optional[List[str]] = None,
-    style: Optional[Style] = None,
+    columns: list[str] | None = None,
+    style: Style | None = None,
 ) -> None:
     """Alias for dataframe."""
     dataframe(data, columns=columns, style=style)
@@ -1035,9 +1039,9 @@ def metric(
     label: str,
     value: Any,
     *,
-    delta: Optional[float] = None,
+    delta: float | None = None,
     delta_label: str = "",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a metric with optional delta.
@@ -1063,8 +1067,8 @@ def metric(
 def progress(
     value: float,
     *,
-    label: Optional[str] = None,
-    style: Optional[Style] = None,
+    label: str | None = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a progress bar.
@@ -1101,14 +1105,15 @@ def spinner(text: str = "Loading..."):
 # Media Components
 # =============================================================================
 
+
 def image(
     src: str,
     *,
     alt: str = "",
-    width: Optional[str] = None,
-    height: Optional[str] = None,
-    caption: Optional[str] = None,
-    style: Optional[Style] = None,
+    width: str | None = None,
+    height: str | None = None,
+    caption: str | None = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display an image.
@@ -1140,9 +1145,9 @@ def video(
     controls: bool = True,
     loop: bool = False,
     muted: bool = False,
-    width: Optional[str] = None,
-    height: Optional[str] = None,
-    style: Optional[Style] = None,
+    width: str | None = None,
+    height: str | None = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a video.
@@ -1177,7 +1182,7 @@ def audio(
     autoplay: bool = False,
     controls: bool = True,
     loop: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display an audio player.
@@ -1204,25 +1209,27 @@ def audio(
 # Chat/Conversation Components
 # =============================================================================
 
+
 @dataclass
 class ChatMessage:
     """Represents a chat message."""
+
     role: str  # 'user', 'assistant', 'system'
     content: str
-    avatar: Optional[str] = None
-    timestamp: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    avatar: str | None = None
+    timestamp: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 def chat_message(
     content: str,
     *,
     role: str = "assistant",
-    avatar: Optional[str] = None,
-    name: Optional[str] = None,
-    timestamp: Optional[str] = None,
+    avatar: str | None = None,
+    name: str | None = None,
+    timestamp: str | None = None,
     is_streaming: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a single chat message.
@@ -1252,11 +1259,11 @@ def chat_message(
 def chat_input(
     placeholder: str = "Type a message...",
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     disabled: bool = False,
-    max_length: Optional[int] = None,
-    style: Optional[Style] = None,
-) -> Optional[str]:
+    max_length: int | None = None,
+    style: Style | None = None,
+) -> str | None:
     """
     Display a chat input field. Returns the submitted message.
 
@@ -1296,8 +1303,8 @@ def chat_input(
 def chat_container(
     *,
     height: str = "500px",
-    key: Optional[str] = None,
-    style: Optional[Style] = None,
+    key: str | None = None,
+    style: Style | None = None,
 ):
     """
     Create a scrollable chat container for messages.
@@ -1319,17 +1326,17 @@ def chat_container(
 
 
 def chat(
-    messages: List[Dict[str, Any]],
+    messages: list[dict[str, Any]],
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     height: str = "500px",
     show_input: bool = True,
     input_placeholder: str = "Type a message...",
-    on_submit: Optional[Callable[[str], None]] = None,
-    user_avatar: Optional[str] = None,
-    assistant_avatar: Optional[str] = None,
-    style: Optional[Style] = None,
-) -> Optional[str]:
+    on_submit: Callable[[str], None] | None = None,
+    user_avatar: str | None = None,
+    assistant_avatar: str | None = None,
+    style: Style | None = None,
+) -> str | None:
     """
     Display a complete chat interface with message history and input.
 
@@ -1390,12 +1397,13 @@ def chat(
 # Navigation Components
 # =============================================================================
 
+
 @contextmanager
 def sidebar(
     *,
     width: str = "280px",
     collapsed: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ):
     """
     Create a sidebar navigation panel.
@@ -1419,11 +1427,11 @@ def sidebar(
 def nav_link(
     label: str,
     *,
-    href: Optional[str] = None,
-    icon: Optional[str] = None,
+    href: str | None = None,
+    icon: str | None = None,
     active: bool = False,
-    key: Optional[str] = None,
-    style: Optional[Style] = None,
+    key: str | None = None,
+    style: Style | None = None,
 ) -> bool:
     """
     Create a navigation link.
@@ -1443,7 +1451,7 @@ def nav_link(
     state = get_session_state()
 
     state_key = key or f"_nav_{label}"
-    was_clicked = state.get(f"{state_key}_clicked", False)
+    was_clicked = bool(state.get(f"{state_key}_clicked", False))
     if was_clicked:
         state.update(**{f"{state_key}_clicked": False})
 
@@ -1461,10 +1469,10 @@ def nav_link(
 
 
 def breadcrumbs(
-    items: List[Dict[str, str]],
+    items: list[dict[str, str]],
     *,
     separator: str = "/",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display breadcrumb navigation.
@@ -1487,8 +1495,8 @@ def pagination(
     total_pages: int,
     *,
     current_page: int = 1,
-    key: Optional[str] = None,
-    style: Optional[Style] = None,
+    key: str | None = None,
+    style: Style | None = None,
 ) -> int:
     """
     Display pagination controls.
@@ -1523,14 +1531,15 @@ def pagination(
 # Container Components
 # =============================================================================
 
+
 @contextmanager
 def expander(
     title: str,
     *,
     expanded: bool = False,
-    key: Optional[str] = None,
-    icon: Optional[str] = None,
-    style: Optional[Style] = None,
+    key: str | None = None,
+    icon: str | None = None,
+    style: Style | None = None,
 ):
     """
     Create an expandable/collapsible section.
@@ -1562,11 +1571,11 @@ def expander(
 
 @contextmanager
 def accordion(
-    items: List[str],
+    items: list[str],
     *,
     allow_multiple: bool = False,
-    key: Optional[str] = None,
-    style: Optional[Style] = None,
+    key: str | None = None,
+    style: Style | None = None,
 ):
     """
     Create an accordion with multiple collapsible sections.
@@ -1581,7 +1590,7 @@ def accordion(
     state = get_session_state()
 
     state_key = key or "_accordion"
-    open_items = state.setdefault(state_key, [])
+    open_items: list[str] = state.setdefault(state_key, [])
 
     props = {
         "items": items,
@@ -1600,10 +1609,10 @@ def modal(
     title: str,
     *,
     is_open: bool = False,
-    key: Optional[str] = None,
+    key: str | None = None,
     size: str = "md",
     close_on_overlay: bool = True,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ):
     """
     Create a modal dialog.
@@ -1652,8 +1661,8 @@ def popover(
     trigger_label: str,
     *,
     position: str = "bottom",
-    key: Optional[str] = None,
-    style: Optional[Style] = None,
+    key: str | None = None,
+    style: Style | None = None,
 ):
     """
     Create a popover that appears on click.
@@ -1681,7 +1690,7 @@ def tooltip(
     *,
     text: str,
     position: str = "top",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display text with a tooltip on hover.
@@ -1706,16 +1715,17 @@ def tooltip(
 # Additional Input Components
 # =============================================================================
 
+
 def number_input(
     label: str = "",
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     value: float = 0,
-    min_value: Optional[float] = None,
-    max_value: Optional[float] = None,
+    min_value: float | None = None,
+    max_value: float | None = None,
     step: float = 1,
     disabled: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> float:
     """
     Create a number input with increment/decrement buttons.
@@ -1757,10 +1767,10 @@ def number_input(
 def search_input(
     placeholder: str = "Search...",
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     value: str = "",
     debounce: int = 300,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> str:
     """
     Create a search input with icon and debounced updates.
@@ -1796,11 +1806,11 @@ def search_input(
 def rating(
     label: str = "",
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     value: int = 0,
     max_value: int = 5,
     disabled: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> int:
     """
     Create a star rating input.
@@ -1838,13 +1848,13 @@ def rating(
 def tag_input(
     label: str = "",
     *,
-    key: Optional[str] = None,
-    value: Optional[List[str]] = None,
+    key: str | None = None,
+    value: list[str] | None = None,
     placeholder: str = "Add tag...",
-    max_tags: Optional[int] = None,
-    suggestions: Optional[List[str]] = None,
-    style: Optional[Style] = None,
-) -> List[str]:
+    max_tags: int | None = None,
+    suggestions: list[str] | None = None,
+    style: Style | None = None,
+) -> list[str]:
     """
     Create a tag/chip input.
 
@@ -1884,12 +1894,13 @@ def tag_input(
 # Display Components
 # =============================================================================
 
+
 def badge(
     text: str,
     *,
     variant: str = "default",
     size: str = "md",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a badge/chip.
@@ -1911,11 +1922,11 @@ def badge(
 
 
 def avatar(
-    src: Optional[str] = None,
+    src: str | None = None,
     *,
-    name: Optional[str] = None,
+    name: str | None = None,
     size: str = "md",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display an avatar.
@@ -1937,11 +1948,11 @@ def avatar(
 
 
 def avatar_group(
-    avatars: List[Dict[str, str]],
+    avatars: list[dict[str, str]],
     *,
     max_display: int = 4,
     size: str = "md",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a group of overlapping avatars.
@@ -1966,11 +1977,11 @@ def stat_card(
     title: str,
     value: str,
     *,
-    description: Optional[str] = None,
-    icon: Optional[str] = None,
-    trend: Optional[float] = None,
-    trend_label: Optional[str] = None,
-    style: Optional[Style] = None,
+    description: str | None = None,
+    icon: str | None = None,
+    trend: float | None = None,
+    trend_label: str | None = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a statistic card with icon and trend.
@@ -2000,11 +2011,11 @@ def stat_card(
 def empty_state(
     title: str,
     *,
-    description: Optional[str] = None,
-    icon: Optional[str] = None,
-    action_label: Optional[str] = None,
-    key: Optional[str] = None,
-    style: Optional[Style] = None,
+    description: str | None = None,
+    icon: str | None = None,
+    action_label: str | None = None,
+    key: str | None = None,
+    style: Style | None = None,
 ) -> bool:
     """
     Display an empty state placeholder.
@@ -2024,7 +2035,7 @@ def empty_state(
     state = get_session_state()
 
     state_key = key or f"_empty_{title}"
-    was_clicked = state.get(f"{state_key}_clicked", False)
+    was_clicked = bool(state.get(f"{state_key}_clicked", False))
     if was_clicked:
         state.update(**{f"{state_key}_clicked": False})
 
@@ -2045,8 +2056,8 @@ def loading_skeleton(
     *,
     variant: str = "text",
     lines: int = 3,
-    height: Optional[str] = None,
-    style: Optional[Style] = None,
+    height: str | None = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a loading skeleton placeholder.
@@ -2068,9 +2079,9 @@ def loading_skeleton(
 
 
 def timeline(
-    items: List[Dict[str, Any]],
+    items: list[dict[str, Any]],
     *,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a timeline of events.
@@ -2088,12 +2099,12 @@ def timeline(
 
 
 def steps(
-    items: List[str],
+    items: list[str],
     *,
     current: int = 0,
-    key: Optional[str] = None,
+    key: str | None = None,
     clickable: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> int:
     """
     Display a step indicator/wizard.
@@ -2130,15 +2141,16 @@ def steps(
 # Chart Components (Simple built-in charts)
 # =============================================================================
 
+
 def line_chart(
-    data: List[Dict[str, Any]],
+    data: list[dict[str, Any]],
     *,
     x: str,
-    y: Union[str, List[str]],
-    title: Optional[str] = None,
+    y: str | list[str],
+    title: str | None = None,
     height: str = "300px",
-    colors: Optional[List[str]] = None,
-    style: Optional[Style] = None,
+    colors: list[str] | None = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a line chart.
@@ -2167,16 +2179,16 @@ def line_chart(
 
 
 def bar_chart(
-    data: List[Dict[str, Any]],
+    data: list[dict[str, Any]],
     *,
     x: str,
-    y: Union[str, List[str]],
-    title: Optional[str] = None,
+    y: str | list[str],
+    title: str | None = None,
     height: str = "300px",
-    colors: Optional[List[str]] = None,
+    colors: list[str] | None = None,
     horizontal: bool = False,
     stacked: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a bar chart.
@@ -2209,15 +2221,15 @@ def bar_chart(
 
 
 def area_chart(
-    data: List[Dict[str, Any]],
+    data: list[dict[str, Any]],
     *,
     x: str,
-    y: Union[str, List[str]],
-    title: Optional[str] = None,
+    y: str | list[str],
+    title: str | None = None,
     height: str = "300px",
-    colors: Optional[List[str]] = None,
+    colors: list[str] | None = None,
     stacked: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display an area chart.
@@ -2248,15 +2260,15 @@ def area_chart(
 
 
 def pie_chart(
-    data: List[Dict[str, Any]],
+    data: list[dict[str, Any]],
     *,
     label: str,
     value: str,
-    title: Optional[str] = None,
+    title: str | None = None,
     height: str = "300px",
-    colors: Optional[List[str]] = None,
+    colors: list[str] | None = None,
     donut: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a pie/donut chart.
@@ -2290,12 +2302,13 @@ def pie_chart(
 # Utility Components
 # =============================================================================
 
+
 def copy_button(
     text: str,
     *,
     label: str = "Copy",
     success_label: str = "Copied!",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a button that copies text to clipboard.
@@ -2321,7 +2334,7 @@ def json_viewer(
     *,
     expanded: bool = True,
     max_depth: int = 3,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display JSON data in a collapsible tree view.
@@ -2345,7 +2358,7 @@ def json_viewer(
 def html(
     content: str,
     *,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Render raw HTML content.
@@ -2370,7 +2383,7 @@ def iframe(
     height: str = "400px",
     width: str = "100%",
     title: str = "Embedded content",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Embed an iframe.
@@ -2397,6 +2410,7 @@ def iframe(
 # Smart Write Function (like st.write)
 # =============================================================================
 
+
 def write(*args, **kwargs) -> None:
     """
     Write arguments to the app. Handles multiple types intelligently.
@@ -2408,15 +2422,15 @@ def write(*args, **kwargs) -> None:
         *args: Arguments to write (strings, dicts, dataframes, etc.)
         **kwargs: Additional options (unsafe_allow_html, etc.)
     """
-    ctx = get_context()
-    unsafe_html = kwargs.get('unsafe_allow_html', False)
+    get_context()
+    kwargs.get("unsafe_allow_html", False)
 
     for arg in args:
         if arg is None:
             continue
         elif isinstance(arg, str):
             # Check if it looks like markdown
-            if any(c in arg for c in ['#', '*', '`', '[', '>']):
+            if any(c in arg for c in ["#", "*", "`", "[", ">"]):
                 markdown(arg)
             else:
                 text(arg)
@@ -2430,10 +2444,10 @@ def write(*args, **kwargs) -> None:
                 dataframe(arg)
             else:
                 json_viewer(list(arg))
-        elif hasattr(arg, 'to_dict'):
+        elif hasattr(arg, "to_dict"):
             # Pandas DataFrame or similar
             dataframe(arg)
-        elif hasattr(arg, '__html__'):
+        elif hasattr(arg, "__html__"):
             html(arg.__html__())
         else:
             text(str(arg))
@@ -2443,11 +2457,12 @@ def write(*args, **kwargs) -> None:
 # Additional Text Components
 # =============================================================================
 
+
 def title(
     content: str,
     *,
-    anchor: Optional[str] = None,
-    style: Optional[Style] = None,
+    anchor: str | None = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a title (largest heading).
@@ -2471,7 +2486,7 @@ def caption(
     content: str,
     *,
     unsafe_allow_html: bool = False,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display small caption text.
@@ -2494,7 +2509,7 @@ def caption(
 def latex(
     content: str,
     *,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display mathematical expressions using LaTeX notation.
@@ -2537,13 +2552,11 @@ def echo(code_location: str = "above"):
         def __exit__(self, *args):
             # Get the source code of the with block
             try:
-                import linecache
-                filename = self.frame.f_code.co_filename
                 lineno = self.frame.f_lineno
-                lines = []
                 # This is a simplified version - real implementation would parse AST
                 code(f"# Code executed at line {lineno}", language="python")
-            except Exception:
+            except (AttributeError, TypeError):
+                # Frame may not be available in all contexts
                 pass
 
     return EchoContext(code_location)
@@ -2553,16 +2566,17 @@ def echo(code_location: str = "above"):
 # Additional Button Variants
 # =============================================================================
 
+
 def download_button(
     label: str,
-    data: Union[str, bytes],
+    data: str | bytes,
     *,
     file_name: str = "download.txt",
     mime: str = "text/plain",
-    key: Optional[str] = None,
+    key: str | None = None,
     disabled: bool = False,
     variant: str = "secondary",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> bool:
     """
     Display a download button.
@@ -2586,7 +2600,8 @@ def download_button(
     # Convert data to base64 if bytes
     if isinstance(data, bytes):
         import base64
-        data_str = base64.b64encode(data).decode('utf-8')
+
+        data_str = base64.b64encode(data).decode("utf-8")
         is_binary = True
     else:
         data_str = data
@@ -2606,7 +2621,7 @@ def download_button(
     ctx.create_component("download_button", key=component_key, props=props, style=style_dict)
 
     state = get_session_state()
-    return state.get(component_key, False)
+    return bool(state.get(component_key, False))
 
 
 def link_button(
@@ -2615,7 +2630,7 @@ def link_button(
     *,
     disabled: bool = False,
     variant: str = "secondary",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a button that links to a URL.
@@ -2642,13 +2657,14 @@ def link_button(
 # Form Components
 # =============================================================================
 
+
 @contextmanager
 def form(
     key: str,
     *,
     clear_on_submit: bool = False,
     border: bool = True,
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ):
     """
     Create a form that batches input widgets.
@@ -2684,7 +2700,7 @@ def form_submit_button(
     *,
     disabled: bool = False,
     variant: str = "primary",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> bool:
     """
     Display a form submit button. Only works inside a form context.
@@ -2710,17 +2726,18 @@ def form_submit_button(
 
     state = get_session_state()
     # Check if form was submitted
-    return state.get("_form_submitted", False)
+    return bool(state.get("_form_submitted", False))
 
 
 # =============================================================================
 # Toast Notifications
 # =============================================================================
 
+
 def toast(
     message: str,
     *,
-    icon: Optional[str] = None,
+    icon: str | None = None,
     duration: int = 4000,
 ) -> None:
     """
@@ -2744,13 +2761,14 @@ def toast(
 # Status Components
 # =============================================================================
 
+
 @contextmanager
 def status(
     label: str,
     *,
     expanded: bool = True,
     state: str = "running",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ):
     """
     Display a status container with expandable details.
@@ -2775,7 +2793,9 @@ def status(
             self.label = label
             self.state = state
 
-        def update(self, label: Optional[str] = None, state: Optional[str] = None, expanded: Optional[bool] = None):
+        def update(
+            self, label: str | None = None, state: str | None = None, expanded: bool | None = None
+        ):
             if label:
                 self.label = label
             if state:
@@ -2807,7 +2827,7 @@ def exception(e: Exception) -> None:
     props = {
         "exception_type": type(e).__name__,
         "message": str(e),
-        "traceback": ''.join(tb),
+        "traceback": "".join(tb),
     }
     ctx.create_component("exception", props=props)
 
@@ -2816,15 +2836,16 @@ def exception(e: Exception) -> None:
 # Additional Input Widgets
 # =============================================================================
 
+
 def select_slider(
     label: str,
-    options: List[Any],
+    options: list[Any],
     *,
-    value: Optional[Any] = None,
-    key: Optional[str] = None,
+    value: Any | None = None,
+    key: str | None = None,
     disabled: bool = False,
     label_visibility: str = "visible",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> Any:
     """
     Display a slider that selects from a list of options.
@@ -2863,14 +2884,14 @@ def select_slider(
 
 def pills(
     label: str,
-    options: List[str],
+    options: list[str],
     *,
     selection_mode: str = "single",
-    default: Optional[Union[str, List[str]]] = None,
-    key: Optional[str] = None,
+    default: str | list[str] | None = None,
+    key: str | None = None,
     disabled: bool = False,
-    style: Optional[Style] = None,
-) -> Union[str, List[str], None]:
+    style: Style | None = None,
+) -> str | list[str] | None:
     """
     Display pill-shaped selection buttons.
 
@@ -2901,16 +2922,22 @@ def pills(
     ctx.create_component("pills", key=component_key, props=props, style=style_dict)
 
     state = get_session_state()
-    return state.get(component_key, default)
+    result = state.get(component_key, default)
+    # Cast to expected return type
+    if isinstance(result, str):
+        return result
+    if isinstance(result, list):
+        return result
+    return None
 
 
 def feedback(
-    sentiment_mapping: Optional[Dict[str, str]] = None,
+    sentiment_mapping: dict[int, str] | None = None,
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     disabled: bool = False,
-    style: Optional[Style] = None,
-) -> Optional[int]:
+    style: Style | None = None,
+) -> int | None:
     """
     Display a feedback widget (thumbs up/down or star rating).
 
@@ -2926,11 +2953,14 @@ def feedback(
     ctx = get_context()
     component_key = key or f"feedback_{id(sentiment_mapping)}"
 
+    actual_mapping: dict[int, str]
     if sentiment_mapping is None:
-        sentiment_mapping = {0: "Thumbs down", 1: "Thumbs up"}
+        actual_mapping = {0: "Thumbs down", 1: "Thumbs up"}
+    else:
+        actual_mapping = sentiment_mapping
 
     props = {
-        "sentiment_mapping": sentiment_mapping,
+        "sentiment_mapping": actual_mapping,
         "disabled": disabled,
     }
 
@@ -2943,13 +2973,13 @@ def feedback(
 
 def segmented_control(
     label: str,
-    options: List[str],
+    options: list[str],
     *,
-    default: Optional[str] = None,
-    key: Optional[str] = None,
+    default: str | None = None,
+    key: str | None = None,
     disabled: bool = False,
-    style: Optional[Style] = None,
-) -> str:
+    style: Style | None = None,
+) -> str | None:
     """
     Display a segmented control (button group for single selection).
 
@@ -2986,11 +3016,11 @@ def segmented_control(
 def camera_input(
     label: str,
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     disabled: bool = False,
     label_visibility: str = "visible",
-    style: Optional[Style] = None,
-) -> Optional[bytes]:
+    style: Style | None = None,
+) -> bytes | None:
     """
     Display a camera input widget for taking photos.
 
@@ -3023,10 +3053,10 @@ def camera_input(
 def audio_input(
     label: str,
     *,
-    key: Optional[str] = None,
+    key: str | None = None,
     disabled: bool = False,
-    style: Optional[Style] = None,
-) -> Optional[bytes]:
+    style: Style | None = None,
+) -> bytes | None:
     """
     Display an audio recording input.
 
@@ -3058,16 +3088,17 @@ def audio_input(
 # Additional Chart Components
 # =============================================================================
 
+
 def scatter_chart(
-    data: Union[List[Dict], Any],
+    data: list[dict] | Any,
     *,
-    x: Optional[str] = None,
-    y: Optional[str] = None,
-    color: Optional[str] = None,
-    size: Optional[str] = None,
-    title: Optional[str] = None,
+    x: str | None = None,
+    y: str | None = None,
+    color: str | None = None,
+    size: str | None = None,
+    title: str | None = None,
     height: str = "300px",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a scatter chart.
@@ -3084,8 +3115,8 @@ def scatter_chart(
     """
     ctx = get_context()
 
-    if hasattr(data, 'to_dict'):
-        data = data.to_dict('records')
+    if hasattr(data, "to_dict"):
+        data = data.to_dict("records")
 
     props = {
         "data": data,
@@ -3103,13 +3134,13 @@ def scatter_chart(
 
 
 def map(
-    data: Optional[Union[List[Dict], Any]] = None,
+    data: list[dict] | Any | None = None,
     *,
     latitude: str = "lat",
     longitude: str = "lon",
     zoom: int = 10,
     height: str = "400px",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display a map with optional data points.
@@ -3124,8 +3155,8 @@ def map(
     """
     ctx = get_context()
 
-    if data is not None and hasattr(data, 'to_dict'):
-        data = data.to_dict('records')
+    if data is not None and hasattr(data, "to_dict"):
+        data = data.to_dict("records")
 
     props = {
         "data": data,
@@ -3143,17 +3174,18 @@ def map(
 # Data Editor
 # =============================================================================
 
+
 def data_editor(
-    data: Union[List[Dict], Any],
+    data: list[dict] | Any,
     *,
     num_rows: str = "fixed",
-    disabled: Union[bool, List[str]] = False,
-    column_config: Optional[Dict] = None,
+    disabled: bool | list[str] = False,
+    column_config: dict | None = None,
     hide_index: bool = True,
-    key: Optional[str] = None,
-    height: Optional[str] = None,
-    style: Optional[Style] = None,
-) -> Union[List[Dict], Any]:
+    key: str | None = None,
+    height: str | None = None,
+    style: Style | None = None,
+) -> list[dict] | Any:
     """
     Display an editable dataframe.
 
@@ -3173,9 +3205,9 @@ def data_editor(
     ctx = get_context()
     component_key = key or f"data_editor_{id(data)}"
 
-    is_dataframe = hasattr(data, 'to_dict')
+    is_dataframe = hasattr(data, "to_dict") and callable(getattr(data, "to_dict"))
     if is_dataframe:
-        data_list = data.to_dict('records')
+        data_list = data.to_dict("records")  # type: ignore[union-attr]
     else:
         data_list = data
 
@@ -3198,6 +3230,7 @@ def data_editor(
     if is_dataframe and edited_data:
         try:
             import pandas as pd
+
             return pd.DataFrame(edited_data)
         except ImportError:
             return edited_data
@@ -3209,12 +3242,13 @@ def data_editor(
 # Dialog (Improved Modal)
 # =============================================================================
 
+
 @contextmanager
 def dialog(
     title: str,
     *,
     width: str = "medium",
-    style: Optional[Style] = None,
+    style: Style | None = None,
 ):
     """
     Create a dialog/modal window.
@@ -3249,12 +3283,13 @@ def dialog(
 # Page Configuration
 # =============================================================================
 
+
 def set_page_config(
-    page_title: Optional[str] = None,
-    page_icon: Optional[str] = None,
+    page_title: str | None = None,
+    page_icon: str | None = None,
     layout: str = "centered",
     initial_sidebar_state: str = "auto",
-    menu_items: Optional[Dict[str, str]] = None,
+    menu_items: dict[str, str] | None = None,
 ) -> None:
     """
     Configure the page. Must be called before any other Umara commands.
@@ -3267,6 +3302,7 @@ def set_page_config(
         menu_items: Custom menu items dict
     """
     from umara.core import get_app
+
     app = get_app()
 
     if page_title:
@@ -3284,6 +3320,7 @@ def set_page_config(
 # Execution Flow
 # =============================================================================
 
+
 def rerun() -> None:
     """
     Rerun the app from the top.
@@ -3291,6 +3328,7 @@ def rerun() -> None:
     Raises a special exception to trigger a rerun.
     """
     from umara.core import RerunException
+
     raise RerunException()
 
 
@@ -3301,6 +3339,7 @@ def stop() -> None:
     Raises a special exception to stop execution.
     """
     from umara.core import StopException
+
     raise StopException()
 
 
@@ -3308,12 +3347,13 @@ def stop() -> None:
 # Logo Component
 # =============================================================================
 
+
 def logo(
     image: str,
     *,
-    link: Optional[str] = None,
-    icon_image: Optional[str] = None,
-    style: Optional[Style] = None,
+    link: str | None = None,
+    icon_image: str | None = None,
+    style: Style | None = None,
 ) -> None:
     """
     Display an app logo in the sidebar.
