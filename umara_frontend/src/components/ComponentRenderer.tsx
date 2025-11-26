@@ -129,6 +129,7 @@ export function ComponentRenderer({
     case 'input':
       return (
         <Input
+          id={id}
           label={props.label as string}
           value={(props.value ?? '') as string}
           placeholder={props.placeholder as string}
@@ -142,6 +143,7 @@ export function ComponentRenderer({
     case 'textarea':
       return (
         <TextArea
+          id={id}
           label={props.label as string}
           value={(props.value ?? '') as string}
           placeholder={props.placeholder as string}

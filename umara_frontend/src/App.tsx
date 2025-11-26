@@ -11,6 +11,9 @@ interface AppState {
   error: string | null
 }
 
+// Track the focused element to restore focus after re-renders
+let focusedElementId: string | null = null
+
 export interface ComponentTree {
   id: string
   type: string
@@ -56,6 +59,12 @@ function App() {
 
     if (message.type === 'init' || message.type === 'update') {
       if (message.data) {
+        // Capture focused element before update
+        const activeEl = document.activeElement as HTMLElement
+        if (activeEl && activeEl.id) {
+          focusedElementId = activeEl.id
+        }
+
         setAppState(prev => ({
           ...prev,
           tree: message.data!.tree,
@@ -81,6 +90,25 @@ function App() {
   useEffect(() => {
     setAppState(prev => ({ ...prev, connected }))
   }, [connected])
+
+  // Restore focus after tree updates
+  useEffect(() => {
+    if (focusedElementId && appState.tree) {
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        const element = document.getElementById(focusedElementId!)
+        if (element && element !== document.activeElement) {
+          element.focus()
+          // For input elements, restore cursor position to end
+          if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+            const len = element.value.length
+            element.setSelectionRange(len, len)
+          }
+        }
+        focusedElementId = null
+      })
+    }
+  }, [appState.tree])
 
   const handleEvent = useCallback((componentId: string, eventType: string, payload: Record<string, unknown> = {}) => {
     sendMessage({

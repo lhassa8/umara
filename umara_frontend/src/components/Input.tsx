@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 
 interface InputProps {
+  id?: string
   label?: string
   value: string
   placeholder?: string
@@ -12,6 +13,7 @@ interface InputProps {
 }
 
 export function Input({
+  id,
   label,
   value,
   placeholder,
@@ -36,6 +38,7 @@ export function Input({
       )}
       <div className="relative">
         <input
+          id={id}
           type={type}
           value={value}
           placeholder={placeholder}
@@ -70,6 +73,7 @@ export function Input({
 }
 
 interface TextAreaProps {
+  id?: string
   label?: string
   value: string
   placeholder?: string
@@ -80,6 +84,7 @@ interface TextAreaProps {
 }
 
 export function TextArea({
+  id,
   label,
   value,
   placeholder,
@@ -103,6 +108,7 @@ export function TextArea({
         </label>
       )}
       <textarea
+        id={id}
         value={value}
         placeholder={placeholder}
         rows={rows}
