@@ -1007,7 +1007,8 @@ def get_frontend_html(title: str) -> str:
 
             createAvatar(props) {{
                 const el = document.createElement('div');
-                const size = props.size || '40px';
+                const sizeMap = {{ sm: '32px', md: '40px', lg: '48px', xl: '64px' }};
+                const size = sizeMap[props.size] || props.size || '40px';
                 el.style.cssText = `
                     width: ${{size}}; height: ${{size}}; border-radius: 50%;
                     background: linear-gradient(135deg, var(--um-color-primary), var(--um-color-primary-hover));

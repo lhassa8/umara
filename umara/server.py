@@ -986,7 +986,8 @@ def get_dev_html(title: str) -> str:
                     case 'avatar':
                         const avatarEl = document.createElement('div');
                         avatarEl.className = 'um-avatar';
-                        const avatarSize = props.size || '40px';
+                        const avatarSizeMap = {{ sm: '32px', md: '40px', lg: '48px', xl: '64px' }};
+                        const avatarSize = avatarSizeMap[props.size] || props.size || '40px';
                         avatarEl.style.cssText = `width: ${{avatarSize}}; height: ${{avatarSize}}; border-radius: 50%; background: var(--um-color-primary, #6366f1); display: flex; align-items: center; justify-content: center; color: white; font-weight: 500; font-size: calc(${{avatarSize}} / 2.5); overflow: hidden;`;
                         if (props.src) {{
                             const img = document.createElement('img');

@@ -432,11 +432,12 @@ def button(
 
     # Generate state key
     state_key = key or f"_btn_{label}"
-    was_clicked = bool(state.get(f"{state_key}_clicked", False))
+    clicked_key = f"{state_key}_clicked"
+    was_clicked = bool(state.get(clicked_key, False))
 
-    # Reset click state
+    # Reset click state silently (direct dict access to avoid triggering re-render)
     if was_clicked:
-        state.update(**{f"{state_key}_clicked": False})
+        state._state[clicked_key].value = False
 
     props = {
         "label": label,
