@@ -142,6 +142,37 @@ async def handle_message(
     elif msg_type == "ping":
         return {"type": "pong"}
 
+    elif msg_type == "theme_preference":
+        # Handle theme preference from client (localStorage or system)
+        saved_theme = data.get("savedTheme")
+        system_theme = data.get("systemTheme")
+
+        # Store in session for later use
+        session.state["_client_saved_theme"] = saved_theme
+        session.state["_client_system_theme"] = system_theme
+
+        # If user hasn't explicitly set a theme in the app, use saved/system preference
+        if not session.state.get("_app_theme_set"):
+            theme_to_use = saved_theme or system_theme
+            if theme_to_use:
+                session.state["_preferred_theme"] = theme_to_use
+
+        return None
+
+    elif msg_type == "system_theme":
+        # Handle system theme change (dark/light mode toggle)
+        system_theme = data.get("theme")
+        session.state["_client_system_theme"] = system_theme
+
+        # If no saved theme, apply system theme
+        if not session.state.get("_client_saved_theme") and not session.state.get("_app_theme_set"):
+            session.state["_preferred_theme"] = system_theme
+            # Trigger re-render with new theme
+            result = await umara_app.render_session(session)
+            return {"type": "update", "data": result}
+
+        return None
+
     return None
 
 

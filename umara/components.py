@@ -971,6 +971,7 @@ def file_uploader(
     key: str | None = None,
     accept: list[str] | None = None,
     multiple: bool = False,
+    max_file_size: int | None = None,
     disabled: bool = False,
     style: Style | None = None,
 ) -> Any | None:
@@ -982,6 +983,7 @@ def file_uploader(
         key: State key
         accept: Accepted file types (e.g., ['.pdf', '.docx'])
         multiple: Allow multiple files
+        max_file_size: Maximum file size in bytes (e.g., 10*1024*1024 for 10MB)
         disabled: Whether disabled
         style: Optional Style object
 
@@ -998,6 +1000,7 @@ def file_uploader(
         "label": label,
         "accept": accept,
         "multiple": multiple,
+        "maxFileSize": max_file_size,
         "disabled": disabled,
         "stateKey": state_key,
     }
@@ -1056,6 +1059,7 @@ def dataframe(
     *,
     columns: list[str] | None = None,
     height: str | None = None,
+    sortable: bool = False,
     style: Style | None = None,
 ) -> None:
     """
@@ -1065,6 +1069,7 @@ def dataframe(
         data: Data to display (list of dicts, pandas DataFrame, etc.)
         columns: Column names (inferred from data if not provided)
         height: Max height with scrolling
+        sortable: Enable column sorting by clicking headers
         style: Optional Style object
     """
     ctx = get_context()
@@ -1085,6 +1090,7 @@ def dataframe(
         "data": records,
         "columns": cols,
         "height": height,
+        "sortable": sortable,
     }
     style_dict = style.to_dict() if style else None
     ctx.create_component("dataframe", props=props, style=style_dict)

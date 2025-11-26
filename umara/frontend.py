@@ -323,6 +323,18 @@ def get_frontend_html(title: str) -> str:
                 this.ws.onopen = () => {{
                     console.log('%c Umara Connected ', 'background: #6366f1; color: white; padding: 4px 8px; border-radius: 4px;');
                     this.reconnectAttempts = 0;
+
+                    // Setup system theme listener
+                    this.setupThemeListener();
+
+                    // Send saved/system theme preference to server
+                    const savedTheme = this.getSavedTheme();
+                    const systemTheme = this.getSystemTheme();
+                    this.send({{
+                        type: 'theme_preference',
+                        savedTheme: savedTheme,
+                        systemTheme: systemTheme
+                    }});
                 }};
 
                 this.ws.onmessage = (event) => {{
@@ -460,6 +472,39 @@ def get_frontend_html(title: str) -> str:
                 // Update body background and color
                 document.body.style.background = colors.background || '';
                 document.body.style.color = colors.text || '';
+
+                // Save theme name to localStorage for persistence
+                if (theme.name) {{
+                    localStorage.setItem('umara-theme', theme.name);
+                }}
+            }}
+
+            // Get system color scheme preference
+            getSystemTheme() {{
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {{
+                    return 'dark';
+                }}
+                return 'light';
+            }}
+
+            // Get saved theme from localStorage or system preference
+            getSavedTheme() {{
+                return localStorage.getItem('umara-theme') || null;
+            }}
+
+            // Setup system theme change listener
+            setupThemeListener() {{
+                if (window.matchMedia) {{
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {{
+                        // Only apply if no explicit theme is saved
+                        if (!localStorage.getItem('umara-theme')) {{
+                            this.send({{
+                                type: 'system_theme',
+                                theme: e.matches ? 'dark' : 'light'
+                            }});
+                        }}
+                    }});
+                }}
             }}
 
             renderComponent(component, animate = false) {{
@@ -642,6 +687,8 @@ def get_frontend_html(title: str) -> str:
                 const el = document.createElement('button');
                 el.disabled = props.disabled || props.loading || false;
                 el.className = 'um-interactive';
+                el.setAttribute('type', 'button');
+                if (props.label) el.setAttribute('aria-label', props.label);
 
                 const variants = {{
                     primary: 'background: var(--um-color-primary); color: white; border: none;',
@@ -685,6 +732,7 @@ def get_frontend_html(title: str) -> str:
                 const wrapper = document.createElement('div');
                 const isHorizontal = props.labelPosition === 'left';
                 const labelWidth = props.labelWidth || '120px';
+                const inputId = `um-input-${{id}}`;
 
                 wrapper.style.cssText = isHorizontal
                     ? 'margin-bottom: 16px; display: flex; align-items: center; gap: 12px;'
@@ -693,6 +741,7 @@ def get_frontend_html(title: str) -> str:
                 if (props.label) {{
                     const label = document.createElement('label');
                     label.textContent = props.label;
+                    label.setAttribute('for', inputId);
                     label.style.cssText = isHorizontal
                         ? `font-size: 14px; font-weight: 500; color: var(--um-color-text); flex-shrink: 0; width: ${{labelWidth}};`
                         : 'display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: var(--um-color-text);';
@@ -700,11 +749,13 @@ def get_frontend_html(title: str) -> str:
                 }}
 
                 const input = document.createElement('input');
+                input.id = inputId;
                 input.type = props.type || 'text';
                 input.value = props.value || '';
                 input.placeholder = props.placeholder || '';
                 input.dataset.umId = id;
                 input.dataset.stateKey = props.stateKey || id;
+                if (props.label) input.setAttribute('aria-label', props.label);
                 input.style.cssText = `
                     ${{isHorizontal ? 'flex: 1;' : 'width: 100%;'}} padding: 10px 14px; border: 1px solid var(--um-color-border);
                     border-radius: var(--um-radius-md); font-size: 14px; transition: all var(--um-transition-fast);
@@ -761,20 +812,28 @@ def get_frontend_html(title: str) -> str:
             createSlider(id, props) {{
                 const wrapper = document.createElement('div');
                 wrapper.style.cssText = 'margin-bottom: 16px;';
+                const sliderId = `um-slider-${{id}}`;
 
                 if (props.label) {{
                     const labelRow = document.createElement('div');
                     labelRow.style.cssText = 'display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; margin-bottom: 8px;';
-                    labelRow.innerHTML = `<span>${{props.label}}</span><span style="color: var(--um-color-primary); font-weight: 600;">${{props.value ?? props.min ?? 0}}</span>`;
+                    labelRow.innerHTML = `<label for="${{sliderId}}">${{props.label}}</label><span style="color: var(--um-color-primary); font-weight: 600;">${{props.value ?? props.min ?? 0}}</span>`;
                     wrapper.appendChild(labelRow);
                 }}
 
                 const slider = document.createElement('input');
                 slider.type = 'range';
+                slider.id = sliderId;
                 slider.min = props.min || 0;
                 slider.max = props.max || 100;
                 slider.value = props.value ?? props.min ?? 0;
                 slider.step = props.step || 1;
+                // ARIA attributes for slider
+                slider.setAttribute('role', 'slider');
+                slider.setAttribute('aria-valuemin', props.min || 0);
+                slider.setAttribute('aria-valuemax', props.max || 100);
+                slider.setAttribute('aria-valuenow', props.value ?? props.min ?? 0);
+                if (props.label) slider.setAttribute('aria-label', props.label);
                 slider.style.cssText = `
                     width: 100%; height: 6px; -webkit-appearance: none; appearance: none;
                     background: linear-gradient(to right, var(--um-color-primary) 0%, var(--um-color-primary) ${{((props.value - props.min) / (props.max - props.min)) * 100}}%, var(--um-color-border) ${{((props.value - props.min) / (props.max - props.min)) * 100}}%, var(--um-color-border) 100%);
@@ -785,6 +844,7 @@ def get_frontend_html(title: str) -> str:
                     const val = parseFloat(e.target.value);
                     const pct = ((val - props.min) / (props.max - props.min)) * 100;
                     slider.style.background = `linear-gradient(to right, var(--um-color-primary) 0%, var(--um-color-primary) ${{pct}}%, var(--um-color-border) ${{pct}}%, var(--um-color-border) 100%)`;
+                    slider.setAttribute('aria-valuenow', val);
                     if (wrapper.querySelector('span:last-child')) wrapper.querySelector('div span:last-child').textContent = val;
                     this.sendStateUpdate(props.stateKey || id, val);
                 }};
@@ -855,8 +915,12 @@ def get_frontend_html(title: str) -> str:
             }}
 
             createToggle(id, props) {{
-                const wrapper = document.createElement('label');
+                const wrapper = document.createElement('div');
                 wrapper.style.cssText = 'display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 12px;';
+                wrapper.setAttribute('role', 'switch');
+                wrapper.setAttribute('aria-checked', props.value ? 'true' : 'false');
+                if (props.label) wrapper.setAttribute('aria-label', props.label);
+                wrapper.tabIndex = 0;
 
                 const track = document.createElement('div');
                 track.style.cssText = `
@@ -877,7 +941,9 @@ def get_frontend_html(title: str) -> str:
                 label.textContent = props.label || '';
                 label.style.cssText = 'font-size: 14px;';
 
-                wrapper.onclick = () => this.sendStateUpdate(props.stateKey || id, !props.value);
+                const toggle = () => this.sendStateUpdate(props.stateKey || id, !props.value);
+                wrapper.onclick = toggle;
+                wrapper.onkeydown = (e) => {{ if (e.key === ' ' || e.key === 'Enter') {{ e.preventDefault(); toggle(); }} }};
                 wrapper.appendChild(track);
                 wrapper.appendChild(label);
                 return wrapper;
@@ -1092,6 +1158,12 @@ def get_frontend_html(title: str) -> str:
 
                 const track = document.createElement('div');
                 track.style.cssText = 'height: 8px; background: var(--um-color-border); border-radius: 4px; overflow: hidden;';
+                // ARIA attributes for progressbar
+                track.setAttribute('role', 'progressbar');
+                track.setAttribute('aria-valuemin', '0');
+                track.setAttribute('aria-valuemax', '100');
+                track.setAttribute('aria-valuenow', Math.round(props.value || 0));
+                if (props.label) track.setAttribute('aria-label', props.label);
 
                 const bar = document.createElement('div');
                 bar.style.cssText = `
@@ -1214,20 +1286,27 @@ def get_frontend_html(title: str) -> str:
                 const table = document.createElement('table');
                 table.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 14px;';
 
-                // Helper to check if a value is numeric (including strings like "$1,234" or "45%")
+                // Helper to check if a value is numeric
                 const isNumeric = (val) => {{
                     if (typeof val === 'number') return true;
                     if (typeof val !== 'string') return false;
-                    // Remove currency symbols, commas, percent signs, and whitespace
                     const cleaned = val.replace(/[$€£¥,\s%]/g, '');
                     return !isNaN(parseFloat(cleaned)) && isFinite(cleaned);
                 }};
 
-                // Detect which columns are numeric by checking first few rows
+                // Helper to get numeric value for sorting
+                const getNumericValue = (val) => {{
+                    if (typeof val === 'number') return val;
+                    if (typeof val !== 'string') return 0;
+                    const cleaned = val.replace(/[$€£¥,\s%]/g, '');
+                    return parseFloat(cleaned) || 0;
+                }};
+
+                // Detect which columns are numeric
                 const numericColumns = new Set();
+                const keys = props.data && props.data.length > 0 ? Object.keys(props.data[0]) : [];
                 if (props.data && props.data.length > 0) {{
                     const sampleRows = props.data.slice(0, Math.min(5, props.data.length));
-                    const keys = Object.keys(props.data[0]);
                     keys.forEach((key, colIndex) => {{
                         const numericCount = sampleRows.filter(row => isNumeric(row[key])).length;
                         if (numericCount > sampleRows.length / 2) {{
@@ -1236,23 +1315,17 @@ def get_frontend_html(title: str) -> str:
                     }});
                 }}
 
-                if (props.columns) {{
-                    const thead = document.createElement('thead');
-                    const headerRow = document.createElement('tr');
-                    props.columns.forEach((col, colIndex) => {{
-                        const th = document.createElement('th');
-                        th.textContent = col;
-                        const align = numericColumns.has(colIndex) ? 'right' : 'left';
-                        th.style.cssText = `padding: 12px 16px; text-align: ${{align}}; font-weight: 600; background: var(--um-color-background-secondary); border-bottom: 2px solid var(--um-color-border); color: var(--um-color-text);`;
-                        headerRow.appendChild(th);
-                    }});
-                    thead.appendChild(headerRow);
-                    table.appendChild(thead);
-                }}
+                // Sorting state
+                let sortColumn = null;
+                let sortDirection = 'asc';
+                let sortedData = [...(props.data || [])];
 
-                if (props.data) {{
+                const renderBody = () => {{
+                    const existingBody = table.querySelector('tbody');
+                    if (existingBody) existingBody.remove();
+
                     const tbody = document.createElement('tbody');
-                    props.data.forEach((row, i) => {{
+                    sortedData.forEach((row, i) => {{
                         const tr = document.createElement('tr');
                         tr.style.cssText = `transition: background var(--um-transition-fast); ${{i % 2 === 1 ? 'background: var(--um-color-background-secondary);' : ''}}`;
                         tr.onmouseenter = () => {{ tr.style.background = 'var(--um-color-primary-light)'; }};
@@ -1262,16 +1335,97 @@ def get_frontend_html(title: str) -> str:
                             td.textContent = cell;
                             const align = numericColumns.has(colIndex) ? 'right' : 'left';
                             td.style.cssText = `padding: 12px 16px; border-bottom: 1px solid var(--um-color-border); text-align: ${{align}};`;
-                            if (numericColumns.has(colIndex)) {{
-                                td.style.fontVariantNumeric = 'tabular-nums';
-                            }}
+                            if (numericColumns.has(colIndex)) td.style.fontVariantNumeric = 'tabular-nums';
                             tr.appendChild(td);
                         }});
                         tbody.appendChild(tr);
                     }});
                     table.appendChild(tbody);
+                }};
+
+                const sortBy = (colIndex) => {{
+                    if (sortColumn === colIndex) {{
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    }} else {{
+                        sortColumn = colIndex;
+                        sortDirection = 'asc';
+                    }}
+
+                    const key = keys[colIndex];
+                    const isNum = numericColumns.has(colIndex);
+
+                    sortedData.sort((a, b) => {{
+                        let valA = a[key];
+                        let valB = b[key];
+
+                        if (isNum) {{
+                            valA = getNumericValue(valA);
+                            valB = getNumericValue(valB);
+                        }} else {{
+                            valA = String(valA || '').toLowerCase();
+                            valB = String(valB || '').toLowerCase();
+                        }}
+
+                        if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                        if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                        return 0;
+                    }});
+
+                    renderBody();
+                    updateHeaderIcons();
+                }};
+
+                const updateHeaderIcons = () => {{
+                    table.querySelectorAll('th').forEach((th, idx) => {{
+                        const icon = th.querySelector('.sort-icon');
+                        if (icon) {{
+                            if (sortColumn === idx) {{
+                                icon.innerHTML = sortDirection === 'asc'
+                                    ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>'
+                                    : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7 7 7-7"/></svg>';
+                                icon.style.opacity = '1';
+                            }} else {{
+                                icon.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg>';
+                                icon.style.opacity = '0.3';
+                            }}
+                        }}
+                    }});
+                }};
+
+                if (props.columns) {{
+                    const thead = document.createElement('thead');
+                    const headerRow = document.createElement('tr');
+                    props.columns.forEach((col, colIndex) => {{
+                        const th = document.createElement('th');
+                        const align = numericColumns.has(colIndex) ? 'right' : 'left';
+                        th.style.cssText = `padding: 12px 16px; text-align: ${{align}}; font-weight: 600; background: var(--um-color-background-secondary); border-bottom: 2px solid var(--um-color-border); color: var(--um-color-text); ${{props.sortable ? 'cursor: pointer; user-select: none;' : ''}}`;
+
+                        if (props.sortable) {{
+                            const headerContent = document.createElement('span');
+                            headerContent.style.cssText = 'display: inline-flex; align-items: center; gap: 6px;';
+                            headerContent.textContent = col;
+
+                            const sortIcon = document.createElement('span');
+                            sortIcon.className = 'sort-icon';
+                            sortIcon.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg>';
+                            sortIcon.style.cssText = 'opacity: 0.3; transition: opacity 0.15s;';
+                            headerContent.appendChild(sortIcon);
+
+                            th.appendChild(headerContent);
+                            th.onmouseenter = () => {{ th.style.background = 'var(--um-color-border)'; }};
+                            th.onmouseleave = () => {{ th.style.background = 'var(--um-color-background-secondary)'; }};
+                            th.onclick = () => sortBy(colIndex);
+                        }} else {{
+                            th.textContent = col;
+                        }}
+
+                        headerRow.appendChild(th);
+                    }});
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
                 }}
 
+                renderBody();
                 wrapper.appendChild(table);
                 return wrapper;
             }}
@@ -2345,8 +2499,14 @@ def get_frontend_html(title: str) -> str:
                 const subText = document.createElement('p');
                 subText.style.cssText = 'font-size: 13px; color: var(--um-color-text-tertiary); margin: 0;';
                 const acceptText = props.accept ? props.accept.join(', ') : 'Any file type';
-                subText.textContent = acceptText;
+                const maxSizeText = props.maxFileSize ? ` (max ${{(props.maxFileSize / (1024 * 1024)).toFixed(0)}}MB)` : '';
+                subText.textContent = acceptText + maxSizeText;
                 dropzone.appendChild(subText);
+
+                // Error message element
+                const errorMsg = document.createElement('p');
+                errorMsg.style.cssText = 'font-size: 13px; color: var(--um-color-error); margin: 8px 0 0 0; display: none;';
+                dropzone.appendChild(errorMsg);
 
                 const input = document.createElement('input');
                 input.type = 'file';
@@ -2429,7 +2589,21 @@ def get_frontend_html(title: str) -> str:
                 }};
 
                 const sendFiles = (files) => {{
+                    errorMsg.style.display = 'none';
+                    errorMsg.textContent = '';
+
                     if (files && files.length > 0) {{
+                        // Validate file sizes
+                        if (props.maxFileSize) {{
+                            const oversizedFiles = Array.from(files).filter(f => f.size > props.maxFileSize);
+                            if (oversizedFiles.length > 0) {{
+                                const maxMB = (props.maxFileSize / (1024 * 1024)).toFixed(0);
+                                errorMsg.textContent = `File${{oversizedFiles.length > 1 ? 's' : ''}} too large: ${{oversizedFiles.map(f => f.name).join(', ')}} (max ${{maxMB}}MB)`;
+                                errorMsg.style.display = 'block';
+                                return;
+                            }}
+                        }}
+
                         const fileData = Array.from(files).map(f => ({{
                             name: f.name,
                             size: f.size,
