@@ -20,6 +20,28 @@ export interface ComponentTree {
   events?: Record<string, string>
 }
 
+// Helper to find sidebar in component tree and get its width
+function findSidebar(tree: ComponentTree | null): { found: boolean; width: string; collapsed: boolean } {
+  if (!tree) return { found: false, width: '280px', collapsed: false }
+
+  if (tree.type === 'sidebar') {
+    return {
+      found: true,
+      width: (tree.props.width as string) || '280px',
+      collapsed: (tree.props.collapsed as boolean) || false,
+    }
+  }
+
+  if (tree.children) {
+    for (const child of tree.children) {
+      const result = findSidebar(child)
+      if (result.found) return result
+    }
+  }
+
+  return { found: false, width: '280px', collapsed: false }
+}
+
 function App() {
   const [appState, setAppState] = useState<AppState>({
     tree: null,
@@ -99,9 +121,18 @@ function App() {
     )
   }
 
+  // Check if there's a sidebar in the tree
+  const sidebar = findSidebar(appState.tree)
+  const mainContentStyle = sidebar.found
+    ? { marginLeft: sidebar.collapsed ? '64px' : sidebar.width }
+    : {}
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <div
+        className="max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8 transition-[margin] duration-300"
+        style={mainContentStyle}
+      >
         {appState.tree && (
           <ComponentRenderer
             component={appState.tree}

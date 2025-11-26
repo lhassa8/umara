@@ -9,7 +9,7 @@ import { Input, TextArea } from './Input'
 import { Slider } from './Slider'
 import { Select, MultiSelect } from './Select'
 import { Checkbox, Toggle, Radio } from './Checkbox'
-import { Card, Container, Columns, Column, Grid } from './Layout'
+import { Card, Container, Columns, Column, Grid, Sidebar } from './Layout'
 import { Tabs } from './Tabs'
 import { Alert } from './Alert'
 import { Metric, Progress, Spinner } from './DataDisplay'
@@ -281,6 +281,17 @@ export function ComponentRenderer({
         >
           {renderChildren()}
         </Card>
+      )
+
+    case 'sidebar':
+      return (
+        <Sidebar
+          width={props.width as string}
+          collapsed={props.collapsed as boolean}
+          style={customStyle}
+        >
+          {renderChildren()}
+        </Sidebar>
       )
 
     case 'tabs':

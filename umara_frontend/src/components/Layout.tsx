@@ -132,3 +132,58 @@ export function Card({
     </motion.div>
   )
 }
+
+interface SidebarProps {
+  children: React.ReactNode
+  width?: string
+  collapsed?: boolean
+  style?: React.CSSProperties
+}
+
+export function Sidebar({
+  children,
+  width = '280px',
+  collapsed = false,
+  style,
+}: SidebarProps) {
+  return (
+    <motion.aside
+      initial={{ x: -20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="fixed left-0 top-0 h-screen bg-surface border-r border-border/50 overflow-y-auto z-40"
+      style={{
+        width: collapsed ? '64px' : width,
+        padding: collapsed ? '16px 8px' : '24px 16px',
+        ...style,
+      }}
+    >
+      <div className="space-y-4">
+        {children}
+      </div>
+    </motion.aside>
+  )
+}
+
+interface SidebarWrapperProps {
+  children: React.ReactNode
+  sidebarWidth?: string
+  collapsed?: boolean
+}
+
+export function SidebarWrapper({
+  children,
+  sidebarWidth = '280px',
+  collapsed = false,
+}: SidebarWrapperProps) {
+  return (
+    <div
+      style={{
+        marginLeft: collapsed ? '64px' : sidebarWidth,
+        transition: 'margin-left 0.3s ease',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
