@@ -181,6 +181,41 @@ if um.button('Increment'):
     um.session_state.counter += 1
 ```
 
+### Keys and Forms
+
+**Standalone inputs require a `key` parameter** to persist values across reruns:
+
+```python
+# Without key - value resets on every rerun (not recommended)
+name = um.input('Name')
+
+# With key - value persists across reruns (recommended)
+name = um.input('Name', key='user_name')
+email = um.input('Email', key='user_email')
+```
+
+**Use forms when you want to batch multiple inputs** and only trigger an action on submit:
+
+```python
+# Form - values are batched, action triggers on submit
+with um.form('contact'):
+    name = um.input('Name', key='name')
+    email = um.input('Email', key='email')
+
+    if um.form_submit_button('Submit'):
+        # All values available here
+        um.success(f'Submitted: {name}, {email}')
+```
+
+**When to use which:**
+
+| Scenario | Use |
+|----------|-----|
+| Single input that triggers immediate action | Standalone with `key` |
+| Multiple related fields submitted together | `um.form()` |
+| Real-time filtering/search | Standalone with `key` |
+| Data entry that should be validated together | `um.form()` |
+
 ---
 
 ## Documentation
@@ -202,20 +237,22 @@ See [docs/UMARA_COMPLETE_REFERENCE.md](docs/UMARA_COMPLETE_REFERENCE.md) for com
 
 | Component | Description | Returns |
 |-----------|-------------|---------|
-| `um.input(label)` | Text input field | `str` |
-| `um.text_area(label)` | Multi-line text | `str` |
-| `um.number_input(label)` | Numeric input | `float` |
-| `um.slider(label, min, max, value)` | Range slider | `float` |
-| `um.select(label, options)` | Dropdown select | `str` |
-| `um.multiselect(label, options)` | Multi-select | `list[str]` |
-| `um.checkbox(label)` | Checkbox | `bool` |
-| `um.toggle(label)` | Toggle switch | `bool` |
-| `um.radio(label, options)` | Radio buttons | `str` |
-| `um.date_input(label)` | Date picker | `str` |
-| `um.time_input(label)` | Time picker | `str` |
-| `um.color_picker(label)` | Color picker | `str` |
-| `um.file_uploader(label)` | File upload | `file \| None` |
-| `um.button(label)` | Click button | `bool` |
+| `um.input(label, key=...)` | Text input field | `str` |
+| `um.text_area(label, key=...)` | Multi-line text | `str` |
+| `um.number_input(label, key=...)` | Numeric input | `float` |
+| `um.slider(label, min, max, value, key=...)` | Range slider | `float` |
+| `um.select(label, options, key=...)` | Dropdown select | `str` |
+| `um.multiselect(label, options, key=...)` | Multi-select | `list[str]` |
+| `um.checkbox(label, key=...)` | Checkbox | `bool` |
+| `um.toggle(label, key=...)` | Toggle switch | `bool` |
+| `um.radio(label, options, key=...)` | Radio buttons | `str` |
+| `um.date_input(label, key=...)` | Date picker | `str` |
+| `um.time_input(label, key=...)` | Time picker | `str` |
+| `um.color_picker(label, key=...)` | Color picker | `str` |
+| `um.file_uploader(label, key=...)` | File upload | `file \| None` |
+| `um.button(label, key=...)` | Click button | `bool` |
+
+**Important:** Use `key` parameter for inputs outside forms to persist values across reruns.
 
 #### Display Components
 

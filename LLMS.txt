@@ -20,7 +20,8 @@ import umara as um
 um.set_theme('ocean')  # 12 built-in themes available
 um.header('My App')
 
-name = um.input('Your name')
+# IMPORTANT: Use key parameter to persist input values across reruns
+name = um.input('Your name', key='user_name')
 
 if um.button('Greet'):
     um.success(f'Hello, {name}!')
@@ -43,14 +44,14 @@ um.code('print("hello")', language='python')
 
 ### Get User Input
 ```python
-# All inputs return current value
-text = um.input('Label', placeholder='hint')
-num = um.slider('Value', 0, 100, 50)
-choice = um.select('Pick', ['A', 'B', 'C'])
-checked = um.checkbox('Agree')
-enabled = um.toggle('Feature')
-date = um.date_input('Date')
-file = um.file_uploader('Upload', accept=['.csv'], max_file_size=5*1024*1024)
+# IMPORTANT: Always use key= for standalone inputs to persist values across reruns
+text = um.input('Label', placeholder='hint', key='my_text')
+num = um.slider('Value', 0, 100, 50, key='my_slider')
+choice = um.select('Pick', ['A', 'B', 'C'], key='my_select')
+checked = um.checkbox('Agree', key='my_checkbox')
+enabled = um.toggle('Feature', key='my_toggle')
+date = um.date_input('Date', key='my_date')
+file = um.file_uploader('Upload', accept=['.csv'], max_file_size=5*1024*1024, key='my_file')
 ```
 
 ### Buttons
@@ -113,6 +114,31 @@ um.session_state.setdefault('counter', 0)
 um.session_state.counter += 1
 ```
 
+### Keys vs Forms
+
+**Standalone inputs (with key)** - Use when you want real-time updates:
+```python
+# Value persists and triggers rerun immediately on change
+search = um.input('Search', key='search_query')
+# Filter results in real-time as user types
+results = [item for item in items if search.lower() in item.lower()]
+```
+
+**Forms** - Use when you want batched submission:
+```python
+# Values only processed when form is submitted
+with um.form('my_form'):
+    name = um.input('Name', key='name')
+    email = um.input('Email', key='email')
+    if um.form_submit_button('Submit'):
+        # Both values available here after submit
+        um.success(f'Submitted: {name}, {email}')
+```
+
+**When to use which:**
+- Standalone with key: real-time search, filters, single actions
+- Forms: multi-field data entry, validation, batch submission
+
 ### Themes
 ```python
 # 12 built-in themes
@@ -123,15 +149,6 @@ um.set_theme('forest')  # greens
 # Also: slate, nord, midnight, rose, copper, lavender, sunset, mint
 
 # Themes auto-persist to localStorage and respect system dark/light mode
-```
-
-### Forms
-```python
-with um.form('my_form'):
-    name = um.input('Name', key='name')
-    email = um.input('Email', key='email')
-    if um.form_submit_button('Submit'):
-        um.success(f'Submitted: {name}')
 ```
 
 ### Chat Interface

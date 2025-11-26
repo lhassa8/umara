@@ -109,13 +109,32 @@ if um.button("Submit"):
 
 ### Keys
 
-Most interactive components accept a `key` parameter for unique identification:
+**Keys are required for standalone inputs** (outside forms) to persist values across reruns:
 
 ```python
-# Using keys ensures state is preserved correctly
+# WITHOUT key - value resets on every rerun (NOT recommended)
+name = um.input("Name")  # Will lose value when app reruns!
+
+# WITH key - value persists across reruns (RECOMMENDED)
 name = um.input("Name", key="user_name")
 email = um.input("Email", key="user_email")
 ```
+
+**Why keys matter:**
+- Without a key, input values reset to defaults on every script rerun
+- Keys create a stable identity for the widget across reruns
+- The widget's value is stored in session state using the key
+
+**When to use keys vs forms:**
+
+| Use Case | Solution |
+|----------|----------|
+| Real-time search/filtering | Standalone input with `key` |
+| Single input that triggers action | Standalone input with `key` |
+| Multiple fields submitted together | `um.form()` with inputs |
+| Data entry with validation | `um.form()` with inputs |
+
+See [Forms](#form) for batched input handling.
 
 ---
 
