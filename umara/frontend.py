@@ -652,7 +652,7 @@ def get_frontend_html(title: str) -> str:
 
                 el.onmouseenter = () => {{ if (!el.disabled) el.style.filter = 'brightness(0.95)'; }};
                 el.onmouseleave = () => {{ el.style.filter = ''; }};
-                el.onclick = () => {{ if (!el.disabled) this.sendEvent(id, 'click', {{}}); }};
+                el.onclick = () => {{ if (!el.disabled) this.sendStateUpdate((props.stateKey || id) + '_clicked', true); }};
 
                 return el;
             }}

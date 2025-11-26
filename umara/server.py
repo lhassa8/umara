@@ -379,7 +379,7 @@ def get_dev_html(title: str) -> str:
                         button.className = `um-button um-button-${{props.variant || 'primary'}}`;
                         button.style.cssText = this.getButtonStyle(props.variant || 'primary');
                         button.disabled = props.disabled || false;
-                        button.onclick = () => this.sendEvent(id, 'click', {{}});
+                        button.onclick = () => {{ if (!button.disabled) this.sendStateUpdate((props.stateKey || id) + '_clicked', true); }};
                         this.applyStyle(button, style);
                         return button;
 
