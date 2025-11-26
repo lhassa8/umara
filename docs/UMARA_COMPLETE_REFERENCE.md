@@ -129,10 +129,12 @@ email = um.input("Email", key="user_email")
 
 | Use Case | Solution |
 |----------|----------|
+| Input + button action | `um.form()` (recommended) |
 | Real-time search/filtering | Standalone input with `key` |
-| Single input that triggers action | Standalone input with `key` |
-| Multiple fields submitted together | `um.form()` with inputs |
-| Data entry with validation | `um.form()` with inputs |
+| Toggle/checkbox immediate effect | Standalone with `key` |
+| Multi-field data entry | `um.form()` with inputs |
+
+**Important:** Standalone inputs have a 50ms debounce. If a user clicks a button immediately after typing, the input value may not be synced yet. For reliable input + button patterns, always use `um.form()`.
 
 See [Forms](#form) for batched input handling.
 

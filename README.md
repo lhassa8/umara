@@ -191,30 +191,31 @@ name = um.input('Name')
 
 # With key - value persists across reruns (recommended)
 name = um.input('Name', key='user_name')
-email = um.input('Email', key='user_email')
 ```
 
-**Use forms when you want to batch multiple inputs** and only trigger an action on submit:
+**Use forms for input + button patterns** to ensure values are captured reliably:
 
 ```python
-# Form - values are batched, action triggers on submit
+# RECOMMENDED: Form batches inputs and submits together
 with um.form('contact'):
     name = um.input('Name', key='name')
     email = um.input('Email', key='email')
 
     if um.form_submit_button('Submit'):
-        # All values available here
+        # All values guaranteed to be current
         um.success(f'Submitted: {name}, {email}')
 ```
+
+**Why forms for input + button?** Standalone inputs have a 50ms debounce. If users click a button immediately after typing, the input value may not be synced yet. Forms batch all values and submit them together, avoiding this race condition.
 
 **When to use which:**
 
 | Scenario | Use |
 |----------|-----|
-| Single input that triggers immediate action | Standalone with `key` |
-| Multiple related fields submitted together | `um.form()` |
-| Real-time filtering/search | Standalone with `key` |
-| Data entry that should be validated together | `um.form()` |
+| Input + button action | `um.form()` (recommended) |
+| Real-time filtering (on every keystroke) | Standalone with `key` |
+| Toggle/checkbox immediate effect | Standalone with `key` |
+| Multi-field data entry | `um.form()` |
 
 ---
 

@@ -20,11 +20,12 @@ import umara as um
 um.set_theme('ocean')  # 12 built-in themes available
 um.header('My App')
 
-# IMPORTANT: Use key parameter to persist input values across reruns
-name = um.input('Your name', key='user_name')
+# Use form for input + button patterns (ensures value is captured)
+with um.form('greeting_form'):
+    name = um.input('Your name', key='user_name')
 
-if um.button('Greet'):
-    um.success(f'Hello, {name}!')
+    if um.form_submit_button('Greet'):
+        um.success(f'Hello, {name}!')
 ```
 
 Run with: `umara run app.py`
@@ -116,28 +117,31 @@ um.session_state.counter += 1
 
 ### Keys vs Forms
 
-**Standalone inputs (with key)** - Use when you want real-time updates:
+**Standalone inputs (with key)** - Use for real-time updates (filtering, search):
 ```python
-# Value persists and triggers rerun immediately on change
+# Value updates on every keystroke (50ms debounce)
 search = um.input('Search', key='search_query')
-# Filter results in real-time as user types
+# Filter results in real-time
 results = [item for item in items if search.lower() in item.lower()]
 ```
 
-**Forms** - Use when you want batched submission:
+**Forms** - Use for input + button patterns (RECOMMENDED):
 ```python
-# Values only processed when form is submitted
+# IMPORTANT: Use forms when you have inputs + a submit button
+# Forms batch values and submit together, avoiding race conditions
 with um.form('my_form'):
     name = um.input('Name', key='name')
     email = um.input('Email', key='email')
     if um.form_submit_button('Submit'):
-        # Both values available here after submit
+        # Both values guaranteed to be current
         um.success(f'Submitted: {name}, {email}')
 ```
 
 **When to use which:**
-- Standalone with key: real-time search, filters, single actions
-- Forms: multi-field data entry, validation, batch submission
+- Forms: input + button (reliable value capture)
+- Standalone with key: real-time search/filter, toggles, checkboxes
+
+**Why forms for input + button?** Standalone inputs have 50ms debounce. If user clicks button immediately after typing, value may not be synced. Forms guarantee all values are captured.
 
 ### Themes
 ```python
