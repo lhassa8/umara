@@ -1,4 +1,4 @@
-import React from 'react'
+import { useEffect, useState, memo } from 'react'
 import { motion } from 'framer-motion'
 
 interface AlertProps {
@@ -51,12 +51,34 @@ const alertConfig = {
   },
 }
 
-export function Alert({ type, message, traceback, style }: AlertProps) {
+// Track which alerts have already been shown to prevent re-animation
+const shownAlerts = new Set<string>()
+
+function AlertComponent({ type, message, traceback, style }: AlertProps) {
   const config = alertConfig[type]
+  const alertKey = `${type}:${message}`
+  const [shouldAnimate] = useState(() => {
+    // Only animate if this alert hasn't been shown before
+    if (shownAlerts.has(alertKey)) {
+      return false
+    }
+    shownAlerts.add(alertKey)
+    return true
+  })
+
+  // Clean up shown alerts when component unmounts
+  useEffect(() => {
+    return () => {
+      // Use a small delay to allow for quick re-renders during typing
+      setTimeout(() => {
+        shownAlerts.delete(alertKey)
+      }, 100)
+    }
+  }, [alertKey])
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -10 }}
+      initial={shouldAnimate ? { opacity: 0, y: -10 } : false}
       animate={{ opacity: 1, y: 0 }}
       className={`
         ${config.bg} ${config.border} ${config.text}
@@ -79,3 +101,6 @@ export function Alert({ type, message, traceback, style }: AlertProps) {
     </motion.div>
   )
 }
+
+// Memoize to prevent unnecessary re-renders
+export const Alert = memo(AlertComponent)
