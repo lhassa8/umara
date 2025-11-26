@@ -124,6 +124,12 @@ class ComponentContext:
         """Get component by ID."""
         return self._components.get(id)
 
+    def update_component(self, component_id: str, props: dict[str, Any]) -> None:
+        """Update props of an existing component (for streaming updates)."""
+        component = self._components.get(component_id)
+        if component:
+            component.props.update(props)
+
     def reset(self) -> None:
         """Reset the context for a new render."""
         self._stack.clear()

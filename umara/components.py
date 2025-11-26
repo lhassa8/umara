@@ -3172,6 +3172,161 @@ def map(
 
 
 # =============================================================================
+# Plotly Charts
+# =============================================================================
+
+
+def plotly_chart(
+    figure: Any,
+    *,
+    use_container_width: bool = True,
+    theme: str | None = None,
+    key: str | None = None,
+    style: Style | None = None,
+) -> None:
+    """
+    Display a Plotly chart.
+
+    Supports any Plotly figure object (go.Figure, px charts, etc).
+    The Plotly.js library is automatically loaded from CDN.
+
+    Args:
+        figure: A Plotly figure object (go.Figure or plotly express chart)
+        use_container_width: If True, chart uses full container width
+        theme: Override the Plotly theme ('plotly', 'plotly_white', 'plotly_dark', etc.)
+        key: Unique key for the component
+        style: Optional Style object
+
+    Example:
+        import plotly.express as px
+        import umara as um
+
+        fig = px.line(df, x='date', y='value', title='My Chart')
+        um.plotly_chart(fig)
+    """
+    ctx = get_context()
+
+    # Convert figure to JSON for frontend rendering
+    if hasattr(figure, "to_json"):
+        # Plotly figure object
+        import json
+
+        figure_json = json.loads(figure.to_json())
+    elif isinstance(figure, dict):
+        # Already a dict representation
+        figure_json = figure
+    else:
+        raise ValueError(
+            "figure must be a Plotly figure object or dict. "
+            "Install plotly with: pip install plotly"
+        )
+
+    props = {
+        "figure": figure_json,
+        "use_container_width": use_container_width,
+        "theme": theme,
+        "key": key,
+    }
+
+    style_dict = style.to_dict() if style else None
+    ctx.create_component("plotly_chart", props=props, style=style_dict)
+
+
+# =============================================================================
+# Streaming Output
+# =============================================================================
+
+
+def write_stream(
+    stream: Any,
+    *,
+    key: str | None = None,
+    style: Style | None = None,
+) -> str:
+    """
+    Write a streaming response, yielding chunks as they arrive.
+
+    Ideal for displaying LLM responses that stream token-by-token.
+    Works with any iterator/generator that yields strings.
+
+    Args:
+        stream: An iterator/generator that yields string chunks
+        key: Unique key for the component
+        style: Optional Style object
+
+    Returns:
+        The complete concatenated response string
+
+    Example:
+        import umara as um
+        import openai
+
+        client = openai.OpenAI()
+        stream = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": "Tell me a story"}],
+            stream=True
+        )
+
+        # Extracts content from OpenAI stream objects automatically
+        response = um.write_stream(stream)
+    """
+    ctx = get_context()
+
+    # Generate a unique key for this stream
+    if key is None:
+        import uuid
+
+        key = f"_stream_{uuid.uuid4().hex[:8]}"
+
+    # Collect all chunks
+    full_response = []
+
+    # Create the streaming text container
+    props = {
+        "key": key,
+        "streaming": True,
+        "content": "",
+    }
+
+    style_dict = style.to_dict() if style else None
+    component = ctx.create_component("streaming_text", props=props, style=style_dict)
+    component_id = component.id
+
+    # Process the stream
+    for chunk in stream:
+        # Handle different stream formats
+        if isinstance(chunk, str):
+            text = chunk
+        elif hasattr(chunk, "choices"):
+            # OpenAI-style response
+            delta = chunk.choices[0].delta if chunk.choices else None
+            text = delta.content if delta and hasattr(delta, "content") and delta.content else ""
+        elif hasattr(chunk, "text"):
+            # Anthropic-style response
+            text = chunk.text if chunk.text else ""
+        elif hasattr(chunk, "content"):
+            # Generic content attribute
+            text = chunk.content if chunk.content else ""
+        else:
+            # Try string conversion
+            text = str(chunk)
+
+        if text:
+            full_response.append(text)
+            # Update the component with new content
+            ctx.update_component(
+                component_id, {"content": "".join(full_response), "streaming": True}
+            )
+
+    # Mark streaming as complete
+    final_text = "".join(full_response)
+    ctx.update_component(component_id, {"content": final_text, "streaming": False})
+
+    return final_text
+
+
+# =============================================================================
 # Data Editor
 # =============================================================================
 

@@ -92,6 +92,8 @@ from umara.components import (
     pagination,
     pie_chart,
     pills,
+    # Plotly Charts
+    plotly_chart,
     popover,
     progress,
     radio,
@@ -134,6 +136,8 @@ from umara.components import (
     warning,
     # Smart Write (like st.write)
     write,
+    # Streaming output
+    write_stream,
 )
 from umara.core import (
     UmaraApp,
@@ -142,6 +146,8 @@ from umara.core import (
 )
 from umara.state import (
     cache,
+    cache_data,
+    cache_resource,
     session_state,
     state,
 )
@@ -266,6 +272,7 @@ __all__ = [
     "area_chart",
     "pie_chart",
     "scatter_chart",
+    "plotly_chart",
     "map",
     # Utility Components
     "copy_button",
@@ -282,10 +289,14 @@ __all__ = [
     "get_theme",
     "create_theme",
     "Theme",
-    # State
+    # State & Caching
     "state",
     "session_state",
     "cache",
+    "cache_data",
+    "cache_resource",
+    # Streaming
+    "write_stream",
     # Styling
     "style",
 ]

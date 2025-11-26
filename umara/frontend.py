@@ -582,6 +582,10 @@ def get_frontend_html(title: str) -> str:
                         return this.createJsonViewer(props);
                     case 'chart':
                         return this.createChart(props);
+                    case 'plotly_chart':
+                        return this.createPlotlyChart(props, id);
+                    case 'streaming_text':
+                        return this.createStreamingText(props, id);
                     case 'empty_state':
                         return this.createEmptyState(props, children);
                     case 'loading_skeleton':
@@ -1937,6 +1941,113 @@ def get_frontend_html(title: str) -> str:
                     </div>
                     ${{yKeys.length > 1 ? `<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 8px;">${{legend}}</div>` : ''}}
                 `;
+            }}
+
+            createPlotlyChart(props, id) {{
+                const wrapper = document.createElement('div');
+                wrapper.id = id + '_plotly';
+                wrapper.style.cssText = `
+                    width: ${{props.use_container_width ? '100%' : 'auto'}};
+                    min-height: 400px; margin-bottom: 16px;
+                `;
+
+                // Load Plotly.js from CDN if not already loaded
+                const loadPlotly = () => {{
+                    return new Promise((resolve, reject) => {{
+                        if (window.Plotly) {{
+                            resolve();
+                            return;
+                        }}
+                        const script = document.createElement('script');
+                        script.src = 'https://cdn.plot.ly/plotly-2.27.0.min.js';
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    }});
+                }};
+
+                // Render the chart after Plotly loads
+                loadPlotly().then(() => {{
+                    const figure = props.figure || {{}};
+                    const data = figure.data || [];
+                    const layout = figure.layout || {{}};
+
+                    // Apply theme if specified
+                    if (props.theme) {{
+                        layout.template = props.theme;
+                    }}
+
+                    // Make responsive
+                    if (props.use_container_width) {{
+                        layout.autosize = true;
+                    }}
+
+                    // Apply dark mode styling if current theme is dark
+                    const isDark = document.body.classList.contains('dark-theme') ||
+                                   getComputedStyle(document.documentElement).getPropertyValue('--um-color-background').trim().startsWith('#0') ||
+                                   getComputedStyle(document.documentElement).getPropertyValue('--um-color-background').trim().startsWith('#1');
+
+                    if (isDark && !props.theme) {{
+                        layout.paper_bgcolor = 'rgba(0,0,0,0)';
+                        layout.plot_bgcolor = 'rgba(0,0,0,0)';
+                        layout.font = {{ color: 'var(--um-color-text)' }};
+                        if (layout.xaxis) layout.xaxis.gridcolor = 'rgba(255,255,255,0.1)';
+                        if (layout.yaxis) layout.yaxis.gridcolor = 'rgba(255,255,255,0.1)';
+                    }}
+
+                    const config = {{
+                        responsive: true,
+                        displayModeBar: true,
+                        displaylogo: false,
+                        modeBarButtonsToRemove: ['lasso2d', 'select2d']
+                    }};
+
+                    Plotly.newPlot(wrapper, data, layout, config);
+                }}).catch(err => {{
+                    wrapper.innerHTML = `<div style="padding: 20px; color: var(--um-color-danger); text-align: center;">Failed to load Plotly: ${{err.message}}</div>`;
+                }});
+
+                return wrapper;
+            }}
+
+            createStreamingText(props, id) {{
+                const wrapper = document.createElement('div');
+                wrapper.id = id + '_stream';
+                wrapper.style.cssText = `
+                    margin-bottom: 16px; line-height: 1.6;
+                    font-size: 14px; color: var(--um-color-text);
+                    white-space: pre-wrap; word-wrap: break-word;
+                `;
+
+                const content = props.content || '';
+                wrapper.textContent = content;
+
+                // Add cursor animation if still streaming
+                if (props.streaming) {{
+                    const cursor = document.createElement('span');
+                    cursor.className = 'streaming-cursor';
+                    cursor.style.cssText = `
+                        display: inline-block; width: 8px; height: 16px;
+                        background: var(--um-color-primary); margin-left: 2px;
+                        animation: um-blink 1s infinite;
+                    `;
+                    wrapper.appendChild(cursor);
+
+                    // Add blink animation if not already added
+                    if (!document.getElementById('um-stream-styles')) {{
+                        const style = document.createElement('style');
+                        style.id = 'um-stream-styles';
+                        style.textContent = `
+                            @keyframes um-blink {{
+                                0%, 50% {{ opacity: 1; }}
+                                51%, 100% {{ opacity: 0; }}
+                            }}
+                        `;
+                        document.head.appendChild(style);
+                    }}
+                }}
+
+                return wrapper;
             }}
 
             createEmptyState(props, children) {{

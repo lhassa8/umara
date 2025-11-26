@@ -279,6 +279,245 @@ class Cache:
 cache = Cache()
 
 
+class CacheData:
+    """
+    Streamlit-compatible caching decorator for data functions.
+
+    Caches the output of expensive data operations (API calls, database queries,
+    data transformations) based on function arguments.
+
+    Features:
+    - TTL (time-to-live) support for automatic cache expiration
+    - Hash-based function argument tracking
+    - Thread-safe operation
+    - Supports DataFrame-like objects
+
+    Example:
+        @um.cache_data(ttl=3600)  # Cache for 1 hour
+        def fetch_data(url):
+            return requests.get(url).json()
+
+        @um.cache_data  # Cache forever
+        def expensive_computation(x, y):
+            return x ** y
+    """
+
+    def __init__(self):
+        self._cache: dict[str, dict[str, Any]] = {}
+        self._lock = threading.RLock()
+
+    def _make_key(self, func: Callable, args: tuple, kwargs: dict) -> str:
+        """Create a cache key from function and arguments."""
+        import pickle
+
+        key_parts = [func.__module__, func.__qualname__]
+
+        # Handle args - try to hash, fallback to str representation
+        for arg in args:
+            try:
+                # Try pickle for hashable objects
+                key_parts.append(hashlib.md5(pickle.dumps(arg), usedforsecurity=False).hexdigest())
+            except (pickle.PicklingError, TypeError):
+                # Fallback for unhashable objects
+                if hasattr(arg, "to_dict"):
+                    # DataFrame-like objects
+                    key_parts.append(str(arg.to_dict()))
+                else:
+                    key_parts.append(str(arg))
+
+        # Handle kwargs
+        for k, v in sorted(kwargs.items()):
+            try:
+                key_parts.append(
+                    f"{k}={hashlib.md5(pickle.dumps(v), usedforsecurity=False).hexdigest()}"
+                )
+            except (pickle.PicklingError, TypeError):
+                key_parts.append(f"{k}={v}")
+
+        key_str = "|".join(key_parts)
+        return hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()
+
+    def _is_expired(self, entry: dict[str, Any]) -> bool:
+        """Check if a cache entry has expired."""
+        import time
+
+        if entry.get("ttl") is None:
+            return False
+        return time.time() > entry["expires_at"]
+
+    def get(self, key: str) -> tuple[bool, Any]:
+        """Get cached value. Returns (found, value)."""
+        with self._lock:
+            if key in self._cache:
+                entry = self._cache[key]
+                if not self._is_expired(entry):
+                    return True, entry["value"]
+                # Clean up expired entry
+                del self._cache[key]
+            return False, None
+
+    def set(self, key: str, value: Any, ttl: int | None = None) -> None:
+        """Set cached value with optional TTL in seconds."""
+        import time
+
+        with self._lock:
+            entry = {"value": value, "ttl": ttl}
+            if ttl is not None:
+                entry["expires_at"] = time.time() + ttl
+            self._cache[key] = entry
+
+    def clear(self) -> None:
+        """Clear all cached values."""
+        with self._lock:
+            self._cache.clear()
+
+    def __call__(
+        self,
+        func: Callable[..., T] | None = None,
+        *,
+        ttl: int | None = None,
+        show_spinner: bool = True,
+        max_entries: int | None = None,
+    ) -> Callable[..., T] | Callable[[Callable[..., T]], Callable[..., T]]:
+        """
+        Decorator to cache function results.
+
+        Args:
+            func: The function to cache (when used without parentheses)
+            ttl: Time-to-live in seconds. None means cache forever.
+            show_spinner: Whether to show a spinner while computing (default: True)
+            max_entries: Maximum number of entries to keep in cache (LRU eviction)
+
+        Usage:
+            @um.cache_data
+            def my_func(): ...
+
+            @um.cache_data(ttl=3600)
+            def my_func(): ...
+        """
+
+        def decorator(fn: Callable[..., T]) -> Callable[..., T]:
+            @functools.wraps(fn)
+            def wrapper(*args: Any, **kwargs: Any) -> T:
+                key = self._make_key(fn, args, kwargs)
+                found, value = self.get(key)
+                if found:
+                    return value
+
+                # Execute function and cache result
+                result = fn(*args, **kwargs)
+                self.set(key, result, ttl=ttl)
+
+                # LRU eviction if max_entries is set
+                if max_entries is not None:
+                    with self._lock:
+                        while len(self._cache) > max_entries:
+                            # Remove oldest entry
+                            oldest_key = next(iter(self._cache))
+                            del self._cache[oldest_key]
+
+                return result
+
+            # Add clear method to the wrapper
+            wrapper.clear = lambda: self._clear_func(fn)  # type: ignore
+            return wrapper
+
+        # Handle both @cache_data and @cache_data(...) syntax
+        if func is not None:
+            return decorator(func)
+        return decorator
+
+    def _clear_func(self, func: Callable) -> None:
+        """Clear cache entries for a specific function."""
+        prefix = f"{func.__module__}|{func.__qualname__}"
+        with self._lock:
+            keys_to_remove = [k for k, v in self._cache.items() if prefix in str(v)]
+            for k in keys_to_remove:
+                del self._cache[k]
+
+
+# Streamlit-compatible cache_data decorator
+cache_data = CacheData()
+
+
+class CacheResource:
+    """
+    Caching decorator for global resources (database connections, ML models).
+
+    Unlike cache_data, cache_resource is designed for objects that should be
+    shared across all users and sessions, like database connections or ML models.
+
+    Example:
+        @um.cache_resource
+        def get_database():
+            return create_connection()
+
+        @um.cache_resource(ttl=3600)
+        def load_model():
+            return load_ml_model()
+    """
+
+    def __init__(self):
+        self._cache: dict[str, dict[str, Any]] = {}
+        self._lock = threading.RLock()
+
+    def _make_key(self, func: Callable) -> str:
+        """Create a cache key from function (no args considered for resources)."""
+        return f"{func.__module__}|{func.__qualname__}"
+
+    def __call__(
+        self,
+        func: Callable[..., T] | None = None,
+        *,
+        ttl: int | None = None,
+    ) -> Callable[..., T] | Callable[[Callable[..., T]], Callable[..., T]]:
+        """Decorator to cache global resources."""
+        import time
+
+        def decorator(fn: Callable[..., T]) -> Callable[..., T]:
+            @functools.wraps(fn)
+            def wrapper(*args: Any, **kwargs: Any) -> T:
+                key = self._make_key(fn)
+
+                with self._lock:
+                    if key in self._cache:
+                        entry = self._cache[key]
+                        # Check expiration
+                        if ttl is None or time.time() <= entry.get("expires_at", float("inf")):
+                            return entry["value"]
+
+                    # Execute and cache
+                    result = fn(*args, **kwargs)
+                    entry = {"value": result}
+                    if ttl is not None:
+                        entry["expires_at"] = time.time() + ttl
+                    self._cache[key] = entry
+                    return result
+
+            wrapper.clear = lambda: self._clear_func(fn)  # type: ignore
+            return wrapper
+
+        if func is not None:
+            return decorator(func)
+        return decorator
+
+    def _clear_func(self, func: Callable) -> None:
+        """Clear cache for a specific function."""
+        key = self._make_key(func)
+        with self._lock:
+            if key in self._cache:
+                del self._cache[key]
+
+    def clear(self) -> None:
+        """Clear all cached resources."""
+        with self._lock:
+            self._cache.clear()
+
+
+# Streamlit-compatible cache_resource decorator
+cache_resource = CacheResource()
+
+
 def state(default: T | None = None) -> T | None:
     """
     Create a reactive state value.
