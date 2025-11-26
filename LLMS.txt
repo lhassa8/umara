@@ -1,0 +1,237 @@
+# Umara
+
+> Beautiful Python UI framework for building web applications without HTML, CSS, or JavaScript.
+
+## Overview
+
+Umara is a Python framework that lets you create modern web UIs with pure Python code. It's similar to Streamlit but with better styling, themes, and more layout control.
+
+## Installation
+
+```bash
+pip install umara
+```
+
+## Quick Start
+
+```python
+import umara as um
+
+um.set_theme('ocean')  # 12 built-in themes available
+um.header('My App')
+
+name = um.input('Your name')
+
+if um.button('Greet'):
+    um.success(f'Hello, {name}!')
+```
+
+Run with: `umara run app.py`
+Open: http://localhost:8501
+
+## Core Patterns
+
+### Display Text
+```python
+um.title('Page Title')
+um.header('Section')
+um.subheader('Subsection')
+um.text('Regular text')
+um.markdown('**bold** and *italic*')
+um.code('print("hello")', language='python')
+```
+
+### Get User Input
+```python
+# All inputs return current value
+text = um.input('Label', placeholder='hint')
+num = um.slider('Value', 0, 100, 50)
+choice = um.select('Pick', ['A', 'B', 'C'])
+checked = um.checkbox('Agree')
+enabled = um.toggle('Feature')
+date = um.date_input('Date')
+file = um.file_uploader('Upload', accept=['.csv'], max_file_size=5*1024*1024)
+```
+
+### Buttons
+```python
+if um.button('Click', variant='primary'):  # primary, secondary, outline, ghost, danger
+    um.success('Clicked!')
+
+um.button('Loading...', loading=True)  # Show spinner
+```
+
+### Layouts
+```python
+# Columns
+with um.columns(3):
+    with um.column():
+        um.text('Col 1')
+    with um.column():
+        um.text('Col 2')
+    with um.column():
+        um.text('Col 3')
+
+# Cards
+with um.card(title='Title'):
+    um.text('Content')
+
+# Tabs
+with um.tabs(['Tab 1', 'Tab 2']) as t:
+    with t.tab(0):
+        um.text('Content 1')
+    with t.tab(1):
+        um.text('Content 2')
+
+# Grid
+with um.grid(columns=4, gap='16px'):
+    for i in range(8):
+        um.text(f'Item {i}')
+```
+
+### Data Display
+```python
+um.metric('Users', '12,543', delta=12.5)  # With trend indicator
+um.progress(75, label='Completion')
+um.dataframe(data, sortable=True)  # Works with pandas DataFrames
+um.json_viewer({'key': 'value'})
+```
+
+### Feedback
+```python
+um.success('Done!')
+um.error('Failed')
+um.warning('Caution')
+um.info('Note')
+um.toast('Quick notification')
+```
+
+### State Management
+```python
+# Persist data across reruns
+um.session_state.setdefault('counter', 0)
+um.session_state.counter += 1
+```
+
+### Themes
+```python
+# 12 built-in themes
+um.set_theme('light')   # default
+um.set_theme('dark')    # dark mode
+um.set_theme('ocean')   # blues
+um.set_theme('forest')  # greens
+# Also: slate, nord, midnight, rose, copper, lavender, sunset, mint
+
+# Themes auto-persist to localStorage and respect system dark/light mode
+```
+
+### Forms
+```python
+with um.form('my_form'):
+    name = um.input('Name', key='name')
+    email = um.input('Email', key='email')
+    if um.form_submit_button('Submit'):
+        um.success(f'Submitted: {name}')
+```
+
+### Chat Interface
+```python
+um.session_state.setdefault('messages', [])
+
+with um.chat_container(height='400px'):
+    for msg in um.session_state.messages:
+        um.chat_message(msg['content'], role=msg['role'])
+
+user_input = um.chat_input('Type message...')
+if user_input:
+    um.session_state.messages.append({'role': 'user', 'content': user_input})
+```
+
+### Charts
+```python
+data = [{'month': 'Jan', 'value': 100}, {'month': 'Feb', 'value': 200}]
+um.line_chart(data, x='month', y='value')
+um.bar_chart(data, x='month', y='value')
+um.pie_chart(data, label='month', value='value')
+```
+
+### Caching
+```python
+@um.cache_data  # Cache function results
+def load_data():
+    return pd.read_csv('large.csv')
+
+@um.cache_resource  # Cache connections/models
+def get_db():
+    return sqlite3.connect('app.db')
+```
+
+## Key Features
+
+- **100+ Components**: Inputs, layouts, charts, data display, chat, navigation
+- **12 Themes**: Light, dark, ocean, forest, slate, nord, midnight, rose, copper, lavender, sunset, mint
+- **WebSocket-based**: Real-time updates without page refresh
+- **Hot Reload**: Changes reflected instantly during development
+- **State Management**: session_state persists data across reruns
+- **Pandas Support**: DataFrames render as interactive tables
+- **Accessibility**: ARIA labels on all interactive components
+- **Theme Persistence**: Saves to localStorage, respects system dark mode
+
+## File Structure
+
+```
+import umara as um
+
+# 1. Configure page (optional)
+um.set_page_config(page_title='My App', layout='wide')
+
+# 2. Set theme (optional)
+um.set_theme('ocean')
+
+# 3. Build UI with components
+um.header('My App')
+# ... more components
+```
+
+## CLI Commands
+
+```bash
+umara run app.py              # Run app
+umara run app.py --port 8080  # Custom port
+umara init my_project         # Create new project
+umara themes                  # List themes
+```
+
+## Common Patterns
+
+### Dashboard
+```python
+with um.columns(4):
+    for label, val, delta in [('Users', '1K', 5), ('Rev', '$10K', -2)]:
+        with um.column():
+            um.metric(label, val, delta=delta)
+```
+
+### Form Validation
+```python
+with um.form('contact'):
+    name = um.input('Name', key='name')
+    if um.form_submit_button('Submit'):
+        if not name:
+            um.error('Name required')
+        else:
+            um.success('Submitted!')
+```
+
+### File Upload
+```python
+file = um.file_uploader('Upload', accept=['.csv'], max_file_size=10*1024*1024)
+if file:
+    um.success(f'Got: {file["name"]} ({file["size"]} bytes)')
+```
+
+## Documentation
+
+Full API reference: docs/UMARA_COMPLETE_REFERENCE.md
+GitHub: https://github.com/lhassa8/umara
+PyPI: https://pypi.org/project/umara/

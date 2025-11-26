@@ -1,8 +1,8 @@
-# Umara Complete Reference
+# Umara Complete API Reference
 
 > **A beautiful, modern Python framework for creating web UIs without HTML, CSS, or JavaScript.**
 
-Version: 0.3.0
+Version: 0.4.4
 
 ---
 
@@ -27,7 +27,8 @@ Version: 0.3.0
 17. [Styling](#styling)
 18. [Page Configuration](#page-configuration)
 19. [CLI Commands](#cli-commands)
-20. [Complete Examples](#complete-examples)
+20. [Accessibility](#accessibility)
+21. [Complete Examples](#complete-examples)
 
 ---
 
@@ -60,15 +61,11 @@ if um.button("Say Hello"):
 
 ### Run Your App
 
-Start the development server:
-
 ```bash
 umara run app.py
 ```
 
-Then open your browser to **http://localhost:8501** to see your app.
-
-The server runs with hot reload enabled by default, so changes to your code will automatically refresh in the browser.
+Open **http://localhost:8501** in your browser. Hot reload is enabled by default.
 
 ---
 
@@ -95,6 +92,9 @@ import umara as um
 # Configure page
 um.set_page_config(page_title="My App")
 
+# Set theme
+um.set_theme("ocean")
+
 # Display content
 um.header("My App")
 um.text("Welcome!")
@@ -105,6 +105,16 @@ name = um.input("Name", key="user_name")
 # Handle interactions
 if um.button("Submit"):
     um.success(f"Hello {name}!")
+```
+
+### Keys
+
+Most interactive components accept a `key` parameter for unique identification:
+
+```python
+# Using keys ensures state is preserved correctly
+name = um.input("Name", key="user_name")
+email = um.input("Email", key="user_email")
 ```
 
 ---
@@ -124,6 +134,12 @@ um.text(
     size: str | None = None
 ) -> None
 ```
+
+**Parameters:**
+- `content`: The text to display
+- `style`: Custom style object
+- `color`: Text color (CSS color value)
+- `size`: Font size (e.g., "16px", "1.2rem")
 
 **Examples:**
 
@@ -150,7 +166,7 @@ um.title("Welcome to My App")
 
 ### header()
 
-Display a header.
+Display a section header (h2).
 
 ```python
 um.header(content: str, *, style: Style | None = None) -> None
@@ -164,7 +180,7 @@ um.header("Section Title")
 
 ### subheader()
 
-Display a subheader.
+Display a subsection header (h3).
 
 ```python
 um.subheader(content: str, *, style: Style | None = None) -> None
@@ -192,7 +208,7 @@ um.caption("Figure 1: Sample data visualization")
 
 ### markdown()
 
-Display markdown content.
+Display markdown content with full markdown support.
 
 ```python
 um.markdown(content: str, *, style: Style | None = None) -> None
@@ -223,6 +239,10 @@ um.code(
     style: Style | None = None
 ) -> None
 ```
+
+**Parameters:**
+- `content`: The code to display
+- `language`: Programming language for syntax highlighting
 
 **Example:**
 
@@ -273,6 +293,9 @@ Add vertical space.
 ```python
 um.spacer(height: str = "24px") -> None
 ```
+
+**Parameters:**
+- `height`: Space height (CSS value)
 
 **Example:**
 
@@ -355,6 +378,11 @@ um.toast(
 ) -> None
 ```
 
+**Parameters:**
+- `message`: The notification text
+- `type`: Toast style variant
+- `duration`: How long to show (milliseconds)
+
 **Example:**
 
 ```python
@@ -382,17 +410,16 @@ except Exception as e:
 
 ### spinner()
 
-Display a loading spinner.
+Display a loading spinner (context manager).
 
 ```python
-um.spinner(text: str = "Loading...") -> None
+um.spinner(text: str = "Loading...") -> ContextManager
 ```
 
 **Example:**
 
 ```python
 with um.spinner("Processing..."):
-    # Long operation
     import time
     time.sleep(2)
 ```
@@ -412,10 +439,19 @@ um.button(
     key: str | None = None,
     variant: str = "primary",  # "primary", "secondary", "outline", "ghost", "danger"
     disabled: bool = False,
+    loading: bool = False,
     icon: str | None = None,
     style: Style | None = None
 ) -> bool  # Returns True when clicked
 ```
+
+**Parameters:**
+- `label`: Button text
+- `key`: Unique identifier
+- `variant`: Visual style ("primary", "secondary", "outline", "ghost", "danger")
+- `disabled`: Whether button is disabled
+- `loading`: Show loading spinner
+- `icon`: Icon name
 
 **Examples:**
 
@@ -431,12 +467,11 @@ um.button("Outline", variant="outline")
 um.button("Ghost", variant="ghost")
 um.button("Delete", variant="danger")
 
+# Loading state
+um.button("Processing...", loading=True)
+
 # Disabled button
 um.button("Disabled", disabled=True)
-
-# With unique key
-if um.button("Save", key="save_btn"):
-    save_data()
 ```
 
 ### input()
@@ -452,9 +487,19 @@ um.input(
     placeholder: str = "",
     type: str = "text",  # "text", "password", "email", "number"
     disabled: bool = False,
+    label_position: str = "top",  # "top", "left"
     style: Style | None = None
 ) -> str  # Returns current value
 ```
+
+**Parameters:**
+- `label`: Input label text
+- `key`: Unique identifier
+- `value`: Default value
+- `placeholder`: Placeholder text
+- `type`: Input type
+- `disabled`: Whether input is disabled
+- `label_position`: Label placement ("top" or "left")
 
 **Examples:**
 
@@ -468,8 +513,8 @@ password = um.input("Password", type="password")
 # Email input
 email = um.input("Email", type="email", placeholder="you@example.com")
 
-# With default value
-city = um.input("City", value="New York", key="city_input")
+# Horizontal label
+city = um.input("City", value="New York", label_position="left")
 
 # Disabled
 um.input("Read Only", value="Cannot edit", disabled=True)
@@ -491,6 +536,14 @@ um.text_area(
     style: Style | None = None
 ) -> str
 ```
+
+**Parameters:**
+- `label`: Label text
+- `key`: Unique identifier
+- `value`: Default value
+- `placeholder`: Placeholder text
+- `rows`: Number of visible rows
+- `disabled`: Whether disabled
 
 **Example:**
 
@@ -521,6 +574,14 @@ um.number_input(
 ) -> float
 ```
 
+**Parameters:**
+- `label`: Label text
+- `key`: Unique identifier
+- `value`: Default value
+- `min_value`: Minimum allowed value
+- `max_value`: Maximum allowed value
+- `step`: Increment step
+
 **Examples:**
 
 ```python
@@ -543,7 +604,7 @@ um.slider(
     label: str = "",
     min_value: float = 0,
     max_value: float = 100,
-    value: float | None = None,  # Defaults to min_value
+    value: float | None = None,
     *,
     key: str | None = None,
     step: float = 1,
@@ -551,6 +612,14 @@ um.slider(
     style: Style | None = None
 ) -> float
 ```
+
+**Parameters:**
+- `label`: Label text
+- `min_value`: Minimum value
+- `max_value`: Maximum value
+- `value`: Default value (defaults to min_value)
+- `key`: Unique identifier
+- `step`: Increment step
 
 **Examples:**
 
@@ -572,7 +641,7 @@ Create a dropdown select.
 ```python
 um.select(
     label: str = "",
-    options: list[str] | None = None,
+    options: list[str] | list[dict] | None = None,
     *,
     key: str | None = None,
     default: str | None = None,
@@ -581,6 +650,13 @@ um.select(
     style: Style | None = None
 ) -> str | None
 ```
+
+**Parameters:**
+- `label`: Label text
+- `options`: List of options (strings or dicts with "value" and "label" keys)
+- `key`: Unique identifier
+- `default`: Default selected value
+- `placeholder`: Placeholder text
 
 **Examples:**
 
@@ -595,11 +671,15 @@ size = um.select(
     default="Medium"
 )
 
-# Custom placeholder
-country = um.select(
-    "Country",
-    options=["USA", "UK", "Canada", "Australia"],
-    placeholder="Choose your country..."
+# With value/label objects
+framework = um.select(
+    "Framework",
+    options=[
+        {"value": "umara", "label": "Umara (Best!)"},
+        {"value": "streamlit", "label": "Streamlit"},
+        {"value": "gradio", "label": "Gradio"},
+    ],
+    default="umara"
 )
 ```
 
@@ -701,6 +781,11 @@ um.radio(
     style: Style | None = None
 ) -> str | None
 ```
+
+**Parameters:**
+- `label`: Group label
+- `options`: List of option strings
+- `horizontal`: Display horizontally instead of vertically
 
 **Examples:**
 
@@ -822,29 +907,45 @@ um.file_uploader(
     label: str = "",
     *,
     key: str | None = None,
-    accept: str | None = None,  # e.g., ".csv,.xlsx" or "image/*"
+    accept: list[str] | None = None,  # e.g., [".csv", ".xlsx"] or ["image/*"]
     multiple: bool = False,
+    max_file_size: int | None = None,  # Maximum file size in bytes
+    disabled: bool = False,
     style: Style | None = None
-) -> file | list[file] | None
+) -> dict | list[dict] | None
 ```
+
+**Parameters:**
+- `label`: Upload label
+- `key`: Unique identifier
+- `accept`: List of accepted file extensions or MIME types
+- `multiple`: Allow multiple file selection
+- `max_file_size`: Maximum file size in bytes (new in v0.4.4)
+- `disabled`: Whether disabled
+
+**Returns:** File object with keys: `name`, `size`, `type`, `content` (base64)
 
 **Examples:**
 
 ```python
 # Single file
-uploaded = um.file_uploader("Upload CSV", accept=".csv")
+uploaded = um.file_uploader("Upload CSV", accept=[".csv"])
 
 if uploaded:
-    import pandas as pd
-    df = pd.read_csv(uploaded)
-    um.dataframe(df)
+    um.success(f"Uploaded: {uploaded['name']} ({uploaded['size']} bytes)")
 
 # Multiple files
-files = um.file_uploader("Upload Images", accept="image/*", multiple=True)
+files = um.file_uploader("Upload Images", accept=["image/*"], multiple=True)
 
 if files:
-    for f in files:
-        um.image(f)
+    um.info(f"Uploaded {len(files)} file(s)")
+
+# With size limit (5MB)
+doc = um.file_uploader(
+    "Upload Document",
+    accept=[".pdf", ".docx"],
+    max_file_size=5 * 1024 * 1024  # 5MB in bytes
+)
 ```
 
 ### download_button()
@@ -857,13 +958,20 @@ um.download_button(
     data: str | bytes | Callable[[], str | bytes],
     *,
     file_name: str = "download.txt",
-    mime: str | None = None,  # Auto-detected from file_name
+    mime: str | None = None,
     key: str | None = None,
     disabled: bool = False,
     on_click: Callable[[], None] | None = None,
     style: Style | None = None
 ) -> bool
 ```
+
+**Parameters:**
+- `label`: Button text
+- `data`: File content (string, bytes, or callable that returns content)
+- `file_name`: Downloaded file name
+- `mime`: MIME type (auto-detected from file_name if not provided)
+- `on_click`: Callback function
 
 **Examples:**
 
@@ -891,14 +999,6 @@ um.download_button(
     generate_csv,
     file_name="data.csv"
 )
-
-# With callback
-um.download_button(
-    "Download Report",
-    generate_report,
-    file_name="report.pdf",
-    on_click=lambda: log_download()
-)
 ```
 
 ---
@@ -910,10 +1010,7 @@ um.download_button(
 Create a container for grouping elements.
 
 ```python
-with um.container(
-    *,
-    style: Style | None = None
-) -> context manager:
+with um.container(*, style: Style | None = None):
     # Children go here
 ```
 
@@ -935,9 +1032,14 @@ with um.columns(
     *,
     gap: str = "16px",
     style: Style | None = None
-) -> context manager:
-    # Use with um.column() inside
+):
+    with um.column():
+        # Column content
 ```
+
+**Parameters:**
+- `count`: Number of columns
+- `gap`: Gap between columns (CSS value)
 
 **Examples:**
 
@@ -970,9 +1072,14 @@ with um.grid(
     gap: str = "16px",
     row_gap: str | None = None,
     style: Style | None = None
-) -> context manager:
+):
     # Grid items go here
 ```
+
+**Parameters:**
+- `columns`: Number of columns or CSS grid-template-columns value
+- `gap`: Gap between items
+- `row_gap`: Row gap (uses `gap` if not specified)
 
 **Example:**
 
@@ -995,9 +1102,15 @@ with um.card(
     padding: str = "24px",
     shadow: str = "md",  # "sm", "md", "lg", "xl"
     style: Style | None = None
-) -> context manager:
+):
     # Card content goes here
 ```
+
+**Parameters:**
+- `title`: Card title
+- `subtitle`: Card subtitle
+- `padding`: Internal padding
+- `shadow`: Shadow size
 
 **Examples:**
 
@@ -1028,8 +1141,8 @@ with um.tabs(
     default: int = 0,
     key: str | None = None,
     style: Style | None = None
-) -> TabContext:
-    with tabs.tab(index):
+) as t:
+    with t.tab(index):
         # Tab content
 ```
 
@@ -1061,7 +1174,7 @@ with um.expander(
     expanded: bool = False,
     key: str | None = None,
     style: Style | None = None
-) -> context manager:
+):
     # Expandable content
 ```
 
@@ -1082,7 +1195,7 @@ with um.sidebar(
     *,
     width: str = "240px",
     style: Style | None = None
-) -> context manager:
+):
     # Sidebar content
 ```
 
@@ -1110,7 +1223,7 @@ with um.modal(
     key: str,  # Required for open/close
     size: str = "md",  # "sm", "md", "lg"
     style: Style | None = None
-) -> context manager:
+):
     # Modal content
 ```
 
@@ -1135,7 +1248,7 @@ with um.modal("Confirm Action", key="my_modal"):
 
 ### form()
 
-Create a form container.
+Create a form container with batched submission.
 
 ```python
 with um.form(
@@ -1143,7 +1256,7 @@ with um.form(
     *,
     border: bool = False,
     style: Style | None = None
-) -> context manager:
+):
     # Form fields
     if um.form_submit_button("Submit"):
         # Handle submission
@@ -1185,6 +1298,13 @@ um.metric(
 ) -> None
 ```
 
+**Parameters:**
+- `label`: Metric label
+- `value`: Metric value
+- `delta`: Change indicator (positive/negative number)
+- `delta_label`: Additional context for delta
+- `delta_color`: Color for delta ("auto" uses green for positive, red for negative)
+
 **Examples:**
 
 ```python
@@ -1215,6 +1335,11 @@ um.progress(
 ) -> None
 ```
 
+**Parameters:**
+- `value`: Current progress value
+- `label`: Progress label
+- `max_value`: Maximum value (default 100)
+
 **Examples:**
 
 ```python
@@ -1227,17 +1352,26 @@ um.progress(150, label="Downloads", max_value=200)
 
 ### dataframe()
 
-Display tabular data.
+Display tabular data with optional sorting.
 
 ```python
 um.dataframe(
     data: list[dict] | DataFrame,
     *,
+    columns: list[str] | None = None,
+    height: str | None = None,
+    sortable: bool = False,  # Enable column sorting (new in v0.4.4)
     style: Style | None = None
 ) -> None
 ```
 
-**Example:**
+**Parameters:**
+- `data`: Data as list of dicts or pandas DataFrame
+- `columns`: Column names to display (default: all)
+- `height`: Fixed height with scroll
+- `sortable`: Enable click-to-sort on column headers (new in v0.4.4)
+
+**Examples:**
 
 ```python
 import pandas as pd
@@ -1248,19 +1382,23 @@ df = pd.DataFrame({
     "City": ["NYC", "LA", "Chicago"]
 })
 
+# Basic table
 um.dataframe(df)
 
-# Or with list of dicts
+# Sortable table (click headers to sort)
+um.dataframe(df, sortable=True)
+
+# With list of dicts
 data = [
     {"Name": "Alice", "Score": 95},
     {"Name": "Bob", "Score": 87},
 ]
-um.dataframe(data)
+um.dataframe(data, sortable=True)
 ```
 
 ### table()
 
-Display a simple HTML table.
+Display a simple HTML table (non-interactive).
 
 ```python
 um.table(
@@ -1288,11 +1426,11 @@ um.json_viewer(
 ```python
 data = {
     "name": "Umara",
-    "version": "0.3.0",
+    "version": "0.4.4",
     "features": ["themes", "components", "state"]
 }
 
-um.json_viewer(data)
+um.json_viewer(data, expanded=True)
 ```
 
 ### stat_card()
@@ -1383,18 +1521,6 @@ events = [
 ]
 
 um.timeline(events)
-```
-
-### loading_skeleton()
-
-Display a loading placeholder.
-
-```python
-um.loading_skeleton(
-    *,
-    variant: str = "text",  # "text", "card", "avatar", "image"
-    style: Style | None = None
-) -> None
 ```
 
 ---
@@ -1711,7 +1837,7 @@ with um.chat_container(
     *,
     height: str = "400px",
     style: Style | None = None
-) -> context manager:
+):
     # Chat messages go here
 ```
 
@@ -1746,9 +1872,10 @@ um.chat_input(
 **Complete Chat Example:**
 
 ```python
+import umara as um
+
 # Initialize message history
-if "messages" not in um.session_state:
-    um.session_state.messages = []
+um.session_state.setdefault("messages", [])
 
 # Display chat container with messages
 with um.chat_container(height="400px"):
@@ -1767,6 +1894,35 @@ if user_message:
     um.session_state.messages.append({"role": "assistant", "content": response})
 
     um.rerun()
+```
+
+### chat()
+
+Simplified chat widget that handles messages automatically.
+
+```python
+um.chat(
+    messages: list[dict],  # [{"role": str, "content": str}, ...]
+    *,
+    key: str | None = None,
+    height: str = "400px",
+    style: Style | None = None
+) -> str | None  # Returns new message when submitted
+```
+
+**Example:**
+
+```python
+messages = [
+    {"role": "assistant", "content": "Hello! How can I help?"},
+]
+
+new_message = um.chat(messages, key="my_chat")
+
+if new_message:
+    # Handle new message
+    messages.append({"role": "user", "content": new_message})
+    # Add AI response...
 ```
 
 ---
@@ -1915,6 +2071,9 @@ def section():
     ...
 ```
 
+**Parameters:**
+- `run_every`: Auto-refresh interval in seconds
+
 **Examples:**
 
 ```python
@@ -2024,34 +2183,35 @@ for repo in repos:
     um.text(f"- {repo['name']}: {repo['stargazers_count']} stars")
 ```
 
-### Snowflake Connection
-
-```python
-sf = um.connection.snowflake(
-    connection_name: str,
-    *,
-    account: str,
-    user: str,
-    password: str,
-    warehouse: str,
-    database: str,
-    schema: str,
-    **kwargs
-) -> SnowflakeConnection
-```
-
 ---
 
 ## Theming
 
 ### Built-in Themes
 
+Umara includes 12 professional themes:
+
 ```python
-um.set_theme("light")   # Default light theme
-um.set_theme("dark")    # Dark mode
-um.set_theme("ocean")   # Ocean blue theme
-um.set_theme("forest")  # Forest green theme
+um.set_theme("light")     # Clean, minimal (default)
+um.set_theme("dark")      # Modern dark mode
+um.set_theme("ocean")     # Calming blues
+um.set_theme("forest")    # Earthy greens
+um.set_theme("slate")     # Corporate gray
+um.set_theme("nord")      # Arctic, Scandinavian
+um.set_theme("midnight")  # Deep purple dark
+um.set_theme("rose")      # Warm pink, fintech
+um.set_theme("copper")    # Premium bronze
+um.set_theme("lavender")  # Soft purple, calming
+um.set_theme("sunset")    # Warm orange
+um.set_theme("mint")      # Fresh teal
 ```
+
+### Theme Persistence (v0.4.4)
+
+Themes automatically:
+- **Persist to localStorage**: User's theme choice is saved and restored on reload
+- **Detect system preference**: Respects `prefers-color-scheme` for dark/light mode
+- **Listen for changes**: Updates when user changes system dark mode
 
 ### Custom Themes
 
@@ -2219,6 +2379,26 @@ umara --help    # Show help
 
 ---
 
+## Accessibility
+
+### ARIA Labels (v0.4.4)
+
+Umara automatically adds ARIA attributes to interactive components for screen reader support:
+
+- **Buttons**: `role="button"`, `aria-label`
+- **Inputs**: `aria-label`, associated `<label>` elements
+- **Sliders**: `role="slider"`, `aria-valuenow`, `aria-valuemin`, `aria-valuemax`
+- **Toggles**: `role="switch"`, `aria-checked`
+- **Progress bars**: `role="progressbar"`, `aria-valuenow`, `aria-valuemin`, `aria-valuemax`
+
+### Keyboard Navigation
+
+- **Toggle switches**: Support Space and Enter keys
+- **Modals**: Focus trap keeps keyboard navigation within modal
+- **Forms**: Proper tab order and label associations
+
+---
+
 ## Complete Examples
 
 ### Dashboard App
@@ -2265,7 +2445,7 @@ with um.columns(2):
 
 # Data table
 um.header("Recent Orders")
-um.dataframe(orders_df)
+um.dataframe(orders_df, sortable=True)
 ```
 
 ### Chat Application
@@ -2342,7 +2522,6 @@ with um.container():
                 elif not terms:
                     um.error("You must agree to the terms")
                 else:
-                    # Create account logic
                     um.success(f"Account created for {email}!")
 ```
 
@@ -2377,6 +2556,33 @@ um.divider()
 # Static content
 um.header("System Status")
 um.success("All systems operational")
+```
+
+### File Upload with Validation
+
+```python
+import umara as um
+
+um.set_page_config(page_title="File Upload")
+um.header("Document Upload")
+
+with um.card():
+    um.text("Upload your documents (max 10MB per file)")
+
+    uploaded = um.file_uploader(
+        "Select files",
+        accept=[".pdf", ".docx", ".xlsx"],
+        multiple=True,
+        max_file_size=10 * 1024 * 1024  # 10MB
+    )
+
+    if uploaded:
+        um.success(f"Uploaded {len(uploaded)} file(s)")
+
+        um.dataframe([
+            {"Name": f["name"], "Size": f"{f['size'] / 1024:.1f} KB", "Type": f["type"]}
+            for f in uploaded
+        ], sortable=True)
 ```
 
 ---
@@ -2452,10 +2658,14 @@ um.text("More content...")
 
 ## Version History
 
-- **0.3.0** - Added Plotly charts, cache decorators, write_stream, connections, fragments, improved download_button
+- **0.4.4** - Added max_file_size for file_uploader, sortable dataframes, ARIA accessibility labels, system theme detection, localStorage theme persistence
+- **0.4.3** - Added button loading states, modal focus trap, chat auto-scroll
+- **0.4.2** - Added horizontal input labels, right-aligned numbers in tables
+- **0.4.0** - Added Plotly charts, cache decorators, streaming support, connections
+- **0.3.0** - Added fragments, improved download_button
 - **0.2.0** - Added themes, state management, WebSocket communication
 - **0.1.0** - Initial release with core components
 
 ---
 
-*Documentation generated for Umara v0.3.0*
+*Documentation generated for Umara v0.4.4*
