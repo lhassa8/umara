@@ -451,6 +451,7 @@ def button(
     key: str | None = None,
     variant: str = "primary",
     disabled: bool = False,
+    loading: bool = False,
     full_width: bool = False,
     icon: str | None = None,
     style: Style | None = None,
@@ -463,6 +464,7 @@ def button(
         key: Unique key for the button
         variant: Button style ('primary', 'secondary', 'outline', 'ghost', 'danger')
         disabled: Whether button is disabled
+        loading: Show loading spinner (also disables the button)
         full_width: Take full width
         icon: Optional icon name
         style: Optional Style object
@@ -485,7 +487,8 @@ def button(
     props = {
         "label": label,
         "variant": variant,
-        "disabled": disabled,
+        "disabled": disabled or loading,
+        "loading": loading,
         "fullWidth": full_width,
         "icon": icon,
         "stateKey": state_key,
@@ -512,6 +515,8 @@ def input(
     placeholder: str = "",
     type: str = "text",
     disabled: bool = False,
+    label_position: str = "top",
+    label_width: str = "120px",
     style: Style | None = None,
 ) -> str:
     """
@@ -524,6 +529,8 @@ def input(
         placeholder: Placeholder text
         type: Input type ('text', 'password', 'email', 'number')
         disabled: Whether input is disabled
+        label_position: Position of label ('top' or 'left')
+        label_width: Width of label when position is 'left' (e.g., '120px', '30%')
         style: Optional Style object
 
     Returns:
@@ -542,6 +549,8 @@ def input(
         "type": type,
         "disabled": disabled,
         "stateKey": state_key,
+        "labelPosition": label_position,
+        "labelWidth": label_width,
     }
     style_dict = style.to_dict() if style else None
     ctx.create_component("input", props=props, style=style_dict)
@@ -557,6 +566,8 @@ def text_area(
     placeholder: str = "",
     rows: int = 4,
     disabled: bool = False,
+    label_position: str = "top",
+    label_width: str = "120px",
     style: Style | None = None,
 ) -> str:
     """
@@ -569,6 +580,8 @@ def text_area(
         placeholder: Placeholder text
         rows: Number of visible rows
         disabled: Whether disabled
+        label_position: Position of label ('top' or 'left')
+        label_width: Width of label when position is 'left'
         style: Optional Style object
 
     Returns:
@@ -587,6 +600,8 @@ def text_area(
         "rows": rows,
         "disabled": disabled,
         "stateKey": state_key,
+        "labelPosition": label_position,
+        "labelWidth": label_width,
     }
     style_dict = style.to_dict() if style else None
     ctx.create_component("textarea", props=props, style=style_dict)
@@ -651,6 +666,8 @@ def select(
     default: str | None = None,
     placeholder: str = "Select an option...",
     disabled: bool = False,
+    label_position: str = "top",
+    label_width: str = "120px",
     style: Style | None = None,
 ) -> str | None:
     """
@@ -663,6 +680,8 @@ def select(
         default: Default selected value
         placeholder: Placeholder text
         disabled: Whether disabled
+        label_position: Position of label ('top' or 'left')
+        label_width: Width of label when position is 'left'
         style: Optional Style object
 
     Returns:
@@ -682,6 +701,8 @@ def select(
         "placeholder": placeholder,
         "disabled": disabled,
         "stateKey": state_key,
+        "labelPosition": label_position,
+        "labelWidth": label_width,
     }
     style_dict = style.to_dict() if style else None
     ctx.create_component("select", props=props, style=style_dict)

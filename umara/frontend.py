@@ -640,8 +640,7 @@ def get_frontend_html(title: str) -> str:
 
             createButton(id, props) {{
                 const el = document.createElement('button');
-                el.textContent = props.label || 'Button';
-                el.disabled = props.disabled || false;
+                el.disabled = props.disabled || props.loading || false;
                 el.className = 'um-interactive';
 
                 const variants = {{
@@ -654,25 +653,49 @@ def get_frontend_html(title: str) -> str:
 
                 el.style.cssText = `
                     padding: 10px 20px; border-radius: var(--um-radius-md); font-size: 14px; font-weight: 500;
-                    cursor: pointer; transition: all var(--um-transition-fast); display: inline-flex;
+                    cursor: ${{props.loading ? 'wait' : 'pointer'}}; transition: all var(--um-transition-fast); display: inline-flex;
                     align-items: center; gap: 8px; ${{variants[props.variant] || variants.primary}}
+                    ${{props.loading ? 'opacity: 0.7;' : ''}}
                 `;
+
+                // Create loading spinner or label
+                if (props.loading) {{
+                    const spinner = document.createElement('span');
+                    spinner.style.cssText = `
+                        width: 16px; height: 16px; border: 2px solid currentColor;
+                        border-top-color: transparent; border-radius: 50%;
+                        animation: um-spin 0.8s linear infinite;
+                    `;
+                    el.appendChild(spinner);
+                    const labelSpan = document.createElement('span');
+                    labelSpan.textContent = props.label || 'Loading...';
+                    el.appendChild(labelSpan);
+                }} else {{
+                    el.textContent = props.label || 'Button';
+                }}
 
                 el.onmouseenter = () => {{ if (!el.disabled) el.style.filter = 'brightness(0.95)'; }};
                 el.onmouseleave = () => {{ el.style.filter = ''; }};
-                el.onclick = () => {{ if (!el.disabled) this.sendStateUpdate((props.stateKey || id) + '_clicked', true); }};
+                el.onclick = () => {{ if (!el.disabled && !props.loading) this.sendStateUpdate((props.stateKey || id) + '_clicked', true); }};
 
                 return el;
             }}
 
             createInput(id, props) {{
                 const wrapper = document.createElement('div');
-                wrapper.style.cssText = 'margin-bottom: 16px;';
+                const isHorizontal = props.labelPosition === 'left';
+                const labelWidth = props.labelWidth || '120px';
+
+                wrapper.style.cssText = isHorizontal
+                    ? 'margin-bottom: 16px; display: flex; align-items: center; gap: 12px;'
+                    : 'margin-bottom: 16px;';
 
                 if (props.label) {{
                     const label = document.createElement('label');
                     label.textContent = props.label;
-                    label.style.cssText = 'display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: var(--um-color-text);';
+                    label.style.cssText = isHorizontal
+                        ? `font-size: 14px; font-weight: 500; color: var(--um-color-text); flex-shrink: 0; width: ${{labelWidth}};`
+                        : 'display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: var(--um-color-text);';
                     wrapper.appendChild(label);
                 }}
 
@@ -683,7 +706,7 @@ def get_frontend_html(title: str) -> str:
                 input.dataset.umId = id;
                 input.dataset.stateKey = props.stateKey || id;
                 input.style.cssText = `
-                    width: 100%; padding: 10px 14px; border: 1px solid var(--um-color-border);
+                    ${{isHorizontal ? 'flex: 1;' : 'width: 100%;'}} padding: 10px 14px; border: 1px solid var(--um-color-border);
                     border-radius: var(--um-radius-md); font-size: 14px; transition: all var(--um-transition-fast);
                     background: var(--um-color-surface); color: var(--um-color-text); outline: none;
                 `;
@@ -698,12 +721,19 @@ def get_frontend_html(title: str) -> str:
 
             createTextArea(id, props) {{
                 const wrapper = document.createElement('div');
-                wrapper.style.cssText = 'margin-bottom: 16px;';
+                const isHorizontal = props.labelPosition === 'left';
+                const labelWidth = props.labelWidth || '120px';
+
+                wrapper.style.cssText = isHorizontal
+                    ? 'margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px;'
+                    : 'margin-bottom: 16px;';
 
                 if (props.label) {{
                     const label = document.createElement('label');
                     label.textContent = props.label;
-                    label.style.cssText = 'display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;';
+                    label.style.cssText = isHorizontal
+                        ? `font-size: 14px; font-weight: 500; color: var(--um-color-text); flex-shrink: 0; width: ${{labelWidth}}; padding-top: 10px;`
+                        : 'display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;';
                     wrapper.appendChild(label);
                 }}
 
@@ -714,7 +744,7 @@ def get_frontend_html(title: str) -> str:
                 textarea.dataset.umId = id;
                 textarea.dataset.stateKey = props.stateKey || id;
                 textarea.style.cssText = `
-                    width: 100%; padding: 10px 14px; border: 1px solid var(--um-color-border);
+                    ${{isHorizontal ? 'flex: 1;' : 'width: 100%;'}} padding: 10px 14px; border: 1px solid var(--um-color-border);
                     border-radius: var(--um-radius-md); font-size: 14px; resize: vertical; font-family: inherit;
                     background: var(--um-color-surface); color: var(--um-color-text); outline: none;
                     transition: all var(--um-transition-fast);
@@ -765,18 +795,25 @@ def get_frontend_html(title: str) -> str:
 
             createSelect(id, props) {{
                 const wrapper = document.createElement('div');
-                wrapper.style.cssText = 'margin-bottom: 16px;';
+                const isHorizontal = props.labelPosition === 'left';
+                const labelWidth = props.labelWidth || '120px';
+
+                wrapper.style.cssText = isHorizontal
+                    ? 'margin-bottom: 16px; display: flex; align-items: center; gap: 12px;'
+                    : 'margin-bottom: 16px;';
 
                 if (props.label) {{
                     const label = document.createElement('label');
                     label.textContent = props.label;
-                    label.style.cssText = 'display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;';
+                    label.style.cssText = isHorizontal
+                        ? `font-size: 14px; font-weight: 500; color: var(--um-color-text); flex-shrink: 0; width: ${{labelWidth}};`
+                        : 'display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;';
                     wrapper.appendChild(label);
                 }}
 
                 const select = document.createElement('select');
                 select.style.cssText = `
-                    width: 100%; padding: 10px 14px; border: 1px solid var(--um-color-border);
+                    ${{isHorizontal ? 'flex: 1;' : 'width: 100%;'}} padding: 10px 14px; border: 1px solid var(--um-color-border);
                     border-radius: var(--um-radius-md); font-size: 14px; background: var(--um-color-surface);
                     color: var(--um-color-text); outline: none; cursor: pointer;
                     transition: all var(--um-transition-fast);
@@ -1177,13 +1214,36 @@ def get_frontend_html(title: str) -> str:
                 const table = document.createElement('table');
                 table.style.cssText = 'width: 100%; border-collapse: collapse; font-size: 14px;';
 
+                // Helper to check if a value is numeric (including strings like "$1,234" or "45%")
+                const isNumeric = (val) => {{
+                    if (typeof val === 'number') return true;
+                    if (typeof val !== 'string') return false;
+                    // Remove currency symbols, commas, percent signs, and whitespace
+                    const cleaned = val.replace(/[$€£¥,\s%]/g, '');
+                    return !isNaN(parseFloat(cleaned)) && isFinite(cleaned);
+                }};
+
+                // Detect which columns are numeric by checking first few rows
+                const numericColumns = new Set();
+                if (props.data && props.data.length > 0) {{
+                    const sampleRows = props.data.slice(0, Math.min(5, props.data.length));
+                    const keys = Object.keys(props.data[0]);
+                    keys.forEach((key, colIndex) => {{
+                        const numericCount = sampleRows.filter(row => isNumeric(row[key])).length;
+                        if (numericCount > sampleRows.length / 2) {{
+                            numericColumns.add(colIndex);
+                        }}
+                    }});
+                }}
+
                 if (props.columns) {{
                     const thead = document.createElement('thead');
                     const headerRow = document.createElement('tr');
-                    props.columns.forEach(col => {{
+                    props.columns.forEach((col, colIndex) => {{
                         const th = document.createElement('th');
                         th.textContent = col;
-                        th.style.cssText = 'padding: 12px 16px; text-align: left; font-weight: 600; background: var(--um-color-background-secondary); border-bottom: 2px solid var(--um-color-border); color: var(--um-color-text);';
+                        const align = numericColumns.has(colIndex) ? 'right' : 'left';
+                        th.style.cssText = `padding: 12px 16px; text-align: ${{align}}; font-weight: 600; background: var(--um-color-background-secondary); border-bottom: 2px solid var(--um-color-border); color: var(--um-color-text);`;
                         headerRow.appendChild(th);
                     }});
                     thead.appendChild(headerRow);
@@ -1197,10 +1257,14 @@ def get_frontend_html(title: str) -> str:
                         tr.style.cssText = `transition: background var(--um-transition-fast); ${{i % 2 === 1 ? 'background: var(--um-color-background-secondary);' : ''}}`;
                         tr.onmouseenter = () => {{ tr.style.background = 'var(--um-color-primary-light)'; }};
                         tr.onmouseleave = () => {{ tr.style.background = i % 2 === 1 ? 'var(--um-color-background-secondary)' : ''; }};
-                        Object.values(row).forEach(cell => {{
+                        Object.values(row).forEach((cell, colIndex) => {{
                             const td = document.createElement('td');
                             td.textContent = cell;
-                            td.style.cssText = 'padding: 12px 16px; border-bottom: 1px solid var(--um-color-border);';
+                            const align = numericColumns.has(colIndex) ? 'right' : 'left';
+                            td.style.cssText = `padding: 12px 16px; border-bottom: 1px solid var(--um-color-border); text-align: ${{align}};`;
+                            if (numericColumns.has(colIndex)) {{
+                                td.style.fontVariantNumeric = 'tabular-nums';
+                            }}
                             tr.appendChild(td);
                         }});
                         tbody.appendChild(tr);
@@ -1295,7 +1359,26 @@ def get_frontend_html(title: str) -> str:
                     wrapper.appendChild(inputArea);
                 }}
 
-                setTimeout(() => {{ messages.scrollTop = messages.scrollHeight; }}, 0);
+                // Reliable auto-scroll with smooth behavior
+                const scrollToBottom = () => {{
+                    requestAnimationFrame(() => {{
+                        messages.scrollTo({{ top: messages.scrollHeight, behavior: 'smooth' }});
+                    }});
+                }};
+
+                // Initial scroll
+                scrollToBottom();
+
+                // Watch for new messages and auto-scroll
+                const observer = new MutationObserver((mutations) => {{
+                    const hasNewNodes = mutations.some(m => m.addedNodes.length > 0);
+                    if (hasNewNodes) scrollToBottom();
+                }});
+                observer.observe(messages, {{ childList: true, subtree: true }});
+
+                // Store observer reference for cleanup
+                wrapper._scrollObserver = observer;
+
                 return wrapper;
             }}
 
@@ -1369,9 +1452,30 @@ def get_frontend_html(title: str) -> str:
                 wrapper.style.cssText = `
                     height: ${{props.height || '400px'}}; overflow-y: auto; padding: 16px;
                     border: 1px solid var(--um-color-border); border-radius: var(--um-radius-lg); margin-bottom: 16px;
+                    scroll-behavior: smooth;
                 `;
                 children?.forEach(child => wrapper.appendChild(this.renderComponent(child, false)));
-                setTimeout(() => {{ wrapper.scrollTop = wrapper.scrollHeight; }}, 0);
+
+                // Reliable auto-scroll with smooth behavior
+                const scrollToBottom = () => {{
+                    requestAnimationFrame(() => {{
+                        wrapper.scrollTo({{ top: wrapper.scrollHeight, behavior: 'smooth' }});
+                    }});
+                }};
+
+                // Initial scroll after render
+                scrollToBottom();
+
+                // Watch for new messages and auto-scroll
+                const observer = new MutationObserver((mutations) => {{
+                    const hasNewNodes = mutations.some(m => m.addedNodes.length > 0);
+                    if (hasNewNodes) scrollToBottom();
+                }});
+                observer.observe(wrapper, {{ childList: true, subtree: true }});
+
+                // Store observer reference for cleanup
+                wrapper._scrollObserver = observer;
+
                 return wrapper;
             }}
 
@@ -1415,6 +1519,9 @@ def get_frontend_html(title: str) -> str:
 
                 const overlay = document.createElement('div');
                 overlay.className = 'um-animate-fade';
+                overlay.setAttribute('role', 'dialog');
+                overlay.setAttribute('aria-modal', 'true');
+                if (props.title) overlay.setAttribute('aria-labelledby', `modal-title-${{id}}`);
                 overlay.style.cssText = `
                     position: fixed; inset: 0; background: rgba(0,0,0,0.5);
                     display: flex; align-items: center; justify-content: center; z-index: 1000;
@@ -1423,12 +1530,13 @@ def get_frontend_html(title: str) -> str:
                 overlay.onclick = (e) => {{ if (e.target === overlay && props.closeOnOverlay !== false) this.sendEvent(id, 'close', {{}}); }};
 
                 const modal = document.createElement('div');
-                modal.className = 'um-animate-scale';
+                modal.className = 'um-animate-scale um-modal-content';
+                modal.tabIndex = -1;
                 modal.style.cssText = `
                     background: var(--um-color-surface); border-radius: var(--um-radius-xl);
                     padding: 24px; max-width: ${{props.width || '500px'}}; width: 90%;
                     max-height: 90vh; overflow-y: auto; position: relative;
-                    box-shadow: var(--um-shadow-xl);
+                    box-shadow: var(--um-shadow-xl); outline: none;
                 `;
 
                 if (props.title) {{
@@ -1436,10 +1544,13 @@ def get_frontend_html(title: str) -> str:
                     header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;';
 
                     const title = document.createElement('h3');
+                    title.id = `modal-title-${{id}}`;
                     title.textContent = props.title;
                     title.style.cssText = 'font-size: 18px; font-weight: 600; margin: 0;';
 
                     const closeBtn = document.createElement('button');
+                    closeBtn.className = 'um-modal-close';
+                    closeBtn.setAttribute('aria-label', 'Close modal');
                     closeBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5l-10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
                     closeBtn.style.cssText = `
                         background: none; border: none; cursor: pointer; padding: 4px;
@@ -1458,6 +1569,35 @@ def get_frontend_html(title: str) -> str:
                 const body = document.createElement('div');
                 children?.forEach(child => body.appendChild(this.renderComponent(child, false)));
                 modal.appendChild(body);
+
+                // Focus trap implementation
+                const focusTrap = (e) => {{
+                    if (e.key === 'Escape') {{
+                        this.sendEvent(id, 'close', {{}});
+                        return;
+                    }}
+                    if (e.key !== 'Tab') return;
+
+                    const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                    const first = focusable[0];
+                    const last = focusable[focusable.length - 1];
+
+                    if (e.shiftKey && document.activeElement === first) {{
+                        e.preventDefault();
+                        last?.focus();
+                    }} else if (!e.shiftKey && document.activeElement === last) {{
+                        e.preventDefault();
+                        first?.focus();
+                    }}
+                }};
+
+                overlay.addEventListener('keydown', focusTrap);
+
+                // Focus the modal on open
+                requestAnimationFrame(() => {{
+                    const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                    (firstFocusable || modal).focus();
+                }});
 
                 overlay.appendChild(modal);
                 return overlay;
