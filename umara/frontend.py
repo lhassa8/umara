@@ -596,6 +596,8 @@ def get_frontend_html(title: str) -> str:
                         return this.createHtml(props);
                     case 'iframe':
                         return this.createIframe(props);
+                    case 'fileuploader':
+                        return this.createFileUploader(id, props);
                     default:
                         return this.createGeneric(type, props, children, animate);
                 }}
@@ -2123,6 +2125,207 @@ def get_frontend_html(title: str) -> str:
                 iframe.setAttribute('loading', 'lazy');
 
                 wrapper.appendChild(iframe);
+                return wrapper;
+            }}
+
+            createFileUploader(id, props) {{
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'margin-bottom: 16px;';
+
+                if (props.label) {{
+                    const label = document.createElement('label');
+                    label.textContent = props.label;
+                    label.style.cssText = 'display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; color: var(--um-color-text);';
+                    wrapper.appendChild(label);
+                }}
+
+                const dropzone = document.createElement('div');
+                dropzone.className = 'um-dropzone';
+                dropzone.style.cssText = `
+                    border: 2px dashed var(--um-color-border);
+                    border-radius: var(--um-radius-lg);
+                    padding: 40px 24px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all var(--um-duration-fast) var(--um-easing-default);
+                    background: var(--um-color-background-secondary);
+                    position: relative;
+                `;
+
+                const icon = document.createElement('div');
+                icon.innerHTML = `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 16px; color: var(--um-color-text-tertiary);">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>`;
+                dropzone.appendChild(icon);
+
+                const mainText = document.createElement('p');
+                mainText.style.cssText = 'font-size: 15px; font-weight: 500; color: var(--um-color-text); margin: 0 0 4px 0;';
+                mainText.innerHTML = '<span style="color: var(--um-color-primary); cursor: pointer;">Click to upload</span> or drag and drop';
+                dropzone.appendChild(mainText);
+
+                const subText = document.createElement('p');
+                subText.style.cssText = 'font-size: 13px; color: var(--um-color-text-tertiary); margin: 0;';
+                const acceptText = props.accept ? props.accept.join(', ') : 'Any file type';
+                subText.textContent = acceptText;
+                dropzone.appendChild(subText);
+
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.multiple = props.multiple || false;
+                input.disabled = props.disabled || false;
+                if (props.accept) input.accept = props.accept.join(',');
+                input.style.cssText = 'position: absolute; inset: 0; opacity: 0; cursor: pointer;';
+
+                const fileList = document.createElement('div');
+                fileList.className = 'um-file-list';
+                fileList.style.cssText = 'margin-top: 12px; display: none;';
+
+                const updateFileList = (files) => {{
+                    fileList.innerHTML = '';
+                    if (files && files.length > 0) {{
+                        fileList.style.display = 'block';
+                        Array.from(files).forEach((file, index) => {{
+                            const fileItem = document.createElement('div');
+                            fileItem.style.cssText = `
+                                display: flex; align-items: center; justify-content: space-between;
+                                padding: 10px 14px; background: var(--um-color-surface);
+                                border: 1px solid var(--um-color-border); border-radius: var(--um-radius-md);
+                                margin-bottom: 8px; transition: all var(--um-duration-fast);
+                            `;
+
+                            const fileInfo = document.createElement('div');
+                            fileInfo.style.cssText = 'display: flex; align-items: center; gap: 10px; min-width: 0;';
+
+                            const fileIcon = document.createElement('div');
+                            fileIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--um-color-primary); flex-shrink: 0;">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>`;
+                            fileInfo.appendChild(fileIcon);
+
+                            const fileDetails = document.createElement('div');
+                            fileDetails.style.cssText = 'min-width: 0;';
+
+                            const fileName = document.createElement('p');
+                            fileName.textContent = file.name;
+                            fileName.style.cssText = 'font-size: 14px; font-weight: 500; color: var(--um-color-text); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+                            fileDetails.appendChild(fileName);
+
+                            const fileSize = document.createElement('p');
+                            const sizeKB = (file.size / 1024).toFixed(1);
+                            const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                            fileSize.textContent = file.size > 1024 * 1024 ? `${{sizeMB}} MB` : `${{sizeKB}} KB`;
+                            fileSize.style.cssText = 'font-size: 12px; color: var(--um-color-text-tertiary); margin: 2px 0 0 0;';
+                            fileDetails.appendChild(fileSize);
+
+                            fileInfo.appendChild(fileDetails);
+                            fileItem.appendChild(fileInfo);
+
+                            const removeBtn = document.createElement('button');
+                            removeBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>`;
+                            removeBtn.style.cssText = `
+                                background: none; border: none; cursor: pointer; padding: 6px;
+                                color: var(--um-color-text-tertiary); border-radius: var(--um-radius-sm);
+                                transition: all var(--um-duration-fast); flex-shrink: 0;
+                            `;
+                            removeBtn.onmouseenter = () => {{ removeBtn.style.color = 'var(--um-color-error)'; removeBtn.style.background = 'var(--um-color-error-light)'; }};
+                            removeBtn.onmouseleave = () => {{ removeBtn.style.color = 'var(--um-color-text-tertiary)'; removeBtn.style.background = 'none'; }};
+                            removeBtn.onclick = (e) => {{
+                                e.stopPropagation();
+                                const dt = new DataTransfer();
+                                Array.from(input.files).forEach((f, i) => {{ if (i !== index) dt.items.add(f); }});
+                                input.files = dt.files;
+                                updateFileList(input.files);
+                                sendFiles(input.files);
+                            }};
+                            fileItem.appendChild(removeBtn);
+
+                            fileList.appendChild(fileItem);
+                        }});
+                    }} else {{
+                        fileList.style.display = 'none';
+                    }}
+                }};
+
+                const sendFiles = (files) => {{
+                    if (files && files.length > 0) {{
+                        const fileData = Array.from(files).map(f => ({{
+                            name: f.name,
+                            size: f.size,
+                            type: f.type,
+                            lastModified: f.lastModified
+                        }}));
+                        this.sendStateUpdate(props.stateKey || id, props.multiple ? fileData : fileData[0]);
+                    }} else {{
+                        this.sendStateUpdate(props.stateKey || id, null);
+                    }}
+                }};
+
+                input.onchange = () => {{
+                    updateFileList(input.files);
+                    sendFiles(input.files);
+                }};
+
+                // Drag and drop handlers
+                dropzone.ondragover = (e) => {{
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.style.borderColor = 'var(--um-color-primary)';
+                    dropzone.style.background = 'var(--um-color-primary-light)';
+                }};
+
+                dropzone.ondragleave = (e) => {{
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.style.borderColor = 'var(--um-color-border)';
+                    dropzone.style.background = 'var(--um-color-background-secondary)';
+                }};
+
+                dropzone.ondrop = (e) => {{
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.style.borderColor = 'var(--um-color-border)';
+                    dropzone.style.background = 'var(--um-color-background-secondary)';
+
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {{
+                        if (props.multiple) {{
+                            input.files = files;
+                        }} else {{
+                            const dt = new DataTransfer();
+                            dt.items.add(files[0]);
+                            input.files = dt.files;
+                        }}
+                        updateFileList(input.files);
+                        sendFiles(input.files);
+                    }}
+                }};
+
+                // Hover effects
+                dropzone.onmouseenter = () => {{
+                    if (!props.disabled) {{
+                        dropzone.style.borderColor = 'var(--um-color-primary)';
+                        dropzone.style.background = 'var(--um-color-background-tertiary)';
+                    }}
+                }};
+                dropzone.onmouseleave = () => {{
+                    dropzone.style.borderColor = 'var(--um-color-border)';
+                    dropzone.style.background = 'var(--um-color-background-secondary)';
+                }};
+
+                if (props.disabled) {{
+                    dropzone.style.opacity = '0.6';
+                    dropzone.style.cursor = 'not-allowed';
+                }}
+
+                dropzone.appendChild(input);
+                wrapper.appendChild(dropzone);
+                wrapper.appendChild(fileList);
+
                 return wrapper;
             }}
 
