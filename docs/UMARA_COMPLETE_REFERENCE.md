@@ -2,7 +2,7 @@
 
 > **A beautiful, modern Python framework for creating web UIs without HTML, CSS, or JavaScript.**
 
-Version: 0.4.8
+Version: 0.4.9
 
 ---
 
@@ -209,16 +209,27 @@ um.title("Welcome to My App")
 
 ### header()
 
-Display a section header (h2).
+Display a section header.
 
 ```python
-um.header(content: str, *, style: Style | None = None) -> None
+um.header(
+    content: str,
+    *,
+    level: int = 1,  # 1-6 for h1-h6
+    style: Style | None = None
+) -> None
 ```
 
-**Example:**
+**Parameters:**
+- `content`: The header text
+- `level`: Header level 1-6 (h1-h6)
+
+**Examples:**
 
 ```python
-um.header("Section Title")
+um.header("Main Section")  # h1 by default
+um.header("Subsection", level=2)  # h2
+um.header("Sub-subsection", level=3)  # h3
 ```
 
 ### subheader()
@@ -1029,6 +1040,172 @@ size = um.select_slider(
 um.text(f"Selected size: {size}")
 ```
 
+### search_input()
+
+Create a search input with debounce.
+
+```python
+um.search_input(
+    placeholder: str = "Search...",
+    *,
+    key: str | None = None,
+    value: str = "",
+    debounce: int = 300,  # milliseconds
+    style: Style | None = None
+) -> str
+```
+
+**Parameters:**
+- `placeholder`: Placeholder text
+- `key`: Unique identifier
+- `value`: Default value
+- `debounce`: Debounce delay in milliseconds
+
+**Example:**
+
+```python
+query = um.search_input("Search products...", key="product_search")
+
+if query:
+    results = search_products(query)
+    um.dataframe(results)
+```
+
+### tag_input()
+
+Create a tag/chip input with optional suggestions.
+
+```python
+um.tag_input(
+    label: str = "",
+    *,
+    key: str | None = None,
+    value: list[str] | None = None,
+    placeholder: str = "Add tag...",
+    max_tags: int | None = None,
+    suggestions: list[str] | None = None,
+    style: Style | None = None
+) -> list[str]
+```
+
+**Parameters:**
+- `label`: Label text
+- `key`: Unique identifier
+- `value`: Default tags
+- `placeholder`: Placeholder text
+- `max_tags`: Maximum number of tags allowed
+- `suggestions`: List of suggested tags
+
+**Example:**
+
+```python
+tags = um.tag_input(
+    "Tags",
+    suggestions=["Python", "JavaScript", "Rust"],
+    max_tags=5,
+    key="skill_tags"
+)
+um.text(f"Selected tags: {', '.join(tags)}")
+```
+
+### segmented_control()
+
+Create a segmented button control.
+
+```python
+um.segmented_control(
+    label: str,
+    options: list[str],
+    *,
+    default: str | None = None,
+    key: str | None = None,
+    disabled: bool = False,
+    style: Style | None = None
+) -> str | None
+```
+
+**Parameters:**
+- `label`: Label text
+- `options`: List of options
+- `default`: Default selected option
+- `key`: Unique identifier
+- `disabled`: Whether disabled
+
+**Example:**
+
+```python
+view = um.segmented_control(
+    "View",
+    ["List", "Grid", "Cards"],
+    default="Grid",
+    key="view_mode"
+)
+```
+
+### feedback()
+
+Create a thumbs up/down feedback widget.
+
+```python
+um.feedback(
+    sentiment_mapping: dict[int, str] | None = None,
+    *,
+    key: str | None = None,
+    disabled: bool = False,
+    style: Style | None = None
+) -> int | None
+```
+
+**Parameters:**
+- `sentiment_mapping`: Mapping of scores to labels (default: `{0: "Thumbs down", 1: "Thumbs up"}`)
+- `key`: Unique identifier
+- `disabled`: Whether disabled
+
+**Example:**
+
+```python
+feedback = um.feedback(key="response_feedback")
+
+if feedback is not None:
+    if feedback == 1:
+        um.success("Thanks for the positive feedback!")
+    else:
+        um.info("We'll work to improve.")
+```
+
+### camera_input() [Experimental]
+
+Capture image from camera.
+
+```python
+um.camera_input(
+    label: str,
+    *,
+    key: str | None = None,
+    disabled: bool = False,
+    label_visibility: str = "visible",
+    style: Style | None = None
+) -> bytes | None
+```
+
+**Returns:** Image bytes or None.
+
+### audio_input() [Experimental]
+
+Record audio.
+
+```python
+um.audio_input(
+    label: str,
+    *,
+    key: str | None = None,
+    disabled: bool = False,
+    style: Style | None = None
+) -> bytes | None
+```
+
+**Returns:** Audio bytes or None.
+
 ### file_uploader()
 
 Create a file upload widget.
@@ -1130,6 +1307,34 @@ um.download_button(
     generate_csv,
     file_name="data.csv"
 )
+```
+
+### link_button()
+
+Create a button that opens a URL.
+
+```python
+um.link_button(
+    label: str,
+    url: str,
+    *,
+    disabled: bool = False,
+    variant: str = "secondary",  # "primary", "secondary", "outline", "ghost"
+    style: Style | None = None
+) -> None
+```
+
+**Parameters:**
+- `label`: Button text
+- `url`: URL to open
+- `disabled`: Whether button is disabled
+- `variant`: Button style variant
+
+**Example:**
+
+```python
+um.link_button("View Documentation", "https://example.com/docs")
+um.link_button("GitHub", "https://github.com/user/repo", variant="outline")
 ```
 
 ---
@@ -1317,6 +1522,147 @@ with um.expander("Click to see more", expanded=False):
     um.code("print('Hello!')")
 ```
 
+### accordion()
+
+Create multiple collapsible sections.
+
+```python
+with um.accordion(
+    items: list[str],
+    *,
+    allow_multiple: bool = False,
+    key: str | None = None,
+    style: Style | None = None
+):
+    # Accordion content
+```
+
+**Parameters:**
+- `items`: List of section titles
+- `allow_multiple`: Allow multiple sections to be open
+- `key`: Unique identifier
+
+**Example:**
+
+```python
+with um.accordion(["FAQ 1", "FAQ 2", "FAQ 3"]):
+    um.text("Answer to FAQ 1")
+    um.divider()
+    um.text("Answer to FAQ 2")
+    um.divider()
+    um.text("Answer to FAQ 3")
+```
+
+### dialog()
+
+Create a dialog box.
+
+```python
+with um.dialog(
+    title: str,
+    *,
+    width: str = "medium",  # "small", "medium", "large"
+    style: Style | None = None
+):
+    # Dialog content
+```
+
+**Parameters:**
+- `title`: Dialog title
+- `width`: Dialog width ("small", "medium", "large")
+
+**Example:**
+
+```python
+with um.dialog("Confirm Action", width="small"):
+    um.text("Are you sure you want to proceed?")
+    if um.button("Confirm"):
+        um.success("Confirmed!")
+```
+
+### popover()
+
+Create a click-triggered overlay.
+
+```python
+with um.popover(
+    trigger_label: str,
+    *,
+    position: str = "bottom",  # "top", "bottom", "left", "right"
+    key: str | None = None,
+    style: Style | None = None
+):
+    # Popover content
+```
+
+**Parameters:**
+- `trigger_label`: Text for the trigger button
+- `position`: Popover position relative to trigger
+- `key`: Unique identifier
+
+**Example:**
+
+```python
+with um.popover("Settings", position="bottom"):
+    um.toggle("Dark Mode", key="dark_mode")
+    um.toggle("Notifications", key="notifications")
+```
+
+### tooltip()
+
+Display text with a hover tooltip.
+
+```python
+um.tooltip(
+    content: str,
+    *,
+    text: str,
+    position: str = "top",  # "top", "bottom", "left", "right"
+    style: Style | None = None
+) -> None
+```
+
+**Parameters:**
+- `content`: The main text to display
+- `text`: Tooltip text shown on hover
+- `position`: Tooltip position
+
+**Example:**
+
+```python
+um.tooltip("Hover me", text="This is additional information")
+```
+
+### status()
+
+Display a status indicator with expandable details.
+
+```python
+with um.status(
+    label: str,
+    *,
+    expanded: bool = True,
+    state: str = "running",  # "running", "complete", "error"
+    style: Style | None = None
+) as status:
+    # Status content
+    status.update(label="Done!", state="complete")
+```
+
+**Parameters:**
+- `label`: Status label
+- `expanded`: Whether expanded by default
+- `state`: Status state ("running", "complete", "error")
+
+**Example:**
+
+```python
+with um.status("Processing...", state="running") as status:
+    um.text("Step 1: Loading data")
+    # Do work...
+    status.update(label="Complete!", state="complete")
+```
+
 ### sidebar()
 
 Create a sidebar layout.
@@ -1377,6 +1723,32 @@ with um.modal("Confirm Action", key="my_modal"):
                 um.close_modal("my_modal")
 ```
 
+### open_modal() / close_modal()
+
+Control modal visibility programmatically.
+
+```python
+um.open_modal(key: str) -> None
+um.close_modal(key: str) -> None
+```
+
+**Parameters:**
+- `key`: The key of the modal to open/close
+
+**Example:**
+
+```python
+# Open modal on button click
+if um.button("Show Details"):
+    um.open_modal("details_modal")
+
+with um.modal("Details", key="details_modal"):
+    um.text("Here are the details...")
+
+    if um.button("Close"):
+        um.close_modal("details_modal")
+```
+
 ### form()
 
 Create a form container with batched submission.
@@ -1385,13 +1757,19 @@ Create a form container with batched submission.
 with um.form(
     key: str,
     *,
-    border: bool = False,
+    clear_on_submit: bool = False,
+    border: bool = True,
     style: Style | None = None
 ):
     # Form fields
     if um.form_submit_button("Submit"):
         # Handle submission
 ```
+
+**Parameters:**
+- `key`: Unique form identifier (required)
+- `clear_on_submit`: Clear form values after submission
+- `border`: Show border around form
 
 **Example:**
 
@@ -1408,6 +1786,27 @@ with um.form("contact_form", border=True):
         else:
             um.error("Please fill all fields")
 ```
+
+### form_submit_button()
+
+Create a submit button for forms.
+
+```python
+um.form_submit_button(
+    label: str = "Submit",
+    *,
+    disabled: bool = False,
+    variant: str = "primary",
+    style: Style | None = None
+) -> bool  # Returns True if form submitted
+```
+
+**Parameters:**
+- `label`: Button text
+- `disabled`: Whether button is disabled
+- `variant`: Button style variant
+
+**Note:** Must be used inside a `um.form()` context. Using a regular `um.button()` inside a form will not trigger form submission.
 
 ---
 
@@ -1582,16 +1981,105 @@ um.stat_card(
     title: str,
     value: str,
     *,
-    trend: float | None = None,
+    description: str | None = None,
     icon: str | None = None,
+    trend: float | None = None,
+    trend_label: str | None = None,
     style: Style | None = None
 ) -> None
 ```
 
+**Parameters:**
+- `title`: Card title
+- `value`: Main value to display
+- `description`: Additional description text
+- `icon`: Icon name
+- `trend`: Trend percentage (positive/negative)
+- `trend_label`: Label for trend (e.g., "vs last month")
+
 **Example:**
 
 ```python
-um.stat_card("Total Sales", "$12,450", trend=15.2, icon="TrendingUp")
+um.stat_card(
+    "Total Sales",
+    "$12,450",
+    description="Revenue this quarter",
+    trend=15.2,
+    trend_label="vs last quarter",
+    icon="TrendingUp"
+)
+```
+
+### data_editor()
+
+Display an editable table.
+
+```python
+um.data_editor(
+    data: list[dict] | DataFrame,
+    *,
+    num_rows: str = "fixed",  # "fixed" or "dynamic"
+    disabled: bool | list[str] = False,
+    column_config: dict | None = None,
+    hide_index: bool = True,
+    key: str | None = None,
+    height: str | None = None,
+    style: Style | None = None
+) -> list[dict] | DataFrame
+```
+
+**Parameters:**
+- `data`: Data to edit (list of dicts or DataFrame)
+- `num_rows`: Whether rows can be added/deleted
+- `disabled`: Disable editing (True for all, list for specific columns)
+- `column_config`: Column configuration dict
+- `hide_index`: Whether to hide row index
+- `key`: Unique identifier
+- `height`: Table height
+
+**Returns:** Edited data in same format as input.
+
+**Example:**
+
+```python
+data = [
+    {"Name": "Alice", "Age": 25, "Active": True},
+    {"Name": "Bob", "Age": 30, "Active": False},
+]
+
+edited = um.data_editor(data, num_rows="dynamic", key="user_table")
+
+if um.button("Save"):
+    save_data(edited)
+```
+
+### loading_skeleton()
+
+Display a loading skeleton placeholder.
+
+```python
+um.loading_skeleton(
+    *,
+    variant: str = "text",  # "text", "card", "avatar", "image"
+    lines: int = 3,
+    height: str | None = None,
+    style: Style | None = None
+) -> None
+```
+
+**Parameters:**
+- `variant`: Type of skeleton
+- `lines`: Number of lines for text variant
+- `height`: Custom height
+
+**Example:**
+
+```python
+if loading:
+    um.loading_skeleton(variant="card")
+else:
+    with um.card():
+        um.text("Content loaded!")
 ```
 
 ### empty_state()
@@ -1660,16 +2148,22 @@ um.badge(
     text: str,
     *,
     variant: str = "default",  # "default", "primary", "success", "warning", "error", "info"
+    size: str = "md",  # "sm", "md", "lg"
     style: Style | None = None
 ) -> None
 ```
+
+**Parameters:**
+- `text`: Badge text
+- `variant`: Color variant
+- `size`: Badge size ("sm", "md", "lg")
 
 **Example:**
 
 ```python
 um.badge("New", variant="success")
-um.badge("Beta", variant="warning")
-um.badge("Deprecated", variant="error")
+um.badge("Beta", variant="warning", size="sm")
+um.badge("Deprecated", variant="error", size="lg")
 ```
 
 ### avatar()
@@ -1678,22 +2172,63 @@ Display a user avatar.
 
 ```python
 um.avatar(
-    *,
-    name: str = "",  # Generates initials
     src: str | None = None,  # Image URL
+    *,
+    name: str | None = None,  # Generates initials as fallback
     size: str = "md",  # "sm", "md", "lg", "xl"
     style: Style | None = None
 ) -> None
 ```
 
+**Parameters:**
+- `src`: Image URL
+- `name`: Name for generating initials fallback
+- `size`: Avatar size ("sm", "md", "lg", "xl")
+
 **Examples:**
 
 ```python
+# With image
+um.avatar("https://example.com/avatar.jpg", size="lg")
+
 # With initials
 um.avatar(name="John Doe")  # Shows "JD"
 
-# With image
-um.avatar(src="https://example.com/avatar.jpg", size="lg")
+# Image with initials fallback
+um.avatar("https://example.com/avatar.jpg", name="John Doe")
+```
+
+### avatar_group()
+
+Display multiple avatars in an overlapping group.
+
+```python
+um.avatar_group(
+    avatars: list[dict],  # [{"src": str, "name": str}, ...]
+    *,
+    max_display: int = 4,
+    size: str = "md",  # "sm", "md", "lg", "xl"
+    style: Style | None = None
+) -> None
+```
+
+**Parameters:**
+- `avatars`: List of avatar dicts with `src` and/or `name` keys
+- `max_display`: Maximum avatars to show before "+N" overflow
+- `size`: Avatar size
+
+**Example:**
+
+```python
+team = [
+    {"name": "Alice", "src": "alice.jpg"},
+    {"name": "Bob", "src": "bob.jpg"},
+    {"name": "Carol"},
+    {"name": "Dave"},
+    {"name": "Eve"},
+]
+
+um.avatar_group(team, max_display=3)  # Shows 3 + "+2"
 ```
 
 ### timeline()
@@ -2030,6 +2565,45 @@ start = (page - 1) * 10
 um.dataframe(all_data[start:start + 10])
 ```
 
+### nav_link()
+
+Display a navigation link (typically in sidebar).
+
+```python
+um.nav_link(
+    label: str,
+    *,
+    href: str | None = None,
+    icon: str | None = None,
+    active: bool = False,
+    key: str | None = None,
+    style: Style | None = None
+) -> bool  # Returns True if clicked
+```
+
+**Parameters:**
+- `label`: Link text
+- `href`: URL (if external) or None for click handling
+- `icon`: Icon name
+- `active`: Whether this is the active/current link
+- `key`: Unique identifier
+
+**Example:**
+
+```python
+with um.sidebar():
+    um.header("Navigation")
+
+    if um.nav_link("Home", icon="Home", active=page=="home"):
+        um.session_state.page = "home"
+
+    if um.nav_link("Settings", icon="Settings", active=page=="settings"):
+        um.session_state.page = "settings"
+
+    # External link
+    um.nav_link("Documentation", href="https://example.com/docs", icon="Book")
+```
+
 ---
 
 ## Chat Components
@@ -2129,6 +2703,144 @@ if new_message:
     # Handle new message
     messages.append({"role": "user", "content": new_message})
     # Add AI response...
+```
+
+---
+
+## Utility Components
+
+### write()
+
+Smart output that automatically handles different data types.
+
+```python
+um.write(*args, **kwargs) -> None
+```
+
+Automatically displays content based on type:
+- Strings: As text
+- Numbers: As formatted text
+- Dicts/Lists: As JSON
+- DataFrames: As tables
+
+**Example:**
+
+```python
+um.write("Hello, World!")
+um.write(42)
+um.write({"name": "Alice", "age": 30})
+um.write(my_dataframe)
+```
+
+### write_stream()
+
+Display streaming content (for AI responses).
+
+```python
+um.write_stream(
+    stream: Any,
+    *,
+    key: str | None = None,
+    style: Style | None = None
+) -> str  # Returns complete concatenated response
+```
+
+**Example:**
+
+```python
+# With OpenAI
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=messages,
+    stream=True
+)
+
+full_response = um.write_stream(response)
+```
+
+### echo()
+
+Display code and execute it.
+
+```python
+with um.echo(code_location: str = "above"):  # "above" or "below"
+    # Code here is displayed AND executed
+```
+
+**Example:**
+
+```python
+with um.echo():
+    x = 10
+    y = 20
+    um.text(f"Sum: {x + y}")
+```
+
+### html()
+
+Render raw HTML content.
+
+```python
+um.html(content: str, *, style: Style | None = None) -> None
+```
+
+**Warning:** Only use with trusted content to avoid XSS vulnerabilities.
+
+**Example:**
+
+```python
+um.html("<h1 style='color: red;'>Custom HTML</h1>")
+```
+
+### iframe()
+
+Embed external content.
+
+```python
+um.iframe(
+    src: str,
+    *,
+    height: str = "400px",
+    width: str = "100%",
+    title: str = "Embedded content",
+    style: Style | None = None
+) -> None
+```
+
+**Example:**
+
+```python
+um.iframe("https://example.com", height="600px")
+```
+
+### logo()
+
+Display app logo (typically in sidebar).
+
+```python
+um.logo(
+    image: str,  # Image URL or path
+    *,
+    link: str | None = None,
+    icon_image: str | None = None,
+    style: Style | None = None
+) -> None
+```
+
+**Parameters:**
+- `image`: Main logo image URL
+- `link`: Optional link when logo is clicked
+- `icon_image`: Smaller icon version for collapsed sidebar
+
+**Example:**
+
+```python
+with um.sidebar():
+    um.logo(
+        "https://example.com/logo.png",
+        link="https://example.com",
+        icon_image="https://example.com/icon.png"
+    )
 ```
 
 ---
