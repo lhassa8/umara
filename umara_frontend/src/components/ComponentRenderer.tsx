@@ -15,7 +15,7 @@ import { Alert } from './Alert'
 import { Metric, Progress, Spinner } from './DataDisplay'
 import { Divider, Spacer } from './Divider'
 import { DataTable } from './DataTable'
-import { Image, Video, Audio } from './Media'
+import { Image, Video, Audio, LeafletMap } from './Media'
 
 // CopyButton component with its own state
 function CopyButton({ text, label, successLabel, style }: {
@@ -521,7 +521,6 @@ export function ComponentRenderer({
       )
 
     case 'dataframe':
-    case 'table':
       return (
         <DataTable
           data={props.data as Record<string, unknown>[]}
@@ -529,6 +528,41 @@ export function ComponentRenderer({
           height={props.height as string}
           style={customStyle}
         />
+      )
+
+    case 'table':
+      // Table component accepts 2D array (list of lists) where first row is headers
+      const tableData = props.data as unknown[][]
+      if (!tableData || !Array.isArray(tableData) || tableData.length === 0) {
+        return <div className="text-sm text-text-tertiary mb-4">No data to display</div>
+      }
+      const headers = tableData[0] as string[]
+      const rows = tableData.slice(1)
+      return (
+        <div style={customStyle} className="mb-4 overflow-hidden rounded-lg border border-border">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-background-secondary border-b border-border">
+                {headers.map((header, i) => (
+                  <th key={i} className="px-4 py-3 text-left font-medium text-text">
+                    {String(header)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, rowIdx) => (
+                <tr key={rowIdx} className="border-b border-border last:border-b-0 hover:bg-surface-hover">
+                  {(row as unknown[]).map((cell, cellIdx) => (
+                    <td key={cellIdx} className="px-4 py-3 text-text">
+                      {String(cell)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )
 
     // Utility
@@ -1978,6 +2012,276 @@ export function ComponentRenderer({
               className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-lg text-text focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
+        </div>
+      )
+
+    // LaTeX component - renders math using KaTeX
+    case 'latex':
+      const latexContent = props.content as string
+      let renderedLatex = ''
+      try {
+        if (typeof window !== 'undefined' && (window as any).katex) {
+          renderedLatex = (window as any).katex.renderToString(latexContent, {
+            throwOnError: false,
+            displayMode: true
+          })
+        }
+      } catch (e) {
+        renderedLatex = ''
+      }
+      return renderedLatex ? (
+        <div
+          style={customStyle}
+          className="mb-4 p-4 bg-surface-hover rounded-lg overflow-x-auto text-text"
+          dangerouslySetInnerHTML={{ __html: renderedLatex }}
+        />
+      ) : (
+        <div style={customStyle} className="mb-4 p-4 bg-surface-hover rounded-lg font-mono text-sm">
+          <code className="text-text">{latexContent}</code>
+        </div>
+      )
+
+    // Exception display
+    case 'exception':
+      return (
+        <div style={customStyle} className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="font-semibold text-red-700 dark:text-red-400">{props.exception_type as string}</span>
+          </div>
+          <p className="text-red-600 dark:text-red-300 mb-2">{props.message as string}</p>
+          {props.traceback ? (
+            <pre className="text-xs text-red-500 dark:text-red-400 overflow-auto p-2 bg-red-100 dark:bg-red-900/40 rounded">
+              {String(props.traceback)}
+            </pre>
+          ) : null}
+        </div>
+      )
+
+    // Chat message
+    case 'chat_message':
+      const isUser = (props.role as string) === 'user'
+      return (
+        <div style={customStyle} className={`mb-3 flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+          <div className={`max-w-[80%] p-3 rounded-2xl ${
+            isUser
+              ? 'bg-primary text-white rounded-br-md'
+              : 'bg-surface-hover text-text rounded-bl-md'
+          }`}>
+            {props.name ? (
+              <div className={`text-xs font-medium mb-1 ${isUser ? 'text-primary-foreground/70' : 'text-text-secondary'}`}>
+                {String(props.name)}
+              </div>
+            ) : null}
+            <div className="text-sm">{props.content as string}</div>
+            {props.timestamp ? (
+              <div className={`text-xs mt-1 ${isUser ? 'text-primary-foreground/60' : 'text-text-secondary'}`}>
+                {String(props.timestamp)}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )
+
+    // Chat container
+    case 'chat_container':
+      return (
+        <div
+          style={{ height: props.height as string || '500px', ...customStyle }}
+          className="mb-4 overflow-y-auto border border-border rounded-lg p-4 bg-surface"
+        >
+          {renderChildren()}
+        </div>
+      )
+
+    // Chat input - uses uncontrolled input with ref for better UX
+    case 'chat_input':
+      const chatInputRef = React.useRef<HTMLInputElement>(null)
+      const handleChatInputSubmit = () => {
+        const input = chatInputRef.current
+        if (input && input.value.trim()) {
+          onStateUpdate(props.stateKey as string || id, input.value.trim())
+          input.value = ''
+        }
+      }
+      return (
+        <div style={customStyle} className="mb-4 flex gap-2">
+          <input
+            ref={chatInputRef}
+            type="text"
+            defaultValue=""
+            placeholder={props.placeholder as string || 'Type a message...'}
+            disabled={props.disabled as boolean}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleChatInputSubmit()
+              }
+            }}
+            className="flex-1 px-4 py-2.5 bg-surface border border-border rounded-lg text-text focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          />
+          <button
+            className="px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            onClick={handleChatInputSubmit}
+          >
+            Send
+          </button>
+        </div>
+      )
+
+    // Full chat interface
+    case 'chat':
+      const chatRef = React.useRef<HTMLInputElement>(null)
+      const handleChatSubmit = () => {
+        const input = chatRef.current
+        if (input && input.value.trim()) {
+          onStateUpdate(props.stateKey as string || id, input.value.trim())
+          input.value = ''
+        }
+      }
+      return (
+        <div style={customStyle} className="mb-4 border border-border rounded-lg overflow-hidden">
+          <div style={{ height: props.height as string || '500px' }} className="overflow-y-auto p-4 bg-surface">
+            {renderChildren()}
+          </div>
+          {(props.show_input !== false) && (
+            <div className="p-3 border-t border-border bg-surface-hover">
+              <div className="flex gap-2">
+                <input
+                  ref={chatRef}
+                  type="text"
+                  defaultValue=""
+                  placeholder={props.input_placeholder as string || 'Type a message...'}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleChatSubmit()
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-surface border border-border rounded-lg text-text"
+                />
+                <button
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  onClick={handleChatSubmit}
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )
+
+    // Iframe
+    case 'iframe':
+      return (
+        <div style={customStyle} className="mb-4">
+          <iframe
+            src={props.src as string}
+            width={props.width as string || '100%'}
+            height={props.height as string || '400px'}
+            title={props.title as string || 'Embedded content'}
+            className="border border-border rounded-lg"
+            sandbox="allow-scripts allow-same-origin"
+          />
+        </div>
+      )
+
+    // File uploader
+    case 'file_uploader':
+      return (
+        <div style={customStyle} className="mb-4">
+          {props.label ? (
+            <label className="block text-sm font-medium text-text mb-1.5">{String(props.label)}</label>
+          ) : null}
+          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
+            <svg className="w-10 h-10 mx-auto text-text-secondary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <p className="text-text-secondary text-sm">Drop files here or click to upload</p>
+            <input type="file" className="hidden" />
+          </div>
+        </div>
+      )
+
+    // Camera input
+    case 'camera_input':
+      return (
+        <div style={customStyle} className="mb-4">
+          {props.label ? (
+            <label className="block text-sm font-medium text-text mb-1.5">{String(props.label)}</label>
+          ) : null}
+          <div className="border border-border rounded-lg p-4 text-center bg-surface">
+            <svg className="w-12 h-12 mx-auto text-text-secondary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <button className="px-4 py-2 bg-primary text-white rounded-lg text-sm">Take Photo</button>
+          </div>
+        </div>
+      )
+
+    // Audio input
+    case 'audio_input':
+      return (
+        <div style={customStyle} className="mb-4">
+          {props.label ? (
+            <label className="block text-sm font-medium text-text mb-1.5">{String(props.label)}</label>
+          ) : null}
+          <div className="border border-border rounded-lg p-4 text-center bg-surface">
+            <svg className="w-12 h-12 mx-auto text-text-secondary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+            <button className="px-4 py-2 bg-primary text-white rounded-lg text-sm">Record Audio</button>
+          </div>
+        </div>
+      )
+
+    // Map component
+    case 'map':
+      return (
+        <LeafletMap
+          data={props.data as Array<Record<string, unknown>> || []}
+          latitude={props.latitude as string || 'lat'}
+          longitude={props.longitude as string || 'lon'}
+          zoom={props.zoom as number || 4}
+          height={props.height as string || '400px'}
+          style={customStyle}
+        />
+      )
+
+    // Plotly chart
+    case 'plotly_chart':
+      return (
+        <div style={customStyle} className="mb-4 border border-border rounded-lg p-4 bg-surface min-h-[300px] flex items-center justify-center">
+          <div className="text-center text-text-secondary">
+            <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <p className="text-sm">Plotly Chart</p>
+          </div>
+        </div>
+      )
+
+    // Write stream
+    case 'write_stream':
+      return (
+        <div style={customStyle} className="mb-4">
+          <span className="text-text">{props.content as string}</span>
+          <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-0.5"></span>
+        </div>
+      )
+
+    // Echo (code display)
+    case 'echo':
+      return (
+        <div style={customStyle} className="mb-4 space-y-2">
+          <pre className="p-4 bg-gray-900 text-gray-100 rounded-lg overflow-auto text-sm">
+            <code>{props.code as string}</code>
+          </pre>
+          {renderChildren()}
         </div>
       )
 

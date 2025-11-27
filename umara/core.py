@@ -290,6 +290,14 @@ class UmaraApp:
             result = self._app_func()
             if asyncio.iscoroutine(result):
                 await result
+        except RerunException:
+            # RerunException is expected - it signals a re-render
+            # Just continue to return the current component tree
+            pass
+        except StopException:
+            # StopException is expected - it halts execution
+            # Just continue to return the current component tree
+            pass
         except Exception as e:
             # Create error component
             session.context.create_component(

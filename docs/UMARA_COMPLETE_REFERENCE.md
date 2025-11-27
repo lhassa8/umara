@@ -2,7 +2,7 @@
 
 > **A beautiful, modern Python framework for creating web UIs without HTML, CSS, or JavaScript.**
 
-Version: 0.4.5
+Version: 0.4.7
 
 ---
 
@@ -1482,7 +1482,7 @@ Display tabular data with optional sorting.
 
 ```python
 um.dataframe(
-    data: list[dict] | DataFrame,
+    data: list[dict] | list[list] | DataFrame,
     *,
     columns: list[str] | None = None,
     height: str | None = None,
@@ -1492,7 +1492,7 @@ um.dataframe(
 ```
 
 **Parameters:**
-- `data`: Data as list of dicts or pandas DataFrame
+- `data`: Data as list of dicts, 2D array (list of lists), or pandas DataFrame
 - `columns`: Column names to display (default: all)
 - `height`: Fixed height with scroll
 - `sortable`: Enable click-to-sort on column headers (new in v0.4.4)
@@ -1520,6 +1520,15 @@ data = [
     {"Name": "Bob", "Score": 87},
 ]
 um.dataframe(data, sortable=True)
+
+# With 2D array (first row is headers) - new in v0.4.7
+data = [
+    ["Name", "Age", "City"],
+    ["Alice", 25, "NYC"],
+    ["Bob", 30, "LA"],
+    ["Carol", 35, "Chicago"]
+]
+um.dataframe(data)
 ```
 
 ### table()
@@ -1858,7 +1867,7 @@ um.plotly_chart(fig)
 
 ### map()
 
-Display an interactive map.
+Display an interactive map. Uses [Leaflet.js](https://leafletjs.com/) with OpenStreetMap tiles.
 
 ```python
 um.map(
@@ -1872,6 +1881,13 @@ um.map(
 ) -> None
 ```
 
+**Parameters:**
+- `data`: List of location dicts with latitude/longitude values
+- `latitude`: Column name for latitude (default: "lat")
+- `longitude`: Column name for longitude (default: "lon")
+- `zoom`: Initial zoom level (default: 10)
+- `height`: Map height (default: "400px")
+
 **Example:**
 
 ```python
@@ -1882,6 +1898,8 @@ locations = [
 
 um.map(locations, zoom=4)
 ```
+
+Markers are added automatically for each location. If a `name` field is present, it will be displayed as a popup when the marker is clicked.
 
 ---
 
@@ -2841,6 +2859,7 @@ um.text("More content...")
 
 ## Version History
 
+- **0.4.7** - Fixed RerunException/StopException handling (no longer show as error tracebacks), added 2D array support for dataframe/table, map component now uses Leaflet.js
 - **0.4.6** - Added frontend implementation for empty_state, copy_button, download_button components; fixed tabs, modal, color_picker, rating, pills components
 - **0.4.5** - Fixed SessionState bracket notation support, updated documentation
 - **0.4.4** - Added max_file_size for file_uploader, sortable dataframes, ARIA accessibility labels, system theme detection, localStorage theme persistence
@@ -2853,4 +2872,4 @@ um.text("More content...")
 
 ---
 
-*Documentation generated for Umara v0.4.5*
+*Documentation generated for Umara v0.4.7*

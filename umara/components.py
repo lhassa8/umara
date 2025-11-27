@@ -1070,6 +1070,10 @@ def dataframe(
     elif isinstance(data, list) and data and isinstance(data[0], dict):
         records = data
         cols = columns or list(data[0].keys())
+    elif isinstance(data, list) and data and isinstance(data[0], (list, tuple)):
+        # 2D array format: first row is headers, rest are data rows
+        cols = columns or [str(h) for h in data[0]]
+        records = [dict(zip(cols, row)) for row in data[1:]]
     else:
         records = []
         cols = columns or []
