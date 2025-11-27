@@ -3027,23 +3027,25 @@ def select_slider(
         Selected option value
     """
     ctx = get_context()
-    component_key = key or f"select_slider_{id(label)}"
+    state = get_session_state()
 
+    component_key = key or f"select_slider_{id(label)}"
     default_value = value if value is not None else options[0] if options else None
+    current_value = state.setdefault(component_key, default_value)
 
     props = {
         "label": label,
         "options": options,
-        "default": default_value,
+        "value": current_value,
         "disabled": disabled,
         "label_visibility": label_visibility,
+        "stateKey": component_key,
     }
 
     style_dict = style.to_dict() if style else None
     ctx.create_component("select_slider", key=component_key, props=props, style=style_dict)
 
-    state = get_session_state()
-    return state.get(component_key, default_value)
+    return current_value
 
 
 def pills(
@@ -3290,7 +3292,7 @@ def scatter_chart(
         "size": size,
         "title": title,
         "height": height,
-        "chart_type": "scatter",
+        "chartType": "scatter",
     }
 
     style_dict = style.to_dict() if style else None

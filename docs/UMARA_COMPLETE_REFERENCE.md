@@ -989,6 +989,41 @@ tags = um.pills(
 um.text(f"Selected tags: {tags}")
 ```
 
+### select_slider()
+
+Create a slider with discrete options (like a slider but with text labels).
+
+```python
+um.select_slider(
+    label: str = "",
+    options: list[str] | None = None,
+    *,
+    value: str | None = None,
+    key: str | None = None,
+    disabled: bool = False,
+    style: Style | None = None
+) -> str
+```
+
+**Parameters:**
+- `label`: Label text
+- `options`: List of discrete options to choose from
+- `value`: Default selected option
+- `key`: Unique identifier
+- `disabled`: Whether disabled
+
+**Example:**
+
+```python
+size = um.select_slider(
+    "Choose a size",
+    options=['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+    value='M',
+    key='size_slider'
+)
+um.text(f"Selected size: {size}")
+```
+
 ### file_uploader()
 
 Create a file upload widget.

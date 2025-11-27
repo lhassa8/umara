@@ -168,6 +168,14 @@ selection = um.pills(
     options=['All', 'Active', 'Completed', 'Archived'],
     key='pills_select'
 )
+
+# Select slider (slider with discrete options)
+selected = um.select_slider(
+    'Choose a size',
+    options=['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+    value='M',
+    key='size_slider'
+)
 ```
 
 ### Buttons
@@ -336,6 +344,29 @@ um.success('Done!')
 um.error('Failed')
 um.warning('Caution')
 um.info('Note')
+```
+
+### Charts
+```python
+# Line chart
+um.line_chart(data, x='month', y='sales', title='Monthly Sales')
+
+# Bar chart
+um.bar_chart(data, x='month', y='sales')
+
+# Area chart
+um.area_chart(data, x='month', y='sales')
+
+# Pie chart
+um.pie_chart(data, label='category', value='value')
+
+# Scatter chart
+scatter_data = [
+    {'x': 1, 'y': 2},
+    {'x': 2, 'y': 4},
+    {'x': 3, 'y': 3},
+]
+um.scatter_chart(scatter_data, x='x', y='y')
 ```
 
 ### State Management

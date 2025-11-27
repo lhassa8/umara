@@ -115,6 +115,14 @@ export function ComponentRenderer({
 
     // Typography
     case 'text':
+      // Handle caption variant
+      if (props.variant === 'caption') {
+        return (
+          <p className="text-sm text-text-secondary mb-2" style={customStyle}>
+            {props.content as string}
+          </p>
+        )
+      }
       return (
         <Text
           content={props.content as string}
@@ -123,6 +131,23 @@ export function ComponentRenderer({
       )
 
     case 'header':
+      return (
+        <Header
+          content={props.content as string}
+          level={props.level as number}
+          style={customStyle}
+        />
+      )
+
+    // heading type (used by title() with level="title")
+    case 'heading':
+      if (props.level === 'title') {
+        return (
+          <h1 className="text-3xl font-bold text-text mb-4" style={customStyle}>
+            {props.content as string}
+          </h1>
+        )
+      }
       return (
         <Header
           content={props.content as string}
@@ -366,6 +391,51 @@ export function ComponentRenderer({
         </div>
       )
 
+    case 'accordion':
+      const accordionItems = (props.items as string[]) || []
+      const openItems = (props.openItems as string[]) || []
+      const allowMultiple = props.allowMultiple as boolean
+      const accordionStateKey = props.stateKey as string
+
+      return (
+        <div className="space-y-2" style={customStyle}>
+          {accordionItems.map((item, index) => {
+            const isOpen = openItems.includes(item)
+            return (
+              <div key={index} className="border border-border rounded-lg overflow-hidden">
+                <button
+                  className="w-full px-4 py-3 flex items-center justify-between bg-surface hover:bg-surface-hover text-text font-medium text-left transition-colors"
+                  onClick={() => {
+                    let newOpenItems: string[]
+                    if (isOpen) {
+                      newOpenItems = openItems.filter(i => i !== item)
+                    } else {
+                      newOpenItems = allowMultiple ? [...openItems, item] : [item]
+                    }
+                    onStateUpdate(accordionStateKey, newOpenItems)
+                  }}
+                >
+                  <span>{item}</span>
+                  <svg
+                    className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isOpen && (
+                  <div className="px-4 py-3 bg-background border-t border-border">
+                    {renderChildren()}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )
+
     // Feedback
     case 'success':
       return <Alert type="success" message={props.message as string} style={customStyle} />
@@ -409,6 +479,46 @@ export function ComponentRenderer({
 
     case 'spinner':
       return <Spinner text={props.text as string} style={customStyle} />
+
+    case 'stat_card':
+      const statTitle = props.title as string
+      const statValue = props.value as string
+      const statDescription = props.description as string
+      const statTrend = props.trend as number | undefined
+      const statTrendLabel = props.trendLabel as string | undefined
+
+      return (
+        <div className="bg-surface border border-border rounded-xl p-6 mb-4" style={customStyle}>
+          <div className="text-text-secondary text-sm font-medium mb-1">{statTitle}</div>
+          <div className="text-3xl font-bold text-text mb-2">{statValue}</div>
+          {(statTrend !== undefined || statDescription) && (
+            <div className="flex items-center gap-2">
+              {statTrend !== undefined && (
+                <span className={`inline-flex items-center text-sm font-medium ${
+                  statTrend > 0 ? 'text-green-600' : statTrend < 0 ? 'text-red-600' : 'text-text-secondary'
+                }`}>
+                  {statTrend > 0 ? (
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                  ) : statTrend < 0 ? (
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  ) : null}
+                  {statTrend > 0 ? '+' : ''}{statTrend}%
+                </span>
+              )}
+              {statTrendLabel && (
+                <span className="text-text-secondary text-sm">{statTrendLabel}</span>
+              )}
+              {statDescription && !statTrendLabel && (
+                <span className="text-text-secondary text-sm">{statDescription}</span>
+              )}
+            </div>
+          )}
+        </div>
+      )
 
     case 'dataframe':
     case 'table':
@@ -977,6 +1087,898 @@ export function ComponentRenderer({
           </svg>
           {downloadLabel}
         </button>
+      )
+
+    // Tooltip
+    case 'tooltip':
+      const tooltipContent = props.content as string
+      const tooltipText = props.text as string
+      const tooltipPosition = (props.position as string) || 'top'
+      const [showTooltip, setShowTooltip] = React.useState(false)
+
+      const tooltipPositionClasses: Record<string, string> = {
+        top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
+        bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
+        left: 'right-full top-1/2 -translate-y-1/2 mr-2',
+        right: 'left-full top-1/2 -translate-y-1/2 ml-2',
+      }
+
+      return (
+        <div
+          className="relative inline-block"
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+          style={customStyle}
+        >
+          <span className="cursor-help text-text underline decoration-dotted underline-offset-2">
+            {tooltipContent}
+          </span>
+          {showTooltip && (
+            <div className={`absolute z-50 px-3 py-2 text-sm bg-gray-900 text-white rounded-lg shadow-lg whitespace-nowrap ${tooltipPositionClasses[tooltipPosition]}`}>
+              {tooltipText}
+              <div className={`absolute w-2 h-2 bg-gray-900 rotate-45 ${
+                tooltipPosition === 'top' ? 'top-full left-1/2 -translate-x-1/2 -mt-1' :
+                tooltipPosition === 'bottom' ? 'bottom-full left-1/2 -translate-x-1/2 -mb-1' :
+                tooltipPosition === 'left' ? 'left-full top-1/2 -translate-y-1/2 -ml-1' :
+                'right-full top-1/2 -translate-y-1/2 -mr-1'
+              }`} />
+            </div>
+          )}
+        </div>
+      )
+
+    // Tag input
+    case 'tag_input':
+      const tagLabel = props.label as string
+      const tagPlaceholder = props.placeholder as string || 'Add a tag...'
+      const tagValues = (props.value as string[]) || []
+      const [tagInputValue, setTagInputValue] = React.useState('')
+
+      const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && tagInputValue.trim()) {
+          e.preventDefault()
+          const newTags = [...tagValues, tagInputValue.trim()]
+          onStateUpdate(props.stateKey as string || id, newTags)
+          setTagInputValue('')
+        }
+      }
+
+      const handleRemoveTag = (indexToRemove: number) => {
+        const newTags = tagValues.filter((_, index) => index !== indexToRemove)
+        onStateUpdate(props.stateKey as string || id, newTags)
+      }
+
+      return (
+        <div className="mb-4" style={customStyle}>
+          {tagLabel && (
+            <label className="block text-sm font-medium text-text mb-1.5">{tagLabel}</label>
+          )}
+          <div className="flex flex-wrap gap-2 p-2 bg-surface border border-border rounded-lg min-h-[42px]">
+            {tagValues.map((tag, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-md text-sm"
+              >
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(index)}
+                  className="hover:text-primary-dark"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </span>
+            ))}
+            <input
+              type="text"
+              value={tagInputValue}
+              onChange={(e) => setTagInputValue(e.target.value)}
+              onKeyDown={handleAddTag}
+              placeholder={tagValues.length === 0 ? tagPlaceholder : ''}
+              className="flex-1 min-w-[100px] bg-transparent border-none outline-none text-text text-sm"
+            />
+          </div>
+        </div>
+      )
+
+    // Avatar group
+    case 'avatar_group':
+      const avatars = (props.avatars as Array<{ name?: string; src?: string }>) || []
+      const maxDisplay = (props.maxDisplay as number) || 4
+      const displayAvatars = avatars.slice(0, maxDisplay)
+      const remainingCount = avatars.length - maxDisplay
+      const groupSize = (props.size as string) || 'md'
+      const groupSizeClasses: Record<string, string> = {
+        sm: 'w-8 h-8 text-xs',
+        md: 'w-10 h-10 text-sm',
+        lg: 'w-12 h-12 text-base',
+        xl: 'w-16 h-16 text-lg',
+      }
+
+      return (
+        <div className="flex -space-x-2 mb-4" style={customStyle}>
+          {displayAvatars.map((avatar, index) => {
+            const avatarInitials = avatar.name
+              ? avatar.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+              : '?'
+            return (
+              <div
+                key={index}
+                className={`${groupSizeClasses[groupSize]} rounded-full bg-primary flex items-center justify-center text-white font-medium ring-2 ring-background overflow-hidden`}
+                title={avatar.name}
+              >
+                {avatar.src ? (
+                  <img src={avatar.src} alt={avatar.name || 'Avatar'} className="w-full h-full object-cover" />
+                ) : (
+                  avatarInitials
+                )}
+              </div>
+            )
+          })}
+          {remainingCount > 0 && (
+            <div
+              className={`${groupSizeClasses[groupSize]} rounded-full bg-surface border border-border flex items-center justify-center text-text-secondary font-medium ring-2 ring-background`}
+            >
+              +{remainingCount}
+            </div>
+          )}
+        </div>
+      )
+
+    // Loading skeleton (backend sends 'skeleton')
+    case 'skeleton':
+      const skeletonVariant = (props.variant as string) || 'text'
+      const skeletonLines = (props.lines as number) || 3
+      const skeletonHeight = props.height as string
+
+      if (skeletonVariant === 'avatar') {
+        return (
+          <div className="animate-pulse mb-4" style={customStyle}>
+            <div className="w-12 h-12 bg-gray-200 rounded-full" />
+          </div>
+        )
+      }
+
+      if (skeletonVariant === 'card') {
+        return (
+          <div className="animate-pulse mb-4" style={{ ...customStyle, height: skeletonHeight || '120px' }}>
+            <div className="bg-gray-200 rounded-lg h-full w-full" />
+          </div>
+        )
+      }
+
+      if (skeletonVariant === 'image') {
+        return (
+          <div className="animate-pulse mb-4" style={{ ...customStyle, height: skeletonHeight || '200px' }}>
+            <div className="bg-gray-200 rounded-lg h-full w-full flex items-center justify-center">
+              <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+        )
+      }
+
+      // Default: text variant
+      return (
+        <div className="animate-pulse space-y-2 mb-4" style={customStyle}>
+          {Array.from({ length: skeletonLines }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-gray-200 rounded h-4"
+              style={{ width: `${100 - (i * 15)}%` }}
+            />
+          ))}
+        </div>
+      )
+
+    // Timeline
+    case 'timeline':
+      const timelineItems = (props.items as Array<{ title: string; description?: string; date?: string; icon?: string }>) || []
+
+      return (
+        <div className="relative mb-4" style={customStyle}>
+          {/* Vertical line */}
+          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+
+          <div className="space-y-6">
+            {timelineItems.map((item, index) => (
+              <div key={index} className="relative flex gap-4">
+                {/* Dot */}
+                <div className="relative z-10 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-medium shrink-0">
+                  {item.icon || (index + 1)}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 bg-surface border border-border rounded-lg p-4 -mt-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="font-medium text-text">{item.title}</h4>
+                    {item.date && (
+                      <span className="text-xs text-text-secondary whitespace-nowrap">{item.date}</span>
+                    )}
+                  </div>
+                  {item.description && (
+                    <p className="text-sm text-text-secondary mt-1">{item.description}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+
+    // Status indicator
+    case 'status':
+      const statusLabel = props.label as string
+      const statusState = (props.state as string) || 'running'
+      const statusExpanded = (props.expanded as boolean) !== false
+
+      const statusColors: Record<string, string> = {
+        running: 'text-blue-500',
+        complete: 'text-green-500',
+        error: 'text-red-500',
+      }
+
+      const statusIcons: Record<string, JSX.Element> = {
+        running: (
+          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+        ),
+        complete: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        ),
+        error: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ),
+      }
+
+      return (
+        <div className="border border-border rounded-lg mb-4" style={customStyle}>
+          <div className="flex items-center gap-3 px-4 py-3">
+            <span className={statusColors[statusState]}>
+              {statusIcons[statusState]}
+            </span>
+            <span className="font-medium text-text">{statusLabel}</span>
+          </div>
+          {statusExpanded && children && children.length > 0 && (
+            <div className="px-4 pb-3 border-t border-border pt-3">
+              {renderChildren()}
+            </div>
+          )}
+        </div>
+      )
+
+    // Select slider
+    case 'select_slider':
+      const selectSliderLabel = props.label as string
+      const selectSliderOptions = (props.options as string[]) || []
+      const selectSliderValue = props.value as string
+      const selectSliderCurrentIndex = selectSliderOptions.indexOf(selectSliderValue)
+      const selectSliderIndex = selectSliderCurrentIndex >= 0 ? selectSliderCurrentIndex : 0
+
+      return (
+        <div className="mb-4" style={customStyle}>
+          {selectSliderLabel && (
+            <label className="block text-sm font-medium text-text mb-2">{selectSliderLabel}</label>
+          )}
+          <div className="space-y-2">
+            <input
+              type="range"
+              min={0}
+              max={selectSliderOptions.length - 1}
+              value={selectSliderIndex}
+              onChange={(e) => {
+                const newIndex = parseInt(e.target.value)
+                onStateUpdate(props.stateKey as string || id, selectSliderOptions[newIndex])
+              }}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+            />
+            <div className="flex justify-between text-xs text-text-secondary">
+              {selectSliderOptions.map((option, i) => (
+                <span key={i} className={i === selectSliderIndex ? 'text-primary font-medium' : ''}>
+                  {option}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+
+    // Feedback component
+    case 'feedback':
+      const feedbackMapping = (props.sentimentMapping as Record<number, string>) || { 0: 'Bad', 1: 'Okay', 2: 'Good' }
+      const feedbackValue = props.value as number | null
+      const feedbackOptions = Object.entries(feedbackMapping)
+
+      return (
+        <div className="mb-4" style={customStyle}>
+          <div className="flex items-center gap-2">
+            {feedbackOptions.map(([score, label]) => {
+              const scoreNum = parseInt(score)
+              const isSelected = feedbackValue === scoreNum
+              return (
+                <button
+                  key={score}
+                  type="button"
+                  onClick={() => onStateUpdate(props.stateKey as string || id, scoreNum)}
+                  disabled={props.disabled as boolean}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    isSelected
+                      ? 'bg-primary text-white'
+                      : 'bg-surface border border-border text-text hover:bg-surface-hover'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )
+
+    // Segmented control
+    case 'segmented_control':
+      const segmentLabel = props.label as string
+      const segmentOptions = (props.options as string[]) || []
+      const segmentValue = props.value as string
+
+      return (
+        <div className="mb-4" style={customStyle}>
+          {segmentLabel && (
+            <label className="block text-sm font-medium text-text mb-2">{segmentLabel}</label>
+          )}
+          <div className="inline-flex p-1 bg-gray-100 rounded-lg">
+            {segmentOptions.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => onStateUpdate(props.stateKey as string || id, option)}
+                disabled={props.disabled as boolean}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                  segmentValue === option
+                    ? 'bg-white text-text shadow-sm'
+                    : 'text-text-secondary hover:text-text'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+      )
+
+    // Nav link
+    case 'nav_link':
+      const navLabel = props.label as string
+      const navHref = props.href as string
+      const navIcon = props.icon as string
+      const navActive = props.active as boolean
+
+      const iconMap: Record<string, JSX.Element> = {
+        home: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />,
+        settings: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />,
+        user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+      }
+
+      return (
+        <a
+          href={navHref || '#'}
+          className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors mb-1 ${
+            navActive
+              ? 'bg-primary/10 text-primary'
+              : 'text-text hover:bg-surface-hover'
+          }`}
+          style={customStyle}
+          onClick={(e) => {
+            if (!navHref || navHref === '#') {
+              e.preventDefault()
+              onEvent(id, 'click')
+            }
+          }}
+        >
+          {navIcon && (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {iconMap[navIcon] || <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />}
+            </svg>
+          )}
+          <span>{navLabel}</span>
+        </a>
+      )
+
+    // Data editor (simplified table editor)
+    case 'data_editor':
+      const editorData = (props.data as Record<string, unknown>[]) || []
+
+      if (editorData.length === 0) {
+        return <div className="text-text-secondary mb-4">No data</div>
+      }
+
+      const editorColumns = Object.keys(editorData[0] || {})
+
+      return (
+        <div className="overflow-auto mb-4" style={customStyle}>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-surface">
+                {editorColumns.map((col) => (
+                  <th key={col} className="px-4 py-2 text-left text-sm font-medium text-text border border-border">
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {editorData.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {editorColumns.map((col) => (
+                    <td key={col} className="px-4 py-2 border border-border">
+                      <input
+                        type="text"
+                        value={String(row[col] ?? '')}
+                        onChange={(e) => {
+                          const newData = [...editorData]
+                          newData[rowIndex] = { ...newData[rowIndex], [col]: e.target.value }
+                          onStateUpdate(props.stateKey as string || id, newData)
+                        }}
+                        className="w-full bg-transparent text-text text-sm focus:outline-none focus:ring-1 focus:ring-primary rounded px-1"
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+
+    // Popover
+    case 'popover':
+      const popoverTrigger = props.triggerLabel as string
+      const [popoverOpen, setPopoverOpen] = React.useState(false)
+
+      return (
+        <div className="relative inline-block mb-4" style={customStyle}>
+          <button
+            type="button"
+            onClick={() => setPopoverOpen(!popoverOpen)}
+            className="px-4 py-2 bg-surface border border-border rounded-lg text-text hover:bg-surface-hover transition-colors"
+          >
+            {popoverTrigger}
+          </button>
+          {popoverOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setPopoverOpen(false)}
+              />
+              <div className="absolute z-50 mt-2 p-4 bg-surface border border-border rounded-lg shadow-lg min-w-[200px]">
+                {renderChildren()}
+              </div>
+            </>
+          )}
+        </div>
+      )
+
+    // Dialog (alias for modal with different styling)
+    case 'dialog':
+      if (!(props.isOpen as boolean)) return null
+
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => onStateUpdate(props.stateKey as string || id, false)}
+          />
+          <div className="relative bg-surface rounded-xl shadow-xl p-6 max-w-md w-full mx-4" style={customStyle}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-text">{props.title as string}</h2>
+              <button
+                className="text-text-secondary hover:text-text p-1"
+                onClick={() => onStateUpdate(props.stateKey as string || id, false)}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {renderChildren()}
+          </div>
+        </div>
+      )
+
+    // Logo
+    case 'logo':
+      const logoImage = props.image as string
+      const logoLink = props.link as string
+
+      const logoElement = (
+        <img
+          src={logoImage}
+          alt="Logo"
+          className="max-h-12 w-auto"
+          style={customStyle}
+        />
+      )
+
+      return logoLink ? (
+        <a href={logoLink} className="inline-block mb-4">
+          {logoElement}
+        </a>
+      ) : (
+        <div className="mb-4">{logoElement}</div>
+      )
+
+    // Title (large header)
+    case 'title':
+      return (
+        <h1 className="text-3xl font-bold text-text mb-4" style={customStyle}>
+          {props.content as string}
+        </h1>
+      )
+
+    // Caption (small muted text)
+    case 'caption':
+      return (
+        <p className="text-sm text-text-secondary mb-2" style={customStyle}>
+          {props.content as string}
+        </p>
+      )
+
+    // Write (generic display)
+    case 'write':
+      const writeContent = props.content
+      if (typeof writeContent === 'string') {
+        return <p className="text-text mb-2" style={customStyle}>{writeContent}</p>
+      }
+      return (
+        <pre className="text-text mb-2 font-mono text-sm" style={customStyle}>
+          {JSON.stringify(writeContent, null, 2)}
+        </pre>
+      )
+
+    // Charts (backend sends type 'chart' with chartType prop)
+    case 'chart':
+      const chartType = props.chartType as string
+      const chartData = (props.data as Record<string, unknown>[]) || []
+      const chartX = props.x as string
+      const chartY = props.y as string
+      const chartTitle = props.title as string
+      const chartHeight = (props.height as string) || '300px'
+
+      // Simple chart rendering using SVG
+      if (chartData.length === 0) {
+        return (
+          <div className="flex items-center justify-center bg-surface border border-border rounded-lg mb-4" style={{ height: chartHeight, ...customStyle }}>
+            <span className="text-text-secondary">No data to display</span>
+          </div>
+        )
+      }
+
+      // Get values for charts
+      const getValues = () => {
+        if (chartType === 'pie') {
+          const valueKey = props.value as string || 'value'
+          const labelKey = props.label as string || 'label'
+          return chartData.map((d, i) => ({
+            value: Number(d[valueKey]) || 0,
+            label: String(d[labelKey] || `Item ${i + 1}`),
+          }))
+        }
+        // For scatter charts, keep x as numeric
+        if (chartType === 'scatter') {
+          return chartData.map((d) => ({
+            x: Number(d[chartX]) || 0,
+            y: Number(d[chartY]) || 0,
+          }))
+        }
+        return chartData.map((d) => ({
+          x: String(d[chartX] || ''),
+          y: Number(d[chartY]) || 0,
+        }))
+      }
+
+      const values = getValues()
+
+      // For pie chart
+      if (chartType === 'pie') {
+        const total = values.reduce((sum, v) => sum + (v as { value: number }).value, 0)
+        const pieColors = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16']
+        let cumulativeAngle = 0
+
+        return (
+          <div className="mb-4" style={customStyle}>
+            {chartTitle && <h3 className="text-lg font-semibold text-text mb-3">{chartTitle}</h3>}
+            <div className="flex items-center gap-6">
+              <svg viewBox="0 0 100 100" className="w-48 h-48">
+                {values.map((item, i) => {
+                  const pieItem = item as { value: number; label: string }
+                  const angle = (pieItem.value / total) * 360
+                  const startAngle = cumulativeAngle
+                  cumulativeAngle += angle
+
+                  // Convert to radians
+                  const startRad = (startAngle - 90) * (Math.PI / 180)
+                  const endRad = (startAngle + angle - 90) * (Math.PI / 180)
+
+                  // Calculate arc points
+                  const x1 = 50 + 40 * Math.cos(startRad)
+                  const y1 = 50 + 40 * Math.sin(startRad)
+                  const x2 = 50 + 40 * Math.cos(endRad)
+                  const y2 = 50 + 40 * Math.sin(endRad)
+
+                  const largeArc = angle > 180 ? 1 : 0
+
+                  return (
+                    <path
+                      key={i}
+                      d={`M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                      fill={pieColors[i % pieColors.length]}
+                      className="hover:opacity-80 transition-opacity"
+                    />
+                  )
+                })}
+              </svg>
+              <div className="space-y-2">
+                {values.map((item, i) => {
+                  const pieItem = item as { value: number; label: string }
+                  return (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <div className="w-3 h-3 rounded" style={{ backgroundColor: pieColors[i % pieColors.length] }} />
+                      <span className="text-text">{pieItem.label}</span>
+                      <span className="text-text-secondary">({pieItem.value})</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      // For line, bar, area, scatter charts
+      const chartWidth = 400
+      const chartHeightNum = 200
+      const padding = { top: 20, right: 20, bottom: 40, left: 50 }
+      const innerWidth = chartWidth - padding.left - padding.right
+      const innerHeight = chartHeightNum - padding.top - padding.bottom
+
+      // For scatter charts, use numeric x values
+      if (chartType === 'scatter') {
+        const scatterValues = values as { x: number; y: number }[]
+        const maxY = Math.max(...scatterValues.map((v) => v.y), 1)
+        const minY = Math.min(...scatterValues.map((v) => v.y), 0)
+        const rangeY = maxY - minY || 1
+        const maxX = Math.max(...scatterValues.map((v) => v.x), 1)
+        const minX = Math.min(...scatterValues.map((v) => v.x), 0)
+        const rangeX = maxX - minX || 1
+
+        const xScaleScatter = (v: number) => padding.left + ((v - minX) / rangeX) * innerWidth
+        const yScaleScatter = (v: number) => padding.top + innerHeight - ((v - minY) / rangeY) * innerHeight
+
+        return (
+          <div className="mb-4" style={customStyle}>
+            {chartTitle && <h3 className="text-lg font-semibold text-text mb-3">{chartTitle}</h3>}
+            <svg viewBox={`0 0 ${chartWidth} ${chartHeightNum}`} className="w-full" style={{ maxHeight: chartHeight }}>
+              {/* Grid lines */}
+              {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+                <line
+                  key={i}
+                  x1={padding.left}
+                  y1={padding.top + innerHeight * (1 - ratio)}
+                  x2={chartWidth - padding.right}
+                  y2={padding.top + innerHeight * (1 - ratio)}
+                  stroke="#e5e7eb"
+                  strokeWidth="1"
+                />
+              ))}
+
+              {/* Y-axis labels */}
+              {[0, 0.5, 1].map((ratio, i) => (
+                <text
+                  key={i}
+                  x={padding.left - 5}
+                  y={padding.top + innerHeight * (1 - ratio)}
+                  textAnchor="end"
+                  alignmentBaseline="middle"
+                  className="text-xs fill-gray-500"
+                >
+                  {Math.round(minY + rangeY * ratio)}
+                </text>
+              ))}
+
+              {/* Scatter points */}
+              {scatterValues.map((v, i) => (
+                <circle
+                  key={i}
+                  cx={xScaleScatter(v.x)}
+                  cy={yScaleScatter(v.y)}
+                  r="6"
+                  fill="#6366f1"
+                  className="hover:fill-indigo-400 transition-colors"
+                />
+              ))}
+
+              {/* X-axis labels */}
+              {[0, 0.5, 1].map((ratio, i) => (
+                <text
+                  key={i}
+                  x={padding.left + innerWidth * ratio}
+                  y={chartHeightNum - 10}
+                  textAnchor="middle"
+                  className="text-xs fill-gray-500"
+                >
+                  {Math.round(minX + rangeX * ratio)}
+                </text>
+              ))}
+            </svg>
+          </div>
+        )
+      }
+
+      // For line, bar, area charts (string x values)
+      const chartValues = values as { x: string; y: number }[]
+      const maxY = Math.max(...chartValues.map((v) => v.y), 1)
+      const minY = Math.min(...chartValues.map((v) => v.y), 0)
+      const range = maxY - minY || 1
+
+      const xScale = (i: number) => padding.left + (i / (chartValues.length - 1 || 1)) * innerWidth
+      const yScale = (v: number) => padding.top + innerHeight - ((v - minY) / range) * innerHeight
+
+      return (
+        <div className="mb-4" style={customStyle}>
+          {chartTitle && <h3 className="text-lg font-semibold text-text mb-3">{chartTitle}</h3>}
+          <svg viewBox={`0 0 ${chartWidth} ${chartHeightNum}`} className="w-full" style={{ maxHeight: chartHeight }}>
+            {/* Grid lines */}
+            {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+              <line
+                key={i}
+                x1={padding.left}
+                y1={padding.top + innerHeight * (1 - ratio)}
+                x2={chartWidth - padding.right}
+                y2={padding.top + innerHeight * (1 - ratio)}
+                stroke="#e5e7eb"
+                strokeWidth="1"
+              />
+            ))}
+
+            {/* Y-axis labels */}
+            {[0, 0.5, 1].map((ratio, i) => (
+              <text
+                key={i}
+                x={padding.left - 5}
+                y={padding.top + innerHeight * (1 - ratio)}
+                textAnchor="end"
+                alignmentBaseline="middle"
+                className="text-xs fill-gray-500"
+              >
+                {Math.round(minY + range * ratio)}
+              </text>
+            ))}
+
+            {/* Area chart */}
+            {chartType === 'area' && (
+              <path
+                d={`M ${xScale(0)} ${yScale(chartValues[0].y)} ${chartValues.map((v, i) => `L ${xScale(i)} ${yScale(v.y)}`).join(' ')} L ${xScale(chartValues.length - 1)} ${padding.top + innerHeight} L ${xScale(0)} ${padding.top + innerHeight} Z`}
+                fill="rgba(99, 102, 241, 0.2)"
+              />
+            )}
+
+            {/* Line chart */}
+            {(chartType === 'line' || chartType === 'area') && (
+              <path
+                d={`M ${chartValues.map((v, i) => `${xScale(i)} ${yScale(v.y)}`).join(' L ')}`}
+                fill="none"
+                stroke="#6366f1"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
+
+            {/* Line chart points */}
+            {(chartType === 'line' || chartType === 'area') && chartValues.map((v, i) => (
+              <circle
+                key={i}
+                cx={xScale(i)}
+                cy={yScale(v.y)}
+                r="4"
+                fill="#6366f1"
+                className="hover:r-6 transition-all"
+              />
+            ))}
+
+            {/* Bar chart */}
+            {chartType === 'bar' && chartValues.map((v, i) => {
+              const barWidth = (innerWidth / chartValues.length) * 0.7
+              const barX = xScale(i) - barWidth / 2
+              const barHeight = ((v.y - minY) / range) * innerHeight
+              return (
+                <rect
+                  key={i}
+                  x={barX}
+                  y={yScale(v.y)}
+                  width={barWidth}
+                  height={barHeight}
+                  fill="#6366f1"
+                  rx="2"
+                  className="hover:fill-indigo-400 transition-colors"
+                />
+              )
+            })}
+
+
+            {/* X-axis labels */}
+            {chartValues.map((v, i) => (
+              <text
+                key={i}
+                x={xScale(i)}
+                y={chartHeightNum - 10}
+                textAnchor="middle"
+                className="text-xs fill-gray-500"
+              >
+                {v.x}
+              </text>
+            ))}
+          </svg>
+        </div>
+      )
+
+    // Link button
+    case 'link_button':
+      const linkLabel = props.label as string
+      const linkUrl = props.url as string
+      const linkVariant = (props.variant as string) || 'secondary'
+      const linkVariantClasses: Record<string, string> = {
+        primary: 'bg-primary text-white hover:bg-primary-hover',
+        secondary: 'bg-surface border border-border text-text hover:bg-surface-hover',
+        outline: 'bg-transparent border border-primary text-primary hover:bg-primary/10',
+      }
+
+      return (
+        <a
+          href={linkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors mb-4 ${linkVariantClasses[linkVariant] || linkVariantClasses.secondary}`}
+          style={customStyle}
+        >
+          {linkLabel}
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+      )
+
+    // Search input
+    case 'search_input':
+      const searchLabel = props.label as string
+      return (
+        <div className="mb-4 relative" style={customStyle}>
+          {searchLabel ? (
+            <label className="block text-sm font-medium text-text mb-1.5">{searchLabel}</label>
+          ) : null}
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="search"
+              value={(props.value ?? '') as string}
+              placeholder={props.placeholder as string || 'Search...'}
+              disabled={props.disabled as boolean}
+              onChange={(e) => onStateUpdate(props.stateKey as string || id, e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-lg text-text focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+          </div>
+        </div>
       )
 
     default:
