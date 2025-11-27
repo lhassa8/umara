@@ -951,6 +951,44 @@ rating = um.rating("Rate this product", value=3, max_value=5)
 um.text(f"You rated: {rating} stars")
 ```
 
+### pills()
+
+Create pill-shaped selection buttons (segmented control).
+
+```python
+um.pills(
+    label: str,
+    options: list[str],
+    *,
+    selection_mode: str = "single",  # "single" or "multi"
+    default: str | list[str] | None = None,
+    key: str | None = None,
+    disabled: bool = False,
+    style: Style | None = None
+) -> str | list[str] | None
+```
+
+**Example:**
+
+```python
+# Single selection
+filter_choice = um.pills(
+    "Filter by status",
+    options=['All', 'Active', 'Completed', 'Archived'],
+    key='status_filter'
+)
+um.text(f"Selected: {filter_choice}")
+
+# Multi selection
+tags = um.pills(
+    "Select tags",
+    options=['Python', 'JavaScript', 'Rust', 'Go'],
+    selection_mode='multi',
+    key='tag_filter'
+)
+um.text(f"Selected tags: {tags}")
+```
+
 ### file_uploader()
 
 Create a file upload widget.
@@ -1194,24 +1232,24 @@ with um.tabs(
     default: int = 0,
     key: str | None = None,
     style: Style | None = None
-) as t:
-    with t.tab(index):
+):
+    with um.tab(index):
         # Tab content
 ```
 
 **Example:**
 
 ```python
-with um.tabs(["Overview", "Data", "Settings"]) as t:
-    with t.tab(0):
+with um.tabs(['Overview', 'Data', 'Settings'], key='main_tabs'):
+    with um.tab(0):
         um.header("Overview")
         um.text("Welcome to the dashboard")
 
-    with t.tab(1):
+    with um.tab(1):
         um.header("Data")
         um.dataframe(df)
 
-    with t.tab(2):
+    with um.tab(2):
         um.header("Settings")
         um.toggle("Enable notifications")
 ```
