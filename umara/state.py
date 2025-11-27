@@ -173,6 +173,12 @@ class _SessionStateProxy:
     def __setattr__(self, key: str, value: Any) -> None:
         setattr(get_session_state(), key, value)
 
+    def __getitem__(self, key: str) -> Any:
+        return get_session_state()[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        get_session_state()[key] = value
+
     def __contains__(self, key: str) -> bool:
         return key in get_session_state()
 
@@ -187,6 +193,18 @@ class _SessionStateProxy:
 
     def clear(self) -> None:
         get_session_state().clear()
+
+    def to_dict(self) -> dict[str, Any]:
+        return get_session_state().to_dict()
+
+    def keys(self):
+        return get_session_state().keys()
+
+    def values(self):
+        return get_session_state().values()
+
+    def items(self):
+        return get_session_state().items()
 
 
 # Global session state proxy

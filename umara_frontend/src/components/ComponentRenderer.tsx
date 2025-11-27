@@ -290,18 +290,32 @@ export function ComponentRenderer({
       )
 
     case 'tabs':
+      const activeTabIndex = (props.activeTab ?? 0) as number
+      // Find the tab child that matches the active index
+      const activeTabContent = children?.find(
+        (child) => child.type === 'tab' && child.props.index === activeTabIndex
+      )
       return (
-        <Tabs
-          tabs={props.tabs as string[]}
-          activeTab={(props.activeTab ?? 0) as number}
-          onChange={(index) => onStateUpdate(props.stateKey as string || id, index)}
-          style={customStyle}
-        >
-          {children}
-        </Tabs>
+        <div>
+          <Tabs
+            tabs={props.tabs as string[]}
+            activeTab={activeTabIndex}
+            onChange={(index) => onStateUpdate(props.stateKey as string || id, index)}
+            style={customStyle}
+          />
+          {activeTabContent && (
+            <ComponentRenderer
+              component={activeTabContent}
+              onEvent={onEvent}
+              onStateUpdate={onStateUpdate}
+              state={state}
+            />
+          )}
+        </div>
       )
 
     case 'tab':
+      // Tab content is rendered by parent tabs component
       return (
         <div style={customStyle}>
           {renderChildren()}
@@ -714,6 +728,114 @@ export function ComponentRenderer({
           >
             Next
           </button>
+        </div>
+      )
+
+    // Color picker
+    case 'colorpicker':
+      return (
+        <div className="mb-4" style={customStyle}>
+          {props.label ? (
+            <label className="block text-sm font-medium text-text mb-1.5">{String(props.label)}</label>
+          ) : null}
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              value={(props.value as string) || '#6366f1'}
+              disabled={props.disabled as boolean}
+              onChange={(e) => onStateUpdate(props.stateKey as string || id, e.target.value)}
+              className="w-12 h-10 p-1 bg-surface border border-border rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            <input
+              type="text"
+              value={(props.value as string) || '#6366f1'}
+              disabled={props.disabled as boolean}
+              onChange={(e) => onStateUpdate(props.stateKey as string || id, e.target.value)}
+              className="flex-1 px-4 py-2.5 bg-surface border border-border rounded-lg text-text font-mono text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="#000000"
+            />
+            <div
+              className="w-10 h-10 rounded-lg border border-border"
+              style={{ backgroundColor: (props.value as string) || '#6366f1' }}
+            />
+          </div>
+        </div>
+      )
+
+    // Star rating
+    case 'rating':
+      const maxStars = (props.maxValue as number) || 5
+      const currentRating = (props.value as number) || 0
+      return (
+        <div className="mb-4" style={customStyle}>
+          {props.label ? (
+            <label className="block text-sm font-medium text-text mb-1.5">{String(props.label)}</label>
+          ) : null}
+          <div className="flex items-center gap-1">
+            {Array.from({ length: maxStars }, (_, i) => (
+              <button
+                key={i}
+                type="button"
+                disabled={props.disabled as boolean}
+                onClick={() => onStateUpdate(props.stateKey as string || id, i + 1)}
+                className="text-2xl transition-colors focus:outline-none disabled:cursor-not-allowed"
+              >
+                <span className={i < currentRating ? 'text-yellow-400' : 'text-gray-300'}>
+                  ★
+                </span>
+              </button>
+            ))}
+            <span className="ml-2 text-sm text-text-secondary">
+              {currentRating} / {maxStars}
+            </span>
+          </div>
+        </div>
+      )
+
+    // Pills / segmented control
+    case 'pills':
+      const pillOptions = (props.options as string[]) || []
+      const pillValue = props.value as string | string[] | null
+      const selectionMode = (props.selectionMode as string) || 'single'
+      const isMulti = selectionMode === 'multi'
+      const selectedPills = isMulti
+        ? (Array.isArray(pillValue) ? pillValue : [])
+        : (pillValue ? [pillValue] : [])
+
+      return (
+        <div className="mb-4" style={customStyle}>
+          {props.label ? (
+            <label className="block text-sm font-medium text-text mb-2">{String(props.label)}</label>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            {pillOptions.map((option) => {
+              const isSelected = selectedPills.includes(option)
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  disabled={props.disabled as boolean}
+                  onClick={() => {
+                    if (isMulti) {
+                      const newValue = isSelected
+                        ? selectedPills.filter((v) => v !== option)
+                        : [...selectedPills, option]
+                      onStateUpdate(props.stateKey as string || id, newValue)
+                    } else {
+                      onStateUpdate(props.stateKey as string || id, option)
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isSelected
+                      ? 'bg-primary text-white'
+                      : 'bg-surface border border-border text-text hover:bg-surface-hover'
+                  }`}
+                >
+                  {option}
+                </button>
+              )
+            })}
+          </div>
         </div>
       )
 

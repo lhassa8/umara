@@ -376,10 +376,10 @@ def tabs(
         style: Optional Style object
 
     Example:
-        with um.tabs(['Tab 1', 'Tab 2']) as t:
-            with t.tab(0):
+        with um.tabs(['Tab 1', 'Tab 2']) as active_tab:
+            with um.tab(0):
                 um.text('Content for tab 1')
-            with t.tab(1):
+            with um.tab(1):
                 um.text('Content for tab 2')
     """
     ctx = get_context()
@@ -397,25 +397,12 @@ def tabs(
     style_dict = style.to_dict() if style else None
     component = ctx.create_component("tabs", props=props, style=style_dict)
 
-    class TabsContext:
-        def __init__(self, comp, active):
-            self.component = comp
-            self.active_tab = active
-
-        @contextmanager
-        def tab(self, index: int):
-            """Create content for a specific tab."""
-            ctx = get_context()
-            ctx.push(self.component)
-            tab_comp = ctx.create_component("tab", props={"index": index})
-            ctx.pop()
-            ctx.push(tab_comp)
-            try:
-                yield
-            finally:
-                ctx.pop()
-
-    yield TabsContext(component, active_tab)
+    # Push tabs component onto stack so um.tab() creates children inside it
+    ctx.push(component)
+    try:
+        yield active_tab
+    finally:
+        ctx.pop()
 
 
 @contextmanager
@@ -1703,9 +1690,21 @@ def modal(
     state_key = key or f"_modal_{title}"
     open_state = state.setdefault(state_key, is_open)
 
+    # Only create component and yield content if modal is open
+    if not open_state:
+        # Modal is closed - don't create component or render content
+        # Use a dummy context that does nothing
+        class ClosedModalContext:
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                pass
+        yield
+        return
+
     props = {
         "title": title,
-        "isOpen": open_state,
+        "isOpen": True,
         "size": size,
         "closeOnOverlay": close_on_overlay,
         "stateKey": state_key,
