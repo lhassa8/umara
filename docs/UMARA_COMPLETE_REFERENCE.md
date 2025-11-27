@@ -1545,6 +1545,63 @@ um.stat_card(
 um.stat_card("Total Sales", "$12,450", trend=15.2, icon="TrendingUp")
 ```
 
+### empty_state()
+
+Display an empty state placeholder for when there's no data.
+
+```python
+um.empty_state(
+    title: str,
+    *,
+    description: str | None = None,
+    icon: str | None = None,  # "search", "inbox", "document", "folder"
+    action_label: str | None = None,
+    key: str | None = None,
+    style: Style | None = None
+) -> bool  # Returns True if action button clicked
+```
+
+**Parameters:**
+- `title`: Main title text
+- `description`: Supporting description text
+- `icon`: Icon name ("search", "inbox", "document", "folder")
+- `action_label`: Optional action button label
+
+**Example:**
+
+```python
+um.empty_state(
+    title='No results found',
+    description='Try adjusting your search or filters to find what you\'re looking for.',
+    icon='search'
+)
+```
+
+### copy_button()
+
+Display a button that copies text to clipboard.
+
+```python
+um.copy_button(
+    text: str,
+    *,
+    label: str = "Copy",
+    success_label: str = "Copied!",
+    style: Style | None = None
+) -> None
+```
+
+**Parameters:**
+- `text`: Text to copy to clipboard
+- `label`: Button label before clicking
+- `success_label`: Button label after successful copy
+
+**Example:**
+
+```python
+um.copy_button('npm install umara', label='Copy install command')
+```
+
 ### badge()
 
 Display a small badge/tag.
@@ -2749,6 +2806,7 @@ um.text("More content...")
 
 ## Version History
 
+- **0.4.6** - Added frontend implementation for empty_state, copy_button, download_button components; fixed tabs, modal, color_picker, rating, pills components
 - **0.4.5** - Fixed SessionState bracket notation support, updated documentation
 - **0.4.4** - Added max_file_size for file_uploader, sortable dataframes, ARIA accessibility labels, system theme detection, localStorage theme persistence
 - **0.4.3** - Added button loading states, modal focus trap, chat auto-scroll

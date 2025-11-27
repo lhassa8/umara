@@ -17,6 +17,50 @@ import { Divider, Spacer } from './Divider'
 import { DataTable } from './DataTable'
 import { Image, Video, Audio } from './Media'
 
+// CopyButton component with its own state
+function CopyButton({ text, label, successLabel, style }: {
+  text: string
+  label?: string
+  successLabel?: string
+  style?: React.CSSProperties
+}) {
+  const [copied, setCopied] = React.useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
+
+  return (
+    <button
+      className="inline-flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-lg text-text hover:bg-surface-hover transition-colors mb-4"
+      onClick={handleCopy}
+      style={style}
+    >
+      {copied ? (
+        <>
+          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          {successLabel || 'Copied!'}
+        </>
+      ) : (
+        <>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          {label || 'Copy'}
+        </>
+      )}
+    </button>
+  )
+}
+
 interface ComponentRendererProps {
   component: ComponentTree
   onEvent: (componentId: string, eventType: string, payload?: Record<string, unknown>) => void
@@ -837,6 +881,102 @@ export function ComponentRenderer({
             })}
           </div>
         </div>
+      )
+
+    // Empty state placeholder
+    case 'empty_state':
+      const emptyIcon = props.icon as string
+      const emptyDescription = props.description as string
+      const emptyActionLabel = props.actionLabel as string
+      return (
+        <div className="flex flex-col items-center justify-center py-12 px-4 text-center" style={customStyle}>
+          {emptyIcon ? (
+            <div className="mb-4 text-text-secondary">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {emptyIcon === 'search' && (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                )}
+                {emptyIcon === 'inbox' && (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                )}
+                {emptyIcon === 'document' && (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                )}
+                {emptyIcon === 'folder' && (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                )}
+                {!['search', 'inbox', 'document', 'folder'].includes(emptyIcon) && (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                )}
+              </svg>
+            </div>
+          ) : null}
+          <h3 className="text-lg font-semibold text-text mb-2">{props.title as string}</h3>
+          {emptyDescription ? (
+            <p className="text-text-secondary mb-4 max-w-md">{emptyDescription}</p>
+          ) : null}
+          {emptyActionLabel ? (
+            <button
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+              onClick={() => onEvent(id, 'click', {})}
+            >
+              {emptyActionLabel}
+            </button>
+          ) : null}
+        </div>
+      )
+
+    // Copy button
+    case 'copy_button':
+      return (
+        <CopyButton
+          text={props.text as string}
+          label={props.label as string}
+          successLabel={props.successLabel as string}
+          style={customStyle}
+        />
+      )
+
+    // Download button
+    case 'download_button':
+      const downloadLabel = props.label as string || 'Download'
+      const downloadData = props.data as string
+      const downloadFileName = props.file_name as string || 'download.txt'
+      const downloadMime = props.mime as string || 'text/plain'
+      const downloadDisabled = props.disabled as boolean
+      const downloadVariant = props.variant as string || 'secondary'
+
+      const variantClasses: Record<string, string> = {
+        primary: 'bg-primary text-white hover:bg-primary-hover',
+        secondary: 'bg-surface border border-border text-text hover:bg-surface-hover',
+        outline: 'bg-transparent border border-primary text-primary hover:bg-primary/10',
+      }
+
+      const handleDownload = () => {
+        const blob = new Blob([downloadData], { type: downloadMime })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = downloadFileName
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        onEvent(id, 'click', {})
+      }
+
+      return (
+        <button
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors mb-4 disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[downloadVariant] || variantClasses.secondary}`}
+          onClick={handleDownload}
+          disabled={downloadDisabled}
+          style={customStyle}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          {downloadLabel}
+        </button>
       )
 
     default:
