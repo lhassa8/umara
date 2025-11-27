@@ -554,7 +554,7 @@ def input(
         "labelWidth": label_width,
     }
     style_dict = style.to_dict() if style else None
-    ctx.create_component("input", props=props, style=style_dict)
+    ctx.create_component("input", key=state_key, props=props, style=style_dict)
 
     return current_value
 
@@ -605,7 +605,7 @@ def text_area(
         "labelWidth": label_width,
     }
     style_dict = style.to_dict() if style else None
-    ctx.create_component("textarea", props=props, style=style_dict)
+    ctx.create_component("textarea", key=state_key, props=props, style=style_dict)
 
     return current_value
 
