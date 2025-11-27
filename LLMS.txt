@@ -115,6 +115,15 @@ text = um.text_area(label='', key=None, value='', placeholder='', rows=4)
 # Slider
 num = um.slider(label='', min_value=0, max_value=100, value=None, key=None, step=1)
 
+# Number input (with increment/decrement buttons)
+num = um.number_input(
+    label='Enter a number',
+    min_value=0,
+    max_value=100,
+    value=50,
+    key='num_input'
+)
+
 # Select dropdown
 choice = um.select(
     label='',
@@ -124,8 +133,13 @@ choice = um.select(
     placeholder='Select an option...'
 )
 
-# Multi-select
-choices = um.multiselect(label='', options=[], key=None, default=[])
+# Multi-select (returns list of selected items)
+choices = um.multiselect(
+    label='Select items',
+    options=['Apple', 'Banana', 'Cherry', 'Date'],
+    default=['Apple'],
+    key='multi_select'
+)
 
 # Radio buttons
 option = um.radio(label='', options=['S', 'M', 'L'], key=None, default=None, horizontal=False)
@@ -135,6 +149,25 @@ checked = um.checkbox(label='', key=None, value=False)
 
 # Toggle switch (returns bool)
 enabled = um.toggle(label='', key=None, value=False)
+
+# Date input (returns date string)
+selected_date = um.date_input('Select a date', key='date_pick')
+
+# Time input (returns time string)
+selected_time = um.time_input('Select a time', key='time_pick')
+
+# Color picker (returns hex color string)
+color = um.color_picker('Pick a color', value='#3b82f6', key='color_pick')
+
+# Rating (returns number of stars)
+rating = um.rating('Rate this', max_value=5, value=3, key='rating_input')
+
+# Pills / Segmented control (returns selected option)
+selection = um.pills(
+    'Quick filters',
+    options=['All', 'Active', 'Completed', 'Archived'],
+    key='pills_select'
+)
 ```
 
 ### Buttons
@@ -148,6 +181,17 @@ if um.button(
     full_width=False
 ):
     um.success('Clicked!')
+
+# Copy button (copies text to clipboard)
+um.copy_button('npm install umara', label='Copy install command')
+
+# Download button (triggers file download)
+um.download_button(
+    label='Download CSV',
+    data='Name,Age,City\nAlice,28,NYC\nBob,34,LA',
+    file_name='sample.csv',
+    mime='text/csv'
+)
 ```
 
 ### Forms
@@ -185,12 +229,14 @@ with um.grid(columns=4, gap='16px'):
 with um.card(title='Card Title', subtitle='Optional subtitle'):
     um.text('Card content')
 
-# Tabs
-with um.tabs(['Tab 1', 'Tab 2']) as t:
-    with t.tab(0):
-        um.text('Content for tab 1')
-    with t.tab(1):
-        um.text('Content for tab 2')
+# Tabs (CORRECT SYNTAX)
+with um.tabs(['Tab A', 'Tab B', 'Tab C'], key='main_tabs'):
+    with um.tab(0):
+        um.text('Content for Tab A')
+    with um.tab(1):
+        um.text('Content for Tab B')
+    with um.tab(2):
+        um.text('Content for Tab C')
 
 # Sidebar
 with um.sidebar():
@@ -200,15 +246,88 @@ with um.sidebar():
 # Expander (collapsible)
 with um.expander('Click to expand', expanded=False):
     um.text('Hidden content')
+
+# Modal (popup dialog)
+if um.button('Open Modal', key='open_modal_btn'):
+    um.open_modal('my_modal')
+
+with um.modal('Modal Title', key='my_modal'):
+    um.text('Modal content here!')
+    modal_input = um.input('Input in modal', key='modal_input')
 ```
 
 ### Data Display
 ```python
-um.metric(label='Users', value='12,543', delta=12.5)  # With trend indicator
-um.progress(value=75, label='Completion')
-um.dataframe(data, sortable=True)  # Works with pandas DataFrames or list of dicts
+# Metric with trend indicator
+um.metric(label='Users', value='12,543', delta=12.5)
+
+# Stat card (richer metric display)
+um.stat_card(
+    title='Total Revenue',
+    value='$45,231',
+    trend=12.5,           # Positive = green, negative = red
+    trend_label='vs last month'
+)
+
+# Progress bar
+um.progress(value=75, label='75% Complete')
+
+# Dataframe / Table
+sample_data = [
+    {'Name': 'Alice', 'Age': 28, 'City': 'New York'},
+    {'Name': 'Bob', 'Age': 34, 'City': 'Los Angeles'},
+]
+um.dataframe(sample_data, sortable=True)
+
+# JSON viewer (collapsible tree view)
+um.json_viewer({
+    'user': {'name': 'John', 'email': 'john@example.com'},
+    'items': ['apple', 'banana'],
+    'count': 42
+})
+
+# Badge (status indicator)
+um.badge('Default', variant='default')
+um.badge('Success', variant='success')
+um.badge('Warning', variant='warning')
+um.badge('Error', variant='error')
+um.badge('Info', variant='info')
+
+# Avatar (user profile image/initials)
+um.avatar(name='John Doe', size='sm')   # sm, md, lg, xl
+um.avatar(name='Jane Smith', size='lg')
+
+# Breadcrumbs (navigation path)
+um.breadcrumbs([
+    {'label': 'Home', 'href': '#'},
+    {'label': 'Products', 'href': '#'},
+    {'label': 'Laptops'}  # Last item has no href
+])
+
+# Steps indicator (wizard progress)
+um.steps(['Account', 'Profile', 'Review', 'Complete'], current=1)
+
+# Pagination
+page = um.pagination(total_pages=10, current_page=1, key='page')
+um.text(f'Current page: {page}')
+
+# Empty state (placeholder for empty content)
+um.empty_state(
+    title='No results found',
+    description='Try adjusting your search or filters.',
+    icon='search'  # 'search', 'inbox', 'document', 'folder'
+)
+
+# Spinner (loading indicator)
+with um.spinner('Loading data...'):
+    um.text('Content shown while loading')
+
+# Divider and spacer
 um.divider()
 um.spacer(height='24px')
+
+# HTML embed (custom HTML content)
+um.html('<div style="color: blue;">Custom HTML</div>')
 ```
 
 ### Feedback
@@ -263,27 +382,40 @@ with um.card():
                 um.success('Message sent!')
 ```
 
-### Dashboard with Metrics
+### Dashboard with Stat Cards
 ```python
 import umara as um
 
 um.set_theme('dark')
 um.header('Dashboard')
 
-with um.columns(4):
+with um.columns(3):
     with um.column():
-        um.metric('Users', '12,543', delta=12.5)
+        um.stat_card(
+            title='Total Revenue',
+            value='$45,231',
+            trend=12.5,
+            trend_label='vs last month'
+        )
     with um.column():
-        um.metric('Revenue', '$48.2K', delta=8.2)
+        um.stat_card(
+            title='Active Users',
+            value='2,345',
+            trend=-3.2,
+            trend_label='vs last week'
+        )
     with um.column():
-        um.metric('Sessions', '1,892', delta=-2.4)
-    with um.column():
-        um.metric('Conversion', '3.24%', delta=0.5)
+        um.stat_card(
+            title='Orders',
+            value='1,234',
+            trend=8.1,
+            trend_label='vs yesterday'
+        )
 
 # Data table
 sample_data = [
-    {'Name': 'Alice', 'Age': 28, 'City': 'New York'},
-    {'Name': 'Bob', 'Age': 34, 'City': 'San Francisco'},
+    {'Name': 'Alice', 'Age': 28, 'City': 'New York', 'Score': 95},
+    {'Name': 'Bob', 'Age': 34, 'City': 'Los Angeles', 'Score': 87},
 ]
 um.dataframe(sample_data, sortable=True)
 ```
@@ -325,6 +457,59 @@ if show_details:
         um.text('Extra information...')
 ```
 
+### Tabbed Interface
+```python
+import umara as um
+
+um.header('Product Details')
+
+with um.tabs(['Overview', 'Specs', 'Reviews'], key='product_tabs'):
+    with um.tab(0):
+        um.text('Product overview content here')
+        um.badge('In Stock', variant='success')
+
+    with um.tab(1):
+        um.json_viewer({
+            'dimensions': '10x5x3 inches',
+            'weight': '2.5 lbs',
+            'color': 'Black'
+        })
+
+    with um.tab(2):
+        um.rating('Average Rating', max_value=5, value=4, key='avg_rating')
+        um.text('Based on 128 reviews')
+```
+
+### Multi-Step Form with Steps Indicator
+```python
+import umara as um
+
+um.header('Registration')
+
+um.session_state.setdefault('step', 0)
+
+um.steps(['Account', 'Profile', 'Confirm'], current=um.session_state.step)
+
+if um.session_state.step == 0:
+    with um.form('step1'):
+        email = um.input('Email', type='email')
+        password = um.input('Password', type='password')
+        if um.form_submit_button('Next'):
+            um.session_state.step = 1
+
+elif um.session_state.step == 1:
+    with um.form('step2'):
+        name = um.input('Full Name')
+        bio = um.text_area('Bio')
+        if um.form_submit_button('Next'):
+            um.session_state.step = 2
+
+else:
+    um.success('Registration complete!')
+    if um.button('Start Over', key='reset'):
+        um.session_state.step = 0
+```
+
 ### Counter with State
 ```python
 import umara as um
@@ -342,6 +527,22 @@ with um.columns(2):
     with um.column():
         if um.button('Reset', variant='outline', key='reset'):
             um.session_state.counter = 0
+```
+
+### Modal Dialog
+```python
+import umara as um
+
+um.header('Modal Example')
+
+if um.button('Open Settings', key='open_settings'):
+    um.open_modal('settings_modal')
+
+with um.modal('Settings', key='settings_modal'):
+    um.text('Configure your preferences:')
+    theme = um.select('Theme', options=['Light', 'Dark', 'Ocean'], key='theme_select')
+    notifications = um.toggle('Enable notifications', key='notif_toggle')
+    um.text(f'Theme: {theme}, Notifications: {notifications}')
 ```
 
 ---
