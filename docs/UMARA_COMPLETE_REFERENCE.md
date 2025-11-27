@@ -2,7 +2,7 @@
 
 > **A beautiful, modern Python framework for creating web UIs without HTML, CSS, or JavaScript.**
 
-Version: 0.4.7
+Version: 0.4.8
 
 ---
 
@@ -416,22 +416,27 @@ Display a temporary toast notification.
 um.toast(
     message: str,
     *,
-    type: str = "info",  # "info", "success", "warning", "error"
-    duration: int = 3000  # milliseconds
+    icon: str | None = None,
+    duration: int = 4000  # milliseconds
 ) -> None
 ```
 
 **Parameters:**
 - `message`: The notification text
-- `type`: Toast style variant
-- `duration`: How long to show (milliseconds)
+- `icon`: Optional icon (emoji or icon name)
+- `duration`: How long to show (milliseconds, default 4000)
 
 **Example:**
 
 ```python
 if um.button("Save"):
     # ... save logic ...
-    um.toast("Saved successfully!", type="success")
+    um.toast("Saved successfully!", icon="✅")
+
+# Different notification styles using icons
+um.toast("Info message", icon="ℹ️")
+um.toast("Warning!", icon="⚠️")
+um.toast("Error occurred", icon="❌")
 ```
 
 ### exception()
@@ -2859,6 +2864,7 @@ um.text("More content...")
 
 ## Version History
 
+- **0.4.8** - Fixed toast() documentation (uses `icon` not `type`), corrected loading_skeleton, nav_link, modal, logo API documentation
 - **0.4.7** - Fixed RerunException/StopException handling (no longer show as error tracebacks), added 2D array support for dataframe/table, map component now uses Leaflet.js
 - **0.4.6** - Added frontend implementation for empty_state, copy_button, download_button components; fixed tabs, modal, color_picker, rating, pills components
 - **0.4.5** - Fixed SessionState bracket notation support, updated documentation
@@ -2872,4 +2878,4 @@ um.text("More content...")
 
 ---
 
-*Documentation generated for Umara v0.4.7*
+*Documentation generated for Umara v0.4.8*
