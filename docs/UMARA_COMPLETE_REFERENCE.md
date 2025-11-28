@@ -2005,8 +2005,10 @@ um.stat_card(
     *,
     description: str | None = None,
     icon: str | None = None,
-    trend: float | None = None,
+    trend: float | str | None = None,
     trend_label: str | None = None,
+    delta: str | None = None,  # Alias for trend (Streamlit compatibility)
+    delta_type: str | None = None,  # 'positive', 'negative', 'neutral'
     style: Style | None = None
 ) -> None
 ```
@@ -2016,8 +2018,10 @@ um.stat_card(
 - `value`: Main value to display
 - `description`: Additional description text
 - `icon`: Icon name
-- `trend`: Trend percentage (positive/negative)
+- `trend`: Trend percentage or string (e.g., 15.2 or "+12%")
 - `trend_label`: Label for trend (e.g., "vs last month")
+- `delta`: Alias for trend (Streamlit compatibility)
+- `delta_type`: Delta type ('positive', 'negative', 'neutral')
 
 **Example:**
 
@@ -2169,7 +2173,7 @@ Display a small badge/tag.
 um.badge(
     text: str,
     *,
-    variant: str = "default",  # "default", "primary", "success", "warning", "error", "info"
+    variant: str = "default",  # "default", "success", "warning", "error", "info"
     size: str = "md",  # "sm", "md", "lg"
     style: Style | None = None
 ) -> None

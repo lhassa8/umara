@@ -438,9 +438,10 @@ Collapsible JSON tree view.
 ### stat_card()
 ```python
 um.stat_card(title: str, value: str, *, description: str = None, icon: str = None,
-             trend: float = None, trend_label: str = None, style: Style = None) -> None
+             trend: float | str = None, trend_label: str = None,
+             delta: str = None, delta_type: str = None, style: Style = None) -> None
 ```
-Statistic card with icon and trend.
+Statistic card with icon and trend. `delta` is a Streamlit-compatible alias for `trend`. `delta_type`: 'positive', 'negative', 'neutral'.
 
 ### badge()
 ```python
