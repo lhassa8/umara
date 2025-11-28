@@ -37,9 +37,11 @@ with um.columns(3):
         um.button("Disabled", key="btn_disabled", disabled=True)
 
     with um.column():
-        um.subheader("button() - Use Container Width")
-        if um.button("Full Width Button", key="btn_full", use_container_width=True):
-            um.success("Full width clicked!")
+        um.subheader("button() - Variants")
+        if um.button("Ghost", key="btn_ghost", variant="ghost"):
+            um.info("Ghost clicked!")
+        if um.button("Link Style", key="btn_link", variant="link"):
+            um.info("Link clicked!")
 
 um.divider()
 
@@ -192,7 +194,7 @@ um.markdown("""
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| `button()` | ✅ | Variants, icons, disabled, full width |
+| `button()` | ✅ | Variants, icons, disabled |
 | `input()` | ✅ | Types, placeholder, max_chars |
 | `text_area()` | ✅ | Height, max_chars |
 | `number_input()` | ✅ | Min/max, step, float values |
