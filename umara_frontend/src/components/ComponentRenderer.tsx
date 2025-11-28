@@ -61,6 +61,156 @@ function CopyButton({ text, label, successLabel, style }: {
   )
 }
 
+// FileUploader component with drag & drop and file selection
+function FileUploader({
+  label,
+  accept,
+  multiple,
+  disabled,
+  maxFileSize,
+  stateKey,
+  onStateUpdate,
+  style
+}: {
+  label?: string
+  accept?: string[]
+  multiple?: boolean
+  disabled?: boolean
+  maxFileSize?: number
+  stateKey?: string
+  onStateUpdate: (key: string, value: unknown) => void
+  style?: React.CSSProperties
+}) {
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const [dragActive, setDragActive] = React.useState(false)
+  const [uploadedFiles, setUploadedFiles] = React.useState<Array<{name: string, size: number, type: string}>>([])
+  const [error, setError] = React.useState<string | null>(null)
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    setError(null)
+
+    const fileArray = Array.from(files)
+    const processedFiles: Array<{name: string, size: number, type: string, data?: string}> = []
+
+    for (const file of fileArray) {
+      // Check file size
+      if (maxFileSize && file.size > maxFileSize) {
+        setError(`File "${file.name}" exceeds maximum size of ${Math.round(maxFileSize / 1024 / 1024)}MB`)
+        continue
+      }
+
+      // Read file as base64
+      const data = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.readAsDataURL(file)
+      })
+
+      processedFiles.push({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        data: data
+      })
+    }
+
+    if (processedFiles.length > 0) {
+      setUploadedFiles(processedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })))
+      const result = multiple ? processedFiles : processedFiles[0]
+      if (stateKey) {
+        onStateUpdate(stateKey, result)
+      }
+    }
+  }
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true)
+    } else if (e.type === 'dragleave') {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    if (!disabled && e.dataTransfer.files) {
+      handleFiles(e.dataTransfer.files)
+    }
+  }
+
+  const handleClick = () => {
+    if (!disabled) {
+      fileInputRef.current?.click()
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFiles(e.target.files)
+  }
+
+  const acceptString = accept?.join(',')
+
+  return (
+    <div style={style} className="mb-4">
+      {label && (
+        <label className="block text-sm font-medium text-text mb-1.5">{label}</label>
+      )}
+      <div
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer
+          ${dragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}
+          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+        onClick={handleClick}
+      >
+        <svg className="w-10 h-10 mx-auto text-text-secondary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+        <p className="text-text-secondary text-sm">
+          {dragActive ? 'Drop files here' : 'Drop files here or click to upload'}
+        </p>
+        {accept && accept.length > 0 && (
+          <p className="text-text-secondary text-xs mt-1">
+            Accepted: {accept.join(', ')}
+          </p>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          accept={acceptString}
+          multiple={multiple}
+          disabled={disabled}
+          onChange={handleChange}
+        />
+      </div>
+      {error && (
+        <p className="text-red-500 text-sm mt-2">{error}</p>
+      )}
+      {uploadedFiles.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {uploadedFiles.map((file, index) => (
+            <div key={index} className="flex items-center gap-2 p-2 bg-surface rounded border border-border">
+              <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="text-sm text-text flex-1 truncate">{file.name}</span>
+              <span className="text-xs text-text-secondary">{Math.round(file.size / 1024)}KB</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface ComponentRendererProps {
   component: ComponentTree
   onEvent: (componentId: string, eventType: string, payload?: Record<string, unknown>) => void
@@ -204,6 +354,7 @@ export function ComponentRenderer({
           placeholder={props.placeholder as string}
           type={props.type as string}
           disabled={props.disabled as boolean}
+          maxChars={props.maxChars as number | undefined}
           onChange={(value) => onStateUpdate(props.stateKey as string || id, value)}
           style={customStyle}
         />
@@ -217,7 +368,9 @@ export function ComponentRenderer({
           value={(props.value ?? '') as string}
           placeholder={props.placeholder as string}
           rows={props.rows as number}
+          height={props.height as number | undefined}
           disabled={props.disabled as boolean}
+          maxChars={props.maxChars as number | undefined}
           onChange={(value) => onStateUpdate(props.stateKey as string || id, value)}
           style={customStyle}
         />
@@ -2192,18 +2345,16 @@ export function ComponentRenderer({
     // File uploader
     case 'file_uploader':
       return (
-        <div style={customStyle} className="mb-4">
-          {props.label ? (
-            <label className="block text-sm font-medium text-text mb-1.5">{String(props.label)}</label>
-          ) : null}
-          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
-            <svg className="w-10 h-10 mx-auto text-text-secondary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            <p className="text-text-secondary text-sm">Drop files here or click to upload</p>
-            <input type="file" className="hidden" />
-          </div>
-        </div>
+        <FileUploader
+          label={props.label as string}
+          accept={props.accept as string[] || props.type as string[]}
+          multiple={props.multiple as boolean || props.acceptMultipleFiles as boolean}
+          disabled={props.disabled as boolean}
+          maxFileSize={props.maxFileSize as number}
+          stateKey={props.stateKey as string || id}
+          onStateUpdate={onStateUpdate}
+          style={customStyle}
+        />
       )
 
     // Camera input

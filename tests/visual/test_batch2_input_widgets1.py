@@ -37,11 +37,11 @@ with um.columns(3):
         um.button("Disabled", key="btn_disabled", disabled=True)
 
     with um.column():
-        um.subheader("button() - Variants")
+        um.subheader("button() - Full Width")
+        if um.button("Full Width Button", key="btn_full", use_container_width=True):
+            um.success("Full width clicked!")
         if um.button("Ghost", key="btn_ghost", variant="ghost"):
             um.info("Ghost clicked!")
-        if um.button("Link Style", key="btn_link", variant="link"):
-            um.info("Link clicked!")
 
 um.divider()
 
@@ -60,8 +60,10 @@ with um.columns(2):
         email = um.input("Email", key="input_email", type="email", placeholder="user@example.com")
         password = um.input("Password", key="input_password", type="password")
 
-        um.subheader("input() - Disabled")
-        um.input("Disabled Input", key="input_disabled", disabled=True)
+        um.subheader("input() - Max chars")
+        limited = um.input("Limited (10 chars)", key="input_limited", max_chars=10)
+        if limited:
+            um.caption(f"Characters: {len(limited)}/10")
 
     with um.column():
         um.subheader("text_area()")
@@ -69,8 +71,10 @@ with um.columns(2):
         if bio:
             um.caption(f"Character count: {len(bio)}")
 
-        um.subheader("text_area() - Disabled")
-        um.text_area("Read-only Bio", key="textarea_disabled", disabled=True, height=80)
+        um.subheader("text_area() - Max chars")
+        short_bio = um.text_area("Short Bio (100 chars max)", key="textarea_short", max_chars=100, height=80)
+        if short_bio:
+            um.caption(f"Characters: {len(short_bio)}/100")
 
 um.divider()
 
@@ -171,8 +175,8 @@ with um.columns(2):
 
         um.subheader("date_input() - With min/max")
         birth_date = um.date_input("Birth Date", key="date_birth",
-                                   min_value=date(1900, 1, 1),
-                                   max_value=date.today())
+                                   min_date=date(1900, 1, 1),
+                                   max_date=date.today())
 
     with um.column():
         um.subheader("time_input()")
@@ -194,9 +198,9 @@ um.markdown("""
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| `button()` | ✅ | Variants, icons, disabled |
-| `input()` | ✅ | Types, placeholder, disabled |
-| `text_area()` | ✅ | Height, placeholder, disabled |
+| `button()` | ✅ | Variants, icons, disabled, use_container_width |
+| `input()` | ✅ | Types, placeholder, max_chars |
+| `text_area()` | ✅ | Height, placeholder, max_chars |
 | `number_input()` | ✅ | Min/max, step, float values |
 | `slider()` | ✅ | Single value and range |
 | `select()` | ✅ | Options, index |

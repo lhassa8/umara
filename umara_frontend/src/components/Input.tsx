@@ -8,6 +8,7 @@ interface InputProps {
   placeholder?: string
   type?: string
   disabled?: boolean
+  maxChars?: number
   onChange?: (value: string) => void
   style?: React.CSSProperties
 }
@@ -19,10 +20,19 @@ export function Input({
   placeholder,
   type = 'text',
   disabled = false,
+  maxChars,
   onChange,
   style,
 }: InputProps) {
   const [isFocused, setIsFocused] = useState(false)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value
+    if (maxChars && newValue.length > maxChars) {
+      return // Don't update if exceeds max chars
+    }
+    onChange?.(newValue)
+  }
 
   return (
     <motion.div
@@ -34,6 +44,11 @@ export function Input({
       {label && (
         <label className="block text-sm font-medium text-text mb-1.5">
           {label}
+          {maxChars && (
+            <span className="text-text-tertiary ml-2 font-normal">
+              ({value.length}/{maxChars})
+            </span>
+          )}
         </label>
       )}
       <div className="relative">
@@ -43,7 +58,8 @@ export function Input({
           value={value}
           placeholder={placeholder}
           disabled={disabled}
-          onChange={(e) => onChange?.(e.target.value)}
+          maxLength={maxChars}
+          onChange={handleChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           className={`
@@ -78,7 +94,9 @@ interface TextAreaProps {
   value: string
   placeholder?: string
   rows?: number
+  height?: number
   disabled?: boolean
+  maxChars?: number
   onChange?: (value: string) => void
   style?: React.CSSProperties
 }
@@ -89,11 +107,21 @@ export function TextArea({
   value,
   placeholder,
   rows = 4,
+  height,
   disabled = false,
+  maxChars,
   onChange,
   style,
 }: TextAreaProps) {
   const [isFocused, setIsFocused] = useState(false)
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value
+    if (maxChars && newValue.length > maxChars) {
+      return // Don't update if exceeds max chars
+    }
+    onChange?.(newValue)
+  }
 
   return (
     <motion.div
@@ -105,17 +133,24 @@ export function TextArea({
       {label && (
         <label className="block text-sm font-medium text-text mb-1.5">
           {label}
+          {maxChars && (
+            <span className="text-text-tertiary ml-2 font-normal">
+              ({value.length}/{maxChars})
+            </span>
+          )}
         </label>
       )}
       <textarea
         id={id}
         value={value}
         placeholder={placeholder}
-        rows={rows}
+        rows={height ? undefined : rows}
         disabled={disabled}
-        onChange={(e) => onChange?.(e.target.value)}
+        maxLength={maxChars}
+        onChange={handleChange}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
+        style={height ? { height: `${height}px` } : undefined}
         className={`
           w-full px-4 py-2.5 rounded-lg text-sm
           bg-surface border-2 text-text

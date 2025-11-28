@@ -499,6 +499,8 @@ um.button(
     variant: str = "primary",  # "primary", "secondary", "outline", "ghost", "danger"
     disabled: bool = False,
     loading: bool = False,
+    full_width: bool = False,
+    use_container_width: bool = False,  # Alias for full_width (Streamlit-compatible)
     icon: str | None = None,
     style: Style | None = None
 ) -> bool  # Returns True when clicked
@@ -510,6 +512,8 @@ um.button(
 - `variant`: Visual style ("primary", "secondary", "outline", "ghost", "danger")
 - `disabled`: Whether button is disabled
 - `loading`: Show loading spinner
+- `full_width`: Make button take full container width
+- `use_container_width`: Alias for `full_width` (Streamlit-compatible)
 - `icon`: Icon name
 
 **Examples:**
@@ -539,6 +543,9 @@ um.button("Processing...", loading=True)
 
 # Disabled button
 um.button("Disabled", disabled=True)
+
+# Full-width button
+um.button("Submit", use_container_width=True)
 ```
 
 **Note:** Buttons return `True` only during the render cycle when clicked. The click state is ephemeral. See [Immediate-Mode UI Pattern](#immediate-mode-ui-pattern) for best practices.
@@ -556,6 +563,7 @@ um.input(
     placeholder: str = "",
     type: str = "text",  # "text", "password", "email", "number"
     disabled: bool = False,
+    max_chars: int | None = None,
     label_position: str = "top",  # "top", "left"
     style: Style | None = None
 ) -> str  # Returns current value
@@ -568,6 +576,7 @@ um.input(
 - `placeholder`: Placeholder text
 - `type`: Input type
 - `disabled`: Whether input is disabled
+- `max_chars`: Maximum number of characters allowed (None for unlimited)
 - `label_position`: Label placement ("top" or "left")
 
 **Examples:**
@@ -587,6 +596,9 @@ city = um.input("City", value="New York", label_position="left")
 
 # Disabled
 um.input("Read Only", value="Cannot edit", disabled=True)
+
+# Limited characters
+username = um.input("Username", max_chars=20, placeholder="Max 20 characters")
 ```
 
 ### text_area()
@@ -602,6 +614,7 @@ um.text_area(
     placeholder: str = "",
     rows: int = 4,
     disabled: bool = False,
+    max_chars: int | None = None,
     style: Style | None = None
 ) -> str
 ```
@@ -613,6 +626,7 @@ um.text_area(
 - `placeholder`: Placeholder text
 - `rows`: Number of visible rows
 - `disabled`: Whether disabled
+- `max_chars`: Maximum number of characters allowed (None for unlimited)
 
 **Example:**
 
@@ -622,6 +636,14 @@ bio = um.text_area(
     placeholder="Tell us about yourself...",
     rows=5,
     key="user_bio"
+)
+
+# With character limit
+description = um.text_area(
+    "Description",
+    placeholder="Enter description...",
+    max_chars=500,
+    rows=4
 )
 ```
 

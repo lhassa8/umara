@@ -1,5 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface TextProps {
   content: string
@@ -77,13 +79,15 @@ interface MarkdownProps {
 }
 
 export function Markdown({ content, style }: MarkdownProps) {
-  // Simple markdown rendering - in production, use a proper markdown parser
   return (
     <div
       className="prose prose-slate max-w-none mb-4"
       style={style}
-      dangerouslySetInnerHTML={{ __html: content }}
-    />
+    >
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        {content}
+      </ReactMarkdown>
+    </div>
   )
 }
 

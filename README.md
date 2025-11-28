@@ -86,7 +86,7 @@ That's it! Your app is running with hot reload enabled — any changes to `app.p
 
 ### Components
 
-Umara provides 100+ components for building UIs:
+Umara provides 120+ components for building UIs:
 
 ```python
 # Typography
@@ -131,13 +131,13 @@ with um.card(title='Dashboard'):
     um.text('Card content here')
 
 # Tabs
-with um.tabs(['Overview', 'Data', 'Settings']) as t:
-    with t.tab(0):
+with um.tabs(['Overview', 'Data', 'Settings']):
+    with um.tab('Overview'):
         um.text('Overview content')
-    with t.tab(1):
+    with um.tab('Data'):
         um.dataframe(data)
-    with t.tab(2):
-        um.toggle('Enable feature')
+    with um.tab('Settings'):
+        um.toggle('Enable feature', key='feature_toggle')
 
 # Grid
 with um.grid(columns=4, gap='16px'):
@@ -227,7 +227,7 @@ with um.form('contact'):
 
 See [docs/UMARA_COMPLETE_REFERENCE.md](docs/UMARA_COMPLETE_REFERENCE.md) for complete documentation including:
 
-- All 100+ components with parameters and examples
+- All 120+ components with parameters and examples
 - State management and caching
 - Theming and custom styles
 - Database and API connections
@@ -482,6 +482,17 @@ umara run examples/demo_app.py
 - [ ] Multi-page app support
 - [ ] Component marketplace
 - [ ] VS Code extension
+
+---
+
+## Known Issues
+
+The following issues are currently being tracked:
+
+| Issue | Status | Workaround |
+|-------|--------|------------|
+| `file_uploader()` UI not visible | Open | File upload functionality is limited; upload UI may not render |
+| Modal/dialog in complex layouts | Open | Avoid nesting modals inside deeply nested column layouts |
 
 ---
 

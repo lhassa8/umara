@@ -71,6 +71,7 @@ from umara.components import (
     iframe,
     # Media
     image,
+    json,
     info,
     input,
     json_viewer,
@@ -278,6 +279,7 @@ __all__ = [
     "map",
     # Utility Components
     "copy_button",
+    "json",
     "json_viewer",
     "html",
     "iframe",

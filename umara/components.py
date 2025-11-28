@@ -9,11 +9,23 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import date as date_type
+from datetime import time as time_type
 from typing import Any, Callable
 
 from umara.core import Component, ContainerContext, get_context
 from umara.state import get_session_state
 from umara.style import Style
+
+
+def _normalize_style(style: Style | dict | None) -> dict | None:
+    """Convert style parameter to dict, handling both Style objects and plain dicts."""
+    if style is None:
+        return None
+    if isinstance(style, dict):
+        return style
+    return style.to_dict()
+
 
 # =============================================================================
 # Typography Components
@@ -39,7 +51,7 @@ def text(
     ctx = get_context()
     props = {"content": content}
 
-    style_dict = style.to_dict() if style else {}
+    style_dict = _normalize_style(style) or {}
     if color:
         style_dict["color"] = color
     if size:
@@ -64,7 +76,7 @@ def header(
     """
     ctx = get_context()
     props = {"content": content, "level": level}
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("header", props=props, style=style_dict)
 
 
@@ -82,7 +94,7 @@ def subheader(
     """
     ctx = get_context()
     props = {"content": content}
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("subheader", props=props, style=style_dict)
 
 
@@ -100,7 +112,7 @@ def markdown(
     """
     ctx = get_context()
     props = {"content": content}
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("markdown", props=props, style=style_dict)
 
 
@@ -126,7 +138,35 @@ def code(
         "language": language,
         "lineNumbers": line_numbers,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
+    ctx.create_component("code", props=props, style=style_dict)
+
+
+def json(
+    data: Any,
+    *,
+    expanded: bool = True,
+    style: Style | None = None,
+) -> None:
+    """
+    Display JSON data with syntax highlighting.
+
+    Args:
+        data: JSON-serializable data (dict, list, etc.)
+        expanded: Whether to expand the JSON tree by default
+        style: Optional Style object
+    """
+    import json as json_module
+    ctx = get_context()
+    # Convert data to JSON string with formatting
+    json_str = json_module.dumps(data, indent=2, default=str)
+    props = {
+        "content": json_str,
+        "language": "json",
+        "lineNumbers": True,
+        "expanded": expanded,
+    }
+    style_dict = _normalize_style(style)
     ctx.create_component("code", props=props, style=style_dict)
 
 
@@ -139,7 +179,7 @@ def success(message: str, *, style: Style | None = None) -> None:
     """Display a success message."""
     ctx = get_context()
     props = {"message": message}
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("success", props=props, style=style_dict)
 
 
@@ -147,7 +187,7 @@ def error(message: str, *, style: Style | None = None) -> None:
     """Display an error message."""
     ctx = get_context()
     props = {"message": message}
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("error", props=props, style=style_dict)
 
 
@@ -155,7 +195,7 @@ def warning(message: str, *, style: Style | None = None) -> None:
     """Display a warning message."""
     ctx = get_context()
     props = {"message": message}
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("warning", props=props, style=style_dict)
 
 
@@ -163,7 +203,7 @@ def info(message: str, *, style: Style | None = None) -> None:
     """Display an info message."""
     ctx = get_context()
     props = {"message": message}
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("info", props=props, style=style_dict)
 
 
@@ -199,7 +239,7 @@ def container(
         "justify": justify,
         "gap": gap,
     }
-    style_dict = style.to_dict() if style else {}
+    style_dict = _normalize_style(style) or {}
     if padding:
         style_dict["padding"] = padding
     if margin:
@@ -229,7 +269,7 @@ def columns(
     """
     ctx = get_context()
     props = {"count": count, "gap": gap, "verticalAlign": vertical_align}
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     component = ctx.create_component("columns", props=props, style=style_dict)
     with ContainerContext(component):
         yield
@@ -254,7 +294,7 @@ def column(
     """
     ctx = get_context()
     props = {"align": align, "justify": justify, "gap": gap}
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     component = ctx.create_component("column", props=props, style=style_dict)
     with ContainerContext(component):
         yield
@@ -262,8 +302,9 @@ def column(
 
 @contextmanager
 def grid(
-    columns: int | str = 3,
+    columns: int | str | None = None,
     *,
+    cols: int | str | None = None,
     gap: str = "16px",
     row_gap: str | None = None,
     align: str | None = None,
@@ -275,6 +316,7 @@ def grid(
 
     Args:
         columns: Number of columns or CSS grid-template-columns value
+        cols: Alias for columns (Streamlit compatibility)
         gap: Gap between items
         row_gap: Vertical gap (defaults to gap)
         align: Align items within cells ('start', 'center', 'end', 'stretch')
@@ -282,14 +324,18 @@ def grid(
         style: Optional Style object
     """
     ctx = get_context()
+
+    # Handle cols alias for columns
+    effective_columns = cols if cols is not None else (columns if columns is not None else 3)
+
     props = {
-        "columns": columns,
+        "columns": effective_columns,
         "gap": gap,
         "rowGap": row_gap or gap,
         "align": align,
         "justify": justify,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     component = ctx.create_component("grid", props=props, style=style_dict)
     with ContainerContext(component):
         yield
@@ -330,7 +376,7 @@ def card(
         "justify": justify,
         "gap": gap,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     component = ctx.create_component("card", props=props, style=style_dict)
     with ContainerContext(component):
         yield
@@ -394,7 +440,7 @@ def tabs(
         "activeTab": active_tab,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     component = ctx.create_component("tabs", props=props, style=style_dict)
 
     # Push tabs component onto stack so um.tab() creates children inside it
@@ -417,7 +463,7 @@ def tab(index: int):
 def divider(*, style: Style | None = None) -> None:
     """Create a horizontal divider."""
     ctx = get_context()
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("divider", style=style_dict)
 
 
@@ -440,6 +486,7 @@ def button(
     disabled: bool = False,
     loading: bool = False,
     full_width: bool = False,
+    use_container_width: bool = False,
     icon: str | None = None,
     style: Style | None = None,
 ) -> bool:
@@ -453,6 +500,7 @@ def button(
         disabled: Whether button is disabled
         loading: Show loading spinner (also disables the button)
         full_width: Take full width
+        use_container_width: Take full width (alias for full_width, Streamlit-compatible)
         icon: Optional icon name
         style: Optional Style object
 
@@ -461,6 +509,9 @@ def button(
     """
     ctx = get_context()
     state = get_session_state()
+
+    # use_container_width is an alias for full_width (Streamlit compatibility)
+    is_full_width = full_width or use_container_width
 
     # Generate state key
     state_key = key or f"_btn_{label}"
@@ -476,12 +527,12 @@ def button(
         "variant": variant,
         "disabled": disabled or loading,
         "loading": loading,
-        "fullWidth": full_width,
+        "fullWidth": is_full_width,
         "icon": icon,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else {}
-    if full_width:
+    style_dict = _normalize_style(style) or {}
+    if is_full_width:
         style_dict["width"] = "100%"
 
     ctx.create_component(
@@ -503,6 +554,7 @@ def input(
     placeholder: str = "",
     type: str = "text",
     disabled: bool = False,
+    max_chars: int | None = None,
     label_position: str = "top",
     label_width: str = "120px",
     style: Style | None = None,
@@ -517,6 +569,7 @@ def input(
         placeholder: Placeholder text
         type: Input type ('text', 'password', 'email', 'number')
         disabled: Whether input is disabled
+        max_chars: Maximum number of characters allowed (None for unlimited)
         label_position: Position of label ('top' or 'left')
         label_width: Width of label when position is 'left' (e.g., '120px', '30%')
         style: Optional Style object
@@ -540,7 +593,9 @@ def input(
         "labelPosition": label_position,
         "labelWidth": label_width,
     }
-    style_dict = style.to_dict() if style else None
+    if max_chars is not None:
+        props["maxChars"] = max_chars
+    style_dict = _normalize_style(style)
     ctx.create_component("input", key=state_key, props=props, style=style_dict)
 
     return current_value
@@ -553,7 +608,9 @@ def text_area(
     value: str = "",
     placeholder: str = "",
     rows: int = 4,
+    height: int | None = None,
     disabled: bool = False,
+    max_chars: int | None = None,
     label_position: str = "top",
     label_width: str = "120px",
     style: Style | None = None,
@@ -566,8 +623,10 @@ def text_area(
         key: State key
         value: Default value
         placeholder: Placeholder text
-        rows: Number of visible rows
+        rows: Number of visible rows (ignored if height is set)
+        height: Height in pixels (overrides rows if set)
         disabled: Whether disabled
+        max_chars: Maximum number of characters allowed (None for unlimited)
         label_position: Position of label ('top' or 'left')
         label_width: Width of label when position is 'left'
         style: Optional Style object
@@ -591,7 +650,11 @@ def text_area(
         "labelPosition": label_position,
         "labelWidth": label_width,
     }
-    style_dict = style.to_dict() if style else None
+    if height is not None:
+        props["height"] = height
+    if max_chars is not None:
+        props["maxChars"] = max_chars
+    style_dict = _normalize_style(style)
     ctx.create_component("textarea", key=state_key, props=props, style=style_dict)
 
     return current_value
@@ -640,7 +703,7 @@ def slider(
         "disabled": disabled,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("slider", props=props, style=style_dict)
 
     return current_value
@@ -652,6 +715,7 @@ def select(
     *,
     key: str | None = None,
     default: str | None = None,
+    index: int | None = None,
     placeholder: str = "Select an option...",
     disabled: bool = False,
     label_position: str = "top",
@@ -666,6 +730,7 @@ def select(
         options: List of options (strings or dicts with 'value' and 'label')
         key: State key
         default: Default selected value
+        index: Index of default selected option (alternative to default)
         placeholder: Placeholder text
         disabled: Whether disabled
         label_position: Position of label ('top' or 'left')
@@ -679,8 +744,15 @@ def select(
     state = get_session_state()
 
     options = options or []
+
+    # Handle index parameter - use it to set default if provided
+    effective_default = default
+    if index is not None and options and 0 <= index < len(options):
+        opt = options[index]
+        effective_default = opt["value"] if isinstance(opt, dict) else opt
+
     state_key = key or f"_select_{label or 'default'}"
-    current_value = state.setdefault(state_key, default)
+    current_value = state.setdefault(state_key, effective_default)
 
     props = {
         "label": label,
@@ -692,7 +764,7 @@ def select(
         "labelPosition": label_position,
         "labelWidth": label_width,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("select", props=props, style=style_dict)
 
     return current_value
@@ -740,7 +812,7 @@ def multiselect(
         "stateKey": state_key,
         "multi": True,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("multiselect", props=props, style=style_dict)
 
     return current_value
@@ -779,7 +851,7 @@ def checkbox(
         "disabled": disabled,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("checkbox", props=props, style=style_dict)
 
     return current_value
@@ -818,7 +890,7 @@ def toggle(
         "disabled": disabled,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("toggle", props=props, style=style_dict)
 
     return current_value
@@ -863,7 +935,7 @@ def radio(
         "disabled": disabled,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("radio", props=props, style=style_dict)
 
     return current_value
@@ -873,9 +945,9 @@ def date_input(
     label: str = "",
     *,
     key: str | None = None,
-    value: str | None = None,
-    min_date: str | None = None,
-    max_date: str | None = None,
+    value: str | date_type | None = None,
+    min_date: str | date_type | None = None,
+    max_date: str | date_type | None = None,
     disabled: bool = False,
     style: Style | None = None,
 ) -> str | None:
@@ -885,9 +957,9 @@ def date_input(
     Args:
         label: Input label
         key: State key
-        value: Default date (YYYY-MM-DD format)
-        min_date: Minimum selectable date
-        max_date: Maximum selectable date
+        value: Default date (YYYY-MM-DD format or date object)
+        min_date: Minimum selectable date (string or date object)
+        max_date: Maximum selectable date (string or date object)
         disabled: Whether disabled
         style: Optional Style object
 
@@ -897,18 +969,30 @@ def date_input(
     ctx = get_context()
     state = get_session_state()
 
+    # Convert date objects to ISO format strings
+    def to_date_string(d):
+        if d is None:
+            return None
+        if isinstance(d, date_type):
+            return d.isoformat()
+        return d
+
+    value_str = to_date_string(value)
+    min_date_str = to_date_string(min_date)
+    max_date_str = to_date_string(max_date)
+
     state_key = key or f"_date_{label or 'default'}"
-    current_value = state.setdefault(state_key, value)
+    current_value = state.setdefault(state_key, value_str)
 
     props = {
         "label": label,
         "value": current_value,
-        "minDate": min_date,
-        "maxDate": max_date,
+        "minDate": min_date_str,
+        "maxDate": max_date_str,
         "disabled": disabled,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("date", props=props, style=style_dict)
 
     return current_value
@@ -918,7 +1002,8 @@ def time_input(
     label: str = "",
     *,
     key: str | None = None,
-    value: str | None = None,
+    value: str | time_type | None = None,
+    step: int | None = None,
     disabled: bool = False,
     style: Style | None = None,
 ) -> str | None:
@@ -928,7 +1013,8 @@ def time_input(
     Args:
         label: Input label
         key: State key
-        value: Default time (HH:MM format)
+        value: Default time (HH:MM format or time object)
+        step: Step interval in seconds (e.g., 900 for 15-minute steps)
         disabled: Whether disabled
         style: Optional Style object
 
@@ -938,8 +1024,18 @@ def time_input(
     ctx = get_context()
     state = get_session_state()
 
+    # Convert time objects to string format
+    def to_time_string(t):
+        if t is None:
+            return None
+        if isinstance(t, time_type):
+            return t.strftime("%H:%M")
+        return t
+
+    value_str = to_time_string(value)
+
     state_key = key or f"_time_{label or 'default'}"
-    current_value = state.setdefault(state_key, value)
+    current_value = state.setdefault(state_key, value_str)
 
     props = {
         "label": label,
@@ -947,7 +1043,9 @@ def time_input(
         "disabled": disabled,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    if step is not None:
+        props["step"] = step
+    style_dict = _normalize_style(style)
     ctx.create_component("time", props=props, style=style_dict)
 
     return current_value
@@ -958,9 +1056,12 @@ def file_uploader(
     *,
     key: str | None = None,
     accept: list[str] | None = None,
+    type: list[str] | None = None,
     multiple: bool = False,
+    accept_multiple_files: bool | None = None,
     max_file_size: int | None = None,
     disabled: bool = False,
+    label_visibility: str = "visible",
     style: Style | None = None,
 ) -> Any | None:
     """
@@ -970,9 +1071,12 @@ def file_uploader(
         label: Uploader label
         key: State key
         accept: Accepted file types (e.g., ['.pdf', '.docx'])
+        type: Alias for accept (Streamlit compatibility)
         multiple: Allow multiple files
+        accept_multiple_files: Alias for multiple (Streamlit compatibility)
         max_file_size: Maximum file size in bytes (e.g., 10*1024*1024 for 10MB)
         disabled: Whether disabled
+        label_visibility: Label visibility ('visible', 'hidden', 'collapsed')
         style: Optional Style object
 
     Returns:
@@ -981,19 +1085,25 @@ def file_uploader(
     ctx = get_context()
     state = get_session_state()
 
+    # Handle type alias for accept (Streamlit compatibility)
+    effective_accept = type if type is not None else accept
+
+    # Handle accept_multiple_files alias
+    effective_multiple = accept_multiple_files if accept_multiple_files is not None else multiple
+
     state_key = key or f"_file_{label or 'default'}"
     current_value = state.setdefault(state_key, None)
 
     props = {
-        "label": label,
-        "accept": accept,
-        "multiple": multiple,
+        "label": label if label_visibility == "visible" else "",
+        "accept": effective_accept,
+        "multiple": effective_multiple,
         "maxFileSize": max_file_size,
         "disabled": disabled,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
-    ctx.create_component("fileuploader", props=props, style=style_dict)
+    style_dict = _normalize_style(style)
+    ctx.create_component("file_uploader", props=props, style=style_dict)
 
     return current_value
 
@@ -1031,7 +1141,7 @@ def color_picker(
         "disabled": disabled,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("colorpicker", props=props, style=style_dict)
 
     return current_value
@@ -1084,7 +1194,7 @@ def dataframe(
         "height": height,
         "sortable": sortable,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("dataframe", props=props, style=style_dict)
 
 
@@ -1104,6 +1214,7 @@ def metric(
     *,
     delta: float | None = None,
     delta_label: str = "",
+    delta_color: str = "normal",
     style: Style | None = None,
 ) -> None:
     """
@@ -1114,6 +1225,7 @@ def metric(
         value: Metric value
         delta: Change value (positive or negative)
         delta_label: Label for delta (e.g., "from last week")
+        delta_color: Delta color mode ('normal', 'inverse', 'off')
         style: Optional Style object
     """
     ctx = get_context()
@@ -1122,8 +1234,9 @@ def metric(
         "value": str(value),
         "delta": delta,
         "deltaLabel": delta_label,
+        "deltaColor": delta_color,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("metric", props=props, style=style_dict)
 
 
@@ -1131,22 +1244,29 @@ def progress(
     value: float,
     *,
     label: str | None = None,
+    text: str | None = None,  # Streamlit alias for label
     style: Style | None = None,
 ) -> None:
     """
     Display a progress bar.
 
     Args:
-        value: Progress value (0-100)
+        value: Progress value (0-1 or 0-100, auto-detected)
         label: Optional label
+        text: Optional text (alias for label, Streamlit compatibility)
         style: Optional Style object
     """
     ctx = get_context()
+    # Handle text alias for label (Streamlit compatibility)
+    effective_label = text if text is not None else label
+    # Auto-detect 0-1 range (Streamlit style) vs 0-100 range
+    if 0 <= value <= 1:
+        value = value * 100
     props = {
         "value": max(0, min(100, value)),
-        "label": label,
+        "label": effective_label,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("progress", props=props, style=style_dict)
 
 
@@ -1197,7 +1317,7 @@ def image(
         "height": height,
         "caption": caption,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("image", props=props, style=style_dict)
 
 
@@ -1235,7 +1355,7 @@ def video(
         "width": width,
         "height": height,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("video", props=props, style=style_dict)
 
 
@@ -1264,7 +1384,7 @@ def audio(
         "controls": controls,
         "loop": loop,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("audio", props=props, style=style_dict)
 
 
@@ -1315,7 +1435,7 @@ def chat_message(
         "timestamp": timestamp,
         "isStreaming": is_streaming,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("chat_message", props=props, style=style_dict)
 
 
@@ -1356,7 +1476,7 @@ def chat_input(
         "maxLength": max_length,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("chat_input", props=props, style=style_dict)
 
     return submitted_message
@@ -1382,7 +1502,7 @@ def chat_container(
         "height": height,
         "stateKey": key or "_chat_container",
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     component = ctx.create_component("chat_container", props=props, style=style_dict)
     with ContainerContext(component):
         yield
@@ -1450,7 +1570,7 @@ def chat(
         "assistantAvatar": assistant_avatar,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("chat", props=props, style=style_dict)
 
     return submitted
@@ -1481,7 +1601,7 @@ def sidebar(
         "width": width,
         "collapsed": collapsed,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     component = ctx.create_component("sidebar", props=props, style=style_dict)
     with ContainerContext(component):
         yield
@@ -1525,7 +1645,7 @@ def nav_link(
         "active": active,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("nav_link", props=props, style=style_dict)
 
     return was_clicked
@@ -1550,7 +1670,7 @@ def breadcrumbs(
         "items": items,
         "separator": separator,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("breadcrumbs", props=props, style=style_dict)
 
 
@@ -1584,7 +1704,7 @@ def pagination(
         "currentPage": page,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("pagination", props=props, style=style_dict)
 
     return page
@@ -1626,7 +1746,7 @@ def expander(
         "icon": icon,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     component = ctx.create_component("expander", props=props, style=style_dict)
     with ContainerContext(component):
         yield
@@ -1661,7 +1781,7 @@ def accordion(
         "openItems": open_items,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     component = ctx.create_component("accordion", props=props, style=style_dict)
     with ContainerContext(component):
         yield
@@ -1669,10 +1789,10 @@ def accordion(
 
 @contextmanager
 def modal(
-    title: str,
+    key: str,
     *,
+    title: str = "",
     is_open: bool = False,
-    key: str | None = None,
     size: str = "md",
     close_on_overlay: bool = True,
     style: Style | None = None,
@@ -1681,9 +1801,9 @@ def modal(
     Create a modal dialog.
 
     Args:
+        key: State key / identifier for the modal
         title: Modal title
         is_open: Whether modal is open
-        key: State key
         size: Modal size ('sm', 'md', 'lg', 'xl', 'full')
         close_on_overlay: Close when clicking overlay
         style: Optional Style object
@@ -1691,7 +1811,7 @@ def modal(
     ctx = get_context()
     state = get_session_state()
 
-    state_key = key or f"_modal_{title}"
+    state_key = key
     open_state = state.setdefault(state_key, is_open)
 
     # Only create component and yield content if modal is open
@@ -1713,7 +1833,7 @@ def modal(
         "closeOnOverlay": close_on_overlay,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     component = ctx.create_component("modal", props=props, style=style_dict)
     with ContainerContext(component):
         yield
@@ -1754,7 +1874,7 @@ def popover(
         "position": position,
         "stateKey": key or f"_popover_{trigger_label}",
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     component = ctx.create_component("popover", props=props, style=style_dict)
     with ContainerContext(component):
         yield
@@ -1762,8 +1882,8 @@ def popover(
 
 def tooltip(
     content: str,
-    *,
     text: str,
+    *,
     position: str = "top",
     style: Style | None = None,
 ) -> None:
@@ -1771,8 +1891,8 @@ def tooltip(
     Display text with a tooltip on hover.
 
     Args:
-        content: Text to display
-        text: Tooltip text
+        content: Tooltip text (displayed on hover)
+        text: Text to display as the trigger
         position: Tooltip position ('top', 'bottom', 'left', 'right')
         style: Optional Style object
     """
@@ -1782,7 +1902,7 @@ def tooltip(
         "tooltipText": text,
         "position": position,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("tooltip", props=props, style=style_dict)
 
 
@@ -1833,17 +1953,18 @@ def number_input(
         "disabled": disabled,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("number_input", props=props, style=style_dict)
 
     return current_value
 
 
 def search_input(
-    placeholder: str = "Search...",
+    label: str = "",
     *,
     key: str | None = None,
     value: str = "",
+    placeholder: str = "Search...",
     debounce: int = 300,
     style: Style | None = None,
 ) -> str:
@@ -1851,9 +1972,10 @@ def search_input(
     Create a search input with icon and debounced updates.
 
     Args:
-        placeholder: Placeholder text
+        label: Input label
         key: State key
         value: Default value
+        placeholder: Placeholder text
         debounce: Debounce delay in ms
         style: Optional Style object
 
@@ -1863,16 +1985,17 @@ def search_input(
     ctx = get_context()
     state = get_session_state()
 
-    state_key = key or "_search"
+    state_key = key or f"_search_{label or 'default'}"
     current_value = state.setdefault(state_key, value)
 
     props = {
+        "label": label,
         "placeholder": placeholder,
         "value": current_value,
         "debounce": debounce,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("search_input", props=props, style=style_dict)
 
     return current_value
@@ -1914,7 +2037,7 @@ def rating(
         "disabled": disabled,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("rating", props=props, style=style_dict)
 
     return current_value
@@ -1959,7 +2082,7 @@ def tag_input(
         "suggestions": suggestions,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("tag_input", props=props, style=style_dict)
 
     return current_value
@@ -1992,7 +2115,7 @@ def badge(
         "variant": variant,
         "size": size,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("badge", props=props, style=style_dict)
 
 
@@ -2018,7 +2141,7 @@ def avatar(
         "name": name,
         "size": size,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("avatar", props=props, style=style_dict)
 
 
@@ -2044,7 +2167,7 @@ def avatar_group(
         "maxDisplay": max_display,
         "size": size,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("avatar_group", props=props, style=style_dict)
 
 
@@ -2054,8 +2177,10 @@ def stat_card(
     *,
     description: str | None = None,
     icon: str | None = None,
-    trend: float | None = None,
+    trend: float | str | None = None,
     trend_label: str | None = None,
+    delta: str | None = None,  # Streamlit alias for trend
+    delta_type: str | None = None,  # 'positive', 'negative', 'neutral'
     style: Style | None = None,
 ) -> None:
     """
@@ -2066,20 +2191,25 @@ def stat_card(
         value: Stat value
         description: Optional description
         icon: Icon name
-        trend: Trend percentage
+        trend: Trend percentage (or string like "+12%")
         trend_label: Trend label
+        delta: Alias for trend (Streamlit compatibility)
+        delta_type: Delta type ('positive', 'negative', 'neutral')
         style: Optional Style object
     """
     ctx = get_context()
+    # Use delta as alias for trend
+    effective_trend = delta if delta is not None else trend
     props = {
         "title": title,
         "value": value,
         "description": description,
         "icon": icon,
-        "trend": trend,
+        "trend": effective_trend,
         "trendLabel": trend_label,
+        "deltaType": delta_type,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("stat_card", props=props, style=style_dict)
 
 
@@ -2121,7 +2251,7 @@ def empty_state(
         "actionLabel": action_label,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("empty_state", props=props, style=style_dict)
 
     return was_clicked
@@ -2132,6 +2262,7 @@ def loading_skeleton(
     variant: str = "text",
     lines: int = 3,
     height: str | None = None,
+    width: str | None = None,
     style: Style | None = None,
 ) -> None:
     """
@@ -2141,6 +2272,7 @@ def loading_skeleton(
         variant: Skeleton type ('text', 'card', 'avatar', 'image')
         lines: Number of lines for text variant
         height: Custom height
+        width: Custom width
         style: Optional Style object
     """
     ctx = get_context()
@@ -2148,8 +2280,9 @@ def loading_skeleton(
         "variant": variant,
         "lines": lines,
         "height": height,
+        "width": width,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("skeleton", props=props, style=style_dict)
 
 
@@ -2169,7 +2302,7 @@ def timeline(
     props = {
         "items": items,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("timeline", props=props, style=style_dict)
 
 
@@ -2206,7 +2339,7 @@ def steps(
         "clickable": clickable,
         "stateKey": state_key,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("steps", props=props, style=style_dict)
 
     return step
@@ -2249,7 +2382,7 @@ def line_chart(
         "colors": colors,
         "chartType": "line",
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("chart", props=props, style=style_dict)
 
 
@@ -2291,7 +2424,7 @@ def bar_chart(
         "stacked": stacked,
         "chartType": "bar",
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("chart", props=props, style=style_dict)
 
 
@@ -2330,7 +2463,7 @@ def area_chart(
         "stacked": stacked,
         "chartType": "area",
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("chart", props=props, style=style_dict)
 
 
@@ -2369,7 +2502,7 @@ def pie_chart(
         "donut": donut,
         "chartType": "pie",
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("chart", props=props, style=style_dict)
 
 
@@ -2381,6 +2514,7 @@ def pie_chart(
 def copy_button(
     text: str,
     *,
+    key: str | None = None,
     label: str = "Copy",
     success_label: str = "Copied!",
     style: Style | None = None,
@@ -2390,6 +2524,7 @@ def copy_button(
 
     Args:
         text: Text to copy
+        key: Unique key for the component
         label: Button label
         success_label: Label after copying
         style: Optional Style object
@@ -2400,8 +2535,8 @@ def copy_button(
         "label": label,
         "successLabel": success_label,
     }
-    style_dict = style.to_dict() if style else None
-    ctx.create_component("copy_button", props=props, style=style_dict)
+    style_dict = _normalize_style(style)
+    ctx.create_component("copy_button", props=props, style=style_dict, key=key)
 
 
 def json_viewer(
@@ -2426,7 +2561,7 @@ def json_viewer(
         "expanded": expanded,
         "maxDepth": max_depth,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("json_viewer", props=props, style=style_dict)
 
 
@@ -2448,7 +2583,7 @@ def html(
     props = {
         "content": content,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("html", props=props, style=style_dict)
 
 
@@ -2477,7 +2612,7 @@ def iframe(
         "width": width,
         "title": title,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("iframe", props=props, style=style_dict)
 
 
@@ -2553,7 +2688,7 @@ def title(
         "level": "title",
         "anchor": anchor,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("heading", props=props, style=style_dict)
 
 
@@ -2577,7 +2712,7 @@ def caption(
         "variant": "caption",
         "unsafe_allow_html": unsafe_allow_html,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("text", props=props, style=style_dict)
 
 
@@ -2597,7 +2732,7 @@ def latex(
     props = {
         "content": content,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("latex", props=props, style=style_dict)
 
 
@@ -2729,7 +2864,7 @@ def download_button(
         "variant": variant,
     }
 
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("download_button", key=component_key, props=props, style=style_dict)
 
     state = get_session_state()
@@ -2817,7 +2952,7 @@ def link_button(
         "disabled": disabled,
         "variant": variant,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("link_button", props=props, style=style_dict)
 
 
@@ -2857,7 +2992,7 @@ def form(
         "clear_on_submit": clear_on_submit,
         "border": border,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
 
     with ctx.container("form", props=props, style=style_dict):
         yield
@@ -2889,7 +3024,7 @@ def form_submit_button(
         "variant": variant,
         "is_form_submit": True,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("form_submit_button", props=props, style=style_dict)
 
     state = get_session_state()
@@ -2975,7 +3110,7 @@ def status(
         "expanded": expanded,
         "state": state,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
 
     with ctx.container("status", props=props, style=style_dict):
         yield updater
@@ -3046,7 +3181,7 @@ def select_slider(
         "stateKey": component_key,
     }
 
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("select_slider", key=component_key, props=props, style=style_dict)
 
     return current_value
@@ -3088,7 +3223,7 @@ def pills(
         "disabled": disabled,
     }
 
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("pills", key=component_key, props=props, style=style_dict)
 
     state = get_session_state()
@@ -3102,9 +3237,10 @@ def pills(
 
 
 def feedback(
-    sentiment_mapping: dict[int, str] | None = None,
+    label: str = "",
     *,
     key: str | None = None,
+    sentiment_mapping: dict[int, str] | tuple[str, str] | None = None,
     disabled: bool = False,
     style: Style | None = None,
 ) -> int | None:
@@ -3112,8 +3248,9 @@ def feedback(
     Display a feedback widget (thumbs up/down or star rating).
 
     Args:
-        sentiment_mapping: Dict mapping scores to labels, e.g., {0: "Bad", 1: "Good"}
+        label: Optional label for the feedback widget
         key: Unique key for the widget
+        sentiment_mapping: Dict/tuple mapping scores to labels, e.g., {0: "Bad", 1: "Good"} or ("Bad", "Good")
         disabled: Whether widget is disabled
         style: Optional Style object
 
@@ -3121,11 +3258,14 @@ def feedback(
         Selected feedback score or None
     """
     ctx = get_context()
-    component_key = key or f"feedback_{id(sentiment_mapping)}"
+    component_key = key or f"feedback_{label or 'default'}"
 
     actual_mapping: dict[int, str]
     if sentiment_mapping is None:
         actual_mapping = {0: "Thumbs down", 1: "Thumbs up"}
+    elif isinstance(sentiment_mapping, tuple):
+        # Support tuple format: ("Negative", "Positive")
+        actual_mapping = {0: sentiment_mapping[0], 1: sentiment_mapping[1]}
     else:
         actual_mapping = sentiment_mapping
 
@@ -3134,7 +3274,7 @@ def feedback(
         "disabled": disabled,
     }
 
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("feedback", key=component_key, props=props, style=style_dict)
 
     state = get_session_state()
@@ -3176,7 +3316,7 @@ def segmented_control(
         "disabled": disabled,
     }
 
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("segmented_control", key=component_key, props=props, style=style_dict)
 
     state = get_session_state()
@@ -3213,7 +3353,7 @@ def camera_input(
         "label_visibility": label_visibility,
     }
 
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("camera_input", key=component_key, props=props, style=style_dict)
 
     state = get_session_state()
@@ -3247,7 +3387,7 @@ def audio_input(
         "disabled": disabled,
     }
 
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("audio_input", key=component_key, props=props, style=style_dict)
 
     state = get_session_state()
@@ -3299,7 +3439,7 @@ def scatter_chart(
         "chartType": "scatter",
     }
 
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("chart", props=props, style=style_dict)
 
 
@@ -3336,7 +3476,7 @@ def map(
         "height": height,
     }
 
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("map", props=props, style=style_dict)
 
 
@@ -3397,7 +3537,7 @@ def plotly_chart(
         "key": key,
     }
 
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("plotly_chart", props=props, style=style_dict)
 
 
@@ -3458,7 +3598,7 @@ def write_stream(
         "content": "",
     }
 
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     component = ctx.create_component("streaming_text", props=props, style=style_dict)
     component_id = component.id
 
@@ -3545,7 +3685,7 @@ def data_editor(
         "height": height,
     }
 
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("data_editor", key=component_key, props=props, style=style_dict)
 
     state = get_session_state()
@@ -3570,8 +3710,9 @@ def data_editor(
 
 @contextmanager
 def dialog(
-    title: str,
+    key: str,
     *,
+    title: str = "",
     width: str = "medium",
     style: Style | None = None,
 ):
@@ -3579,12 +3720,13 @@ def dialog(
     Create a dialog/modal window.
 
     Args:
+        key: Unique key/identifier for the dialog
         title: Dialog title
         width: Dialog width ('small', 'medium', 'large')
         style: Optional Style object
 
     Usage:
-        @um.dialog('Settings')
+        @um.dialog('settings_dialog', title='Settings')
         def settings_dialog():
             um.write('Dialog content')
             if um.button('Close'):
@@ -3595,10 +3737,10 @@ def dialog(
     """
     ctx = get_context()
     props = {
-        "title": title,
+        "title": title or key,
         "width": width,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
 
     with ctx.container("dialog", props=props, style=style_dict):
         yield
@@ -3695,5 +3837,5 @@ def logo(
         "link": link,
         "icon_image": icon_image,
     }
-    style_dict = style.to_dict() if style else None
+    style_dict = _normalize_style(style)
     ctx.create_component("logo", props=props, style=style_dict)
