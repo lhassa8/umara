@@ -60,8 +60,8 @@ with um.columns(2):
         email = um.input("Email", key="input_email", type="email", placeholder="user@example.com")
         password = um.input("Password", key="input_password", type="password")
 
-        um.subheader("input() - With max_chars")
-        limited = um.input("Limited (10 chars)", key="input_limited", max_chars=10)
+        um.subheader("input() - Disabled")
+        um.input("Disabled Input", key="input_disabled", disabled=True)
 
     with um.column():
         um.subheader("text_area()")
@@ -69,8 +69,8 @@ with um.columns(2):
         if bio:
             um.caption(f"Character count: {len(bio)}")
 
-        um.subheader("text_area() - With max_chars")
-        short_bio = um.text_area("Short Bio (100 chars max)", key="textarea_short", max_chars=100, height=80)
+        um.subheader("text_area() - Disabled")
+        um.text_area("Read-only Bio", key="textarea_disabled", disabled=True, height=80)
 
 um.divider()
 
@@ -195,8 +195,8 @@ um.markdown("""
 | Component | Status | Notes |
 |-----------|--------|-------|
 | `button()` | ✅ | Variants, icons, disabled |
-| `input()` | ✅ | Types, placeholder, max_chars |
-| `text_area()` | ✅ | Height, max_chars |
+| `input()` | ✅ | Types, placeholder, disabled |
+| `text_area()` | ✅ | Height, placeholder, disabled |
 | `number_input()` | ✅ | Min/max, step, float values |
 | `slider()` | ✅ | Single value and range |
 | `select()` | ✅ | Options, index |
