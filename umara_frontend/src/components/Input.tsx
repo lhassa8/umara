@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 
 interface InputProps {
@@ -25,13 +25,29 @@ export function Input({
   style,
 }: InputProps) {
   const [isFocused, setIsFocused] = useState(false)
+  // Use uncontrolled input pattern - only sync with server on blur
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value
-    if (maxChars && newValue.length > maxChars) {
-      return // Don't update if exceeds max chars
+  // Initialize input value from prop on mount
+  useEffect(() => {
+    if (inputRef.current && !isFocused) {
+      inputRef.current.value = value
     }
-    onChange?.(newValue)
+  }, [value, isFocused])
+
+  const handleFocus = () => {
+    setIsFocused(true)
+  }
+
+  const handleBlur = () => {
+    setIsFocused(false)
+    // Send final value to server on blur
+    if (inputRef.current) {
+      const newValue = inputRef.current.value
+      if (newValue !== value) {
+        onChange?.(newValue)
+      }
+    }
   }
 
   return (
@@ -53,15 +69,15 @@ export function Input({
       )}
       <div className="relative">
         <input
+          ref={inputRef}
           id={id}
           type={type}
-          value={value}
+          defaultValue={value}
           placeholder={placeholder}
           disabled={disabled}
           maxLength={maxChars}
-          onChange={handleChange}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           className={`
             w-full px-4 py-2.5 rounded-lg text-sm
             bg-surface border-2 text-text
@@ -114,13 +130,27 @@ export function TextArea({
   style,
 }: TextAreaProps) {
   const [isFocused, setIsFocused] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value
-    if (maxChars && newValue.length > maxChars) {
-      return // Don't update if exceeds max chars
+  // Initialize textarea value from prop on mount
+  useEffect(() => {
+    if (textareaRef.current && !isFocused) {
+      textareaRef.current.value = value
     }
-    onChange?.(newValue)
+  }, [value, isFocused])
+
+  const handleFocus = () => {
+    setIsFocused(true)
+  }
+
+  const handleBlur = () => {
+    setIsFocused(false)
+    if (textareaRef.current) {
+      const newValue = textareaRef.current.value
+      if (newValue !== value) {
+        onChange?.(newValue)
+      }
+    }
   }
 
   return (
@@ -141,15 +171,15 @@ export function TextArea({
         </label>
       )}
       <textarea
+        ref={textareaRef}
         id={id}
-        value={value}
+        defaultValue={value}
         placeholder={placeholder}
         rows={height ? undefined : rows}
         disabled={disabled}
         maxLength={maxChars}
-        onChange={handleChange}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         style={height ? { height: `${height}px` } : undefined}
         className={`
           w-full px-4 py-2.5 rounded-lg text-sm
