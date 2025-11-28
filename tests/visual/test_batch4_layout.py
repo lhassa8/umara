@@ -27,15 +27,15 @@ um.divider()
 um.subheader("columns() and column()")
 with um.columns(3):
     with um.column():
-        um.card():
+        with um.card():
             um.text("Column 1")
             um.metric("Metric A", "100")
     with um.column():
-        um.card():
+        with um.card():
             um.text("Column 2")
             um.metric("Metric B", "200")
     with um.column():
-        um.card():
+        with um.card():
             um.text("Column 3")
             um.metric("Metric C", "300")
 
