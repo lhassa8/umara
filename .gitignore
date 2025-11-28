@@ -66,3 +66,4 @@ Thumbs.db
 # Development test scripts (not pytest tests in tests/)
 test_*.py
 !tests/test_*.py
+!tests/visual/test_*.py
