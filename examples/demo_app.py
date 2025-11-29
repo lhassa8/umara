@@ -240,7 +240,7 @@ um.text(
     size='14px'
 )
 um.text(
-    'Star us on GitHub: github.com/umara-framework/umara',
+    'Star us on GitHub: github.com/lhassa8/umara',
     color='#94a3b8',
     size='12px'
 )

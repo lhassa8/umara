@@ -12,7 +12,7 @@ um.set_theme('light')
 # Header
 # ============================================================================
 um.header('Umara Component Showcase')
-um.text('Explore all available components in Umara v0.2.0')
+um.text('Explore all available components in Umara v0.5.0')
 
 um.breadcrumbs([
     {'label': 'Home', 'href': '/'},
@@ -60,7 +60,7 @@ with um.columns(5):
     with um.column():
         um.badge('Default', variant='default')
     with um.column():
-        um.badge('Primary', variant='primary')
+        um.badge('Info', variant='info')
     with um.column():
         um.badge('Success', variant='success')
     with um.column():
@@ -158,7 +158,7 @@ um.subheader('JSON Viewer')
 
 um.json_viewer({
     'name': 'Umara',
-    'version': '0.2.0',
+    'version': '0.5.0',
     'features': ['chat', 'charts', 'themes'],
     'stats': {
         'components': 50,
@@ -287,5 +287,5 @@ um.divider()
 # ============================================================================
 # Footer
 # ============================================================================
-um.text('Umara v0.2.0 - Component Showcase', color='#64748b', size='12px')
+um.text('Umara v0.5.0 - Component Showcase', color='#64748b', size='12px')
 um.text('50+ beautiful components for your Python apps', color='#94a3b8', size='12px')

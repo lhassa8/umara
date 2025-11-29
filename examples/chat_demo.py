@@ -60,10 +60,10 @@ um.subheader('Custom Chat Layout')
 um.text('Build your own chat layout with individual components', color='#64748b')
 
 with um.chat_container(height='300px', key='custom_chat'):
-    um.chat_message('user', 'How do I create a dashboard?')
-    um.chat_message('assistant', 'Creating dashboards with Umara is easy! Use the `columns` and `metric` components.')
-    um.chat_message('user', 'Can you show me an example?')
-    um.chat_message('assistant', 'Sure! Here\'s a quick example:\n\n```python\nwith um.columns(3):\n    um.metric("Users", "1,234")\n    um.metric("Revenue", "$48K")\n```')
+    um.chat_message('How do I create a dashboard?', role='user')
+    um.chat_message('Creating dashboards with Umara is easy! Use the `columns` and `metric` components.', role='assistant')
+    um.chat_message('Can you show me an example?', role='user')
+    um.chat_message('Sure! Here\'s a quick example:\n\n```python\nwith um.columns(3):\n    um.metric("Users", "1,234")\n    um.metric("Revenue", "$48K")\n```', role='assistant')
 
 um.chat_input('Type your message...', key='custom_input')
 
@@ -103,4 +103,4 @@ um.divider()
 # ============================================================================
 # Footer
 # ============================================================================
-um.text('Chat Demo - Umara v0.2.0', color='#64748b', size='12px')
+um.text('Chat Demo - Umara v0.5.0', color='#64748b', size='12px')
