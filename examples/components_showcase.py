@@ -12,7 +12,7 @@ um.set_theme('light')
 # Header
 # ============================================================================
 um.header('Umara Component Showcase')
-um.text('Explore all available components in Umara v0.3.0')
+um.text('Explore all available components in Umara v0.5.1')
 
 um.breadcrumbs([
     {'label': 'Home', 'href': '/'},
@@ -287,5 +287,5 @@ um.divider()
 # ============================================================================
 # Footer
 # ============================================================================
-um.text('Umara v0.3.0 - Component Showcase', color='#64748b', size='12px')
+um.text('Umara v0.5.1 - Component Showcase', color='#64748b', size='12px')
 um.text('50+ beautiful components for your Python apps', color='#94a3b8', size='12px')

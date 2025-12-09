@@ -163,7 +163,7 @@ from umara.themes import (
     set_theme,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.5.1"
 __all__ = [
     # Core
     "UmaraApp",

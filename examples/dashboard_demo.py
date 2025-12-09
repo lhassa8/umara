@@ -198,4 +198,4 @@ um.divider()
 # Footer
 # ============================================================================
 um.spacer(height='16px')
-um.text('Dashboard Demo - Umara v0.3.0', color='#94a3b8', size='12px')
+um.text('Dashboard Demo - Umara v0.5.1', color='#94a3b8', size='12px')

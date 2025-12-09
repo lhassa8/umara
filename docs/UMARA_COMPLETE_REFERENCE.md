@@ -2,7 +2,7 @@
 
 > **A beautiful, modern Python framework for creating web UIs without HTML, CSS, or JavaScript.**
 
-Version: 0.3.0
+Version: 0.5.1
 
 ---
 
@@ -3602,6 +3602,8 @@ um.text("More content...")
 
 ## Version History
 
+- **0.5.1** - Updated version, fixed example version references, comprehensive component testing
+- **0.5.0** - Major update with improved component stability
 - **0.4.8** - Fixed toast() documentation (uses `icon` not `type`), corrected loading_skeleton, nav_link, modal, logo API documentation
 - **0.4.7** - Fixed RerunException/StopException handling (no longer show as error tracebacks), added 2D array support for dataframe/table, map component now uses Leaflet.js
 - **0.4.6** - Added frontend implementation for empty_state, copy_button, download_button components; fixed tabs, modal, color_picker, rating, pills components
@@ -3616,4 +3618,4 @@ um.text("More content...")
 
 ---
 
-*Documentation generated for Umara v0.3.0*
+*Documentation generated for Umara v0.5.1*
