@@ -138,3 +138,29 @@ export function Code({ content, language = 'text', lineNumbers = true, style }: 
     </motion.div>
   )
 }
+
+interface StreamingTextProps {
+  content: string
+  streaming?: boolean
+  style?: React.CSSProperties
+}
+
+export function StreamingText({ content, streaming = false, style }: StreamingTextProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="text-text leading-relaxed mb-3"
+      style={style}
+    >
+      <span>{content}</span>
+      {streaming && (
+        <motion.span
+          animate={{ opacity: [1, 0] }}
+          transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
+          className="inline-block ml-0.5 w-2 h-5 bg-primary align-text-bottom"
+        />
+      )}
+    </motion.div>
+  )
+}

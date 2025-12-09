@@ -150,6 +150,7 @@ from umara.state import (
     cache,
     cache_data,
     cache_resource,
+    computed,
     fragment,
     session_state,
     state,
@@ -299,6 +300,8 @@ __all__ = [
     "cache",
     "cache_data",
     "cache_resource",
+    # Computed (reactive derived state)
+    "computed",
     # Fragments (partial reruns)
     "fragment",
     # Connections

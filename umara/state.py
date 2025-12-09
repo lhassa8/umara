@@ -695,3 +695,156 @@ def state(default: T | None = None) -> T | None:
         return get_session_state().setdefault(key, default)
 
     return default
+
+
+class Computed:
+    """
+    Decorator for creating reactive computed values.
+
+    Computed values automatically track their dependencies (state keys they access)
+    and recalculate only when those dependencies change. This provides:
+
+    - Automatic dependency tracking (no manual subscription)
+    - Lazy evaluation (only computes when accessed)
+    - Memoization (caches result until dependencies change)
+    - Clean syntax similar to Vue.js/MobX computed properties
+
+    Example:
+        @um.computed
+        def total_price():
+            return session_state.get('quantity', 0) * session_state.get('price', 0)
+
+        @um.computed
+        def filtered_items():
+            items = session_state.get('items', [])
+            search = session_state.get('search', '')
+            return [i for i in items if search.lower() in i['name'].lower()]
+
+    Usage in app:
+        um.text(f'Total: ${total_price()}')  # Automatically updates when quantity/price change
+
+    Advanced - with explicit dependencies:
+        @um.computed(deps=['quantity', 'price'])
+        def total():
+            return session_state.quantity * session_state.price
+    """
+
+    def __init__(self):
+        self._computeds: dict[str, dict[str, Any]] = {}
+        self._lock = threading.RLock()
+
+    def __call__(
+        self,
+        func: Callable[..., T] | None = None,
+        *,
+        deps: list[str] | None = None,
+    ) -> Callable[..., T] | Callable[[Callable[..., T]], Callable[..., T]]:
+        """
+        Decorator to create a computed value.
+
+        Args:
+            func: The function to compute the value
+            deps: Optional explicit list of state keys this computed depends on.
+                  If not provided, dependencies are tracked automatically.
+
+        Usage:
+            @um.computed
+            def my_value(): ...
+
+            @um.computed(deps=['key1', 'key2'])
+            def my_value(): ...
+        """
+
+        def decorator(fn: Callable[..., T]) -> Callable[..., T]:
+            computed_id = f"{fn.__module__}_{fn.__qualname__}"
+
+            @functools.wraps(fn)
+            def wrapper(*args: Any, **kwargs: Any) -> T:
+                state = get_session_state()
+
+                with self._lock:
+                    # Get or create computed entry for this session
+                    if computed_id not in self._computeds:
+                        self._computeds[computed_id] = {
+                            "value": None,
+                            "deps": set(deps) if deps else set(),
+                            "dep_versions": {},
+                            "computed": False,
+                            "explicit_deps": deps is not None,
+                        }
+
+                    entry = self._computeds[computed_id]
+
+                    # Check if we need to recompute
+                    needs_recompute = not entry["computed"]
+
+                    if not needs_recompute and entry["deps"]:
+                        # Check if any dependency version changed
+                        for dep_key in entry["deps"]:
+                            if dep_key in state._state:
+                                current_version = state._state[dep_key].version
+                                if entry["dep_versions"].get(dep_key) != current_version:
+                                    needs_recompute = True
+                                    break
+                            elif dep_key in entry["dep_versions"]:
+                                # Key was deleted
+                                needs_recompute = True
+                                break
+
+                    if needs_recompute:
+                        # Track dependencies during computation if not explicit
+                        if not entry["explicit_deps"]:
+                            tracked_deps: set[str] = set()
+                            original_getattr = SessionState.__getattr__
+
+                            def tracking_getattr(self_state: SessionState, key: str) -> Any:
+                                if not key.startswith("_"):
+                                    tracked_deps.add(key)
+                                return original_getattr(self_state, key)
+
+                            # Temporarily patch __getattr__ to track accesses
+                            SessionState.__getattr__ = tracking_getattr  # type: ignore
+                            try:
+                                result = fn(*args, **kwargs)
+                            finally:
+                                SessionState.__getattr__ = original_getattr  # type: ignore
+
+                            entry["deps"] = tracked_deps
+                        else:
+                            result = fn(*args, **kwargs)
+
+                        # Update cached value and dependency versions
+                        entry["value"] = result
+                        entry["computed"] = True
+                        entry["dep_versions"] = {
+                            key: state._state[key].version
+                            for key in entry["deps"]
+                            if key in state._state
+                        }
+
+                    return entry["value"]
+
+            # Add invalidate method
+            def invalidate() -> None:
+                """Force the computed value to recompute on next access."""
+                with self._lock:
+                    if computed_id in self._computeds:
+                        self._computeds[computed_id]["computed"] = False
+
+            wrapper.invalidate = invalidate  # type: ignore
+            wrapper.computed_id = computed_id  # type: ignore
+
+            return wrapper
+
+        if func is not None:
+            return decorator(func)
+        return decorator
+
+    def clear(self) -> None:
+        """Clear all computed value caches."""
+        with self._lock:
+            self._computeds.clear()
+
+
+# Reactive computed decorator
+computed = Computed()

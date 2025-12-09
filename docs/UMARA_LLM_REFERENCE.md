@@ -1,6 +1,6 @@
 # Umara LLM Reference Guide
 
-Concise API reference for LLM agents using Umara v0.4.9. All signatures verified against source code.
+Concise API reference for LLM agents using Umara v0.3.0. All signatures verified against source code.
 
 ## Quick Start
 
@@ -846,4 +846,4 @@ if "key" not in um.state:
 
 ---
 
-*Umara v0.4.9 - All 79 components documented*
+*Umara v0.3.0 - All 79 components documented*

@@ -178,7 +178,7 @@ with um.columns([1, 2]):
         )
     with um.column():
         with um.card():
-            um.text('Traffic Insights', size='16px', weight='600')
+            um.subheader('Traffic Insights')
             um.spacer(height='12px')
             um.text('Direct traffic continues to be your strongest channel, indicating good brand recognition.', color='#64748b', size='14px')
             um.spacer(height='12px')
@@ -198,4 +198,4 @@ um.divider()
 # Footer
 # ============================================================================
 um.spacer(height='16px')
-um.text('Dashboard Demo - Umara v0.5.0', color='#94a3b8', size='12px')
+um.text('Dashboard Demo - Umara v0.3.0', color='#94a3b8', size='12px')

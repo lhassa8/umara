@@ -2,7 +2,7 @@
 
 > **A beautiful, modern Python framework for creating web UIs without HTML, CSS, or JavaScript.**
 
-Version: 0.4.9
+Version: 0.3.0
 
 ---
 
@@ -3616,4 +3616,4 @@ um.text("More content...")
 
 ---
 
-*Documentation generated for Umara v0.4.8*
+*Documentation generated for Umara v0.3.0*

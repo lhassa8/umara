@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ComponentTree } from '../App'
 
 // Import individual components
-import { Text, Header, Subheader, Markdown, Code } from './Typography'
+import { Text, Header, Subheader, Markdown, Code, StreamingText } from './Typography'
 import { Button } from './Button'
 import { Input, TextArea } from './Input'
 import { Slider } from './Slider'
@@ -276,6 +276,15 @@ export function ComponentRenderer({
       return (
         <Text
           content={props.content as string}
+          style={customStyle}
+        />
+      )
+
+    case 'streaming_text':
+      return (
+        <StreamingText
+          content={props.content as string || ''}
+          streaming={props.streaming as boolean}
           style={customStyle}
         />
       )
