@@ -19,6 +19,7 @@ from typing import Any, Callable
 
 from umara.state import SessionState, StateValue, set_session_state
 from umara.themes import get_theme
+from umara.diff import diff_trees, count_components, should_use_full_update
 
 
 class RerunException(Exception):
@@ -194,6 +195,9 @@ class Session:
         self._event_handlers: dict[str, Callable] = {}
         self._pending_updates: list[dict[str, Any]] = []
         self._lock = asyncio.Lock()
+        # For incremental updates
+        self._previous_tree: dict[str, Any] | None = None
+        self._render_count: int = 0
 
     def register_handler(self, event_id: str, handler: Callable) -> None:
         """Register an event handler."""
@@ -271,11 +275,19 @@ class UmaraApp:
             if session_id in self.sessions:
                 del self.sessions[session_id]
 
-    async def render_session(self, session: Session) -> dict[str, Any]:
+    async def render_session(
+        self,
+        session: Session,
+        incremental: bool = True,
+    ) -> dict[str, Any]:
         """
         Render the app for a specific session.
 
-        Returns the complete component tree.
+        Args:
+            session: The session to render
+            incremental: If True, compute diff and potentially return patches
+
+        Returns the complete component tree or patches if incremental.
         """
         if not self._app_func:
             return {"id": "root", "type": "root", "children": [], "props": {}}
@@ -322,11 +334,49 @@ class UmaraApp:
             if key in session.state._state:
                 session.state._state[key].value = False
 
-        return {
+        # Increment render count
+        session._render_count += 1
+
+        # Compute diff if incremental updates are enabled and we have a previous tree
+        diff_result = None
+        use_patches = False
+
+        if incremental and session._previous_tree is not None:
+            diff_result = diff_trees(session._previous_tree, tree)
+            tree_size = count_components(tree)
+
+            # Decide whether to use patches or full update
+            if diff_result.has_changes and not should_use_full_update(diff_result, tree_size):
+                use_patches = True
+
+        # Store current tree for next diff
+        session._previous_tree = tree
+
+        # Build response
+        response = {
             "tree": tree,
             "theme": theme.to_dict(),
             "state": session.state.to_dict(),
+            "renderCount": session._render_count,
         }
+
+        # Add diff info if available (for debugging/monitoring)
+        if diff_result is not None:
+            response["diff"] = {
+                "hasChanges": diff_result.has_changes,
+                "patchCount": len(diff_result.patches),
+                "stats": {
+                    "added": diff_result.components_added,
+                    "removed": diff_result.components_removed,
+                    "updated": diff_result.components_updated,
+                },
+            }
+
+            # If using patches, include them (frontend can choose to use)
+            if use_patches:
+                response["patches"] = diff_result.to_dict()["patches"]
+
+        return response
 
     async def handle_event(
         self,

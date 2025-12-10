@@ -19,16 +19,18 @@ Version: 0.5.1
 9. [Media Components](#media-components)
 10. [Navigation Components](#navigation-components)
 11. [Chat Components](#chat-components)
-12. [State Management](#state-management)
-13. [Caching](#caching)
-14. [Fragments (Partial Reruns)](#fragments-partial-reruns)
-15. [Connections (Database & API)](#connections-database--api)
-16. [Theming](#theming)
-17. [Styling](#styling)
-18. [Page Configuration](#page-configuration)
-19. [CLI Commands](#cli-commands)
-20. [Accessibility](#accessibility)
-21. [Complete Examples](#complete-examples)
+12. [Form Validation](#form-validation)
+13. [AI Streaming Helpers](#ai-streaming-helpers)
+14. [State Management](#state-management)
+15. [Caching](#caching)
+16. [Fragments (Partial Reruns)](#fragments-partial-reruns)
+17. [Connections (Database & API)](#connections-database--api)
+18. [Theming](#theming)
+19. [Styling](#styling)
+20. [Page Configuration](#page-configuration)
+21. [CLI Commands](#cli-commands)
+22. [Accessibility](#accessibility)
+23. [Complete Examples](#complete-examples)
 
 ---
 
@@ -3531,6 +3533,471 @@ with um.card():
 
 ---
 
+## Form Validation
+
+Umara includes a powerful built-in validation system with 17+ validators. This gives Umara a significant advantage over Streamlit, which requires external libraries for form validation.
+
+### Basic Usage
+
+```python
+import umara as um
+from umara.validation import validate, required, email, min_length
+
+with um.form("signup"):
+    email_input = um.input("Email")
+    password = um.input("Password", type="password")
+
+    if um.form_submit_button("Sign Up"):
+        errors = validate({
+            "email": (email_input, [required(), email()]),
+            "password": (password, [required(), min_length(8)]),
+        })
+
+        if errors:
+            for field, messages in errors.items():
+                um.error(f"{field}: {messages[0]}")
+        else:
+            um.success("Account created!")
+```
+
+### Available Validators
+
+| Validator | Description | Example |
+|-----------|-------------|---------|
+| `required()` | Value not empty/None | `required("Field is required")` |
+| `min_length(n)` | Minimum string length | `min_length(8, "Too short")` |
+| `max_length(n)` | Maximum string length | `max_length(100)` |
+| `email()` | Valid email format | `email("Invalid email")` |
+| `url()` | Valid URL format | `url("Invalid URL")` |
+| `pattern(regex)` | Matches regex pattern | `pattern(r"^\d{3}-\d{4}$")` |
+| `min_value(n)` | Minimum numeric value | `min_value(18, "Must be 18+")` |
+| `max_value(n)` | Maximum numeric value | `max_value(100)` |
+| `in_range(min, max)` | Value in numeric range | `in_range(1, 10)` |
+| `one_of(options)` | Value in allowed list | `one_of(["a", "b", "c"])` |
+| `matches(other, name)` | Matches another value | `matches(password, "password")` |
+| `numeric()` | Is a valid number | `numeric()` |
+| `integer()` | Is a whole number | `integer()` |
+| `alpha()` | Contains only letters | `alpha()` |
+| `alphanumeric()` | Letters and numbers only | `alphanumeric()` |
+| `no_whitespace()` | No spaces/tabs/newlines | `no_whitespace()` |
+| `custom(fn)` | Custom validation function | `custom(lambda x: x > 0)` |
+
+### Validation Functions
+
+#### validate()
+
+Validate multiple fields at once.
+
+```python
+from umara.validation import validate, required, email, min_length
+
+errors = validate({
+    "email": (email_input, [required(), email()]),
+    "password": (password, [required(), min_length(8)]),
+    "age": (age_input, [required(), min_value(18)]),
+})
+
+# Returns: dict[str, list[str]]
+# Example: {"password": ["Must be at least 8 characters"]}
+# Empty dict if all valid
+```
+
+#### validate_field()
+
+Validate a single field.
+
+```python
+from umara.validation import validate_field, required, email
+
+errors = validate_field(email_input, [required(), email()])
+# Returns: list[str] - empty if valid
+```
+
+#### is_valid()
+
+Quick boolean check for validation.
+
+```python
+from umara.validation import is_valid, required, min_length
+
+if is_valid(password, [required(), min_length(8)]):
+    um.success("Password is strong!")
+else:
+    um.error("Password too weak")
+```
+
+### FormValidator Class
+
+For complex forms, use the `FormValidator` class to manage validation more elegantly.
+
+```python
+from umara.validation import FormValidator, required, email, min_length, matches
+
+validator = FormValidator()
+
+# Add fields to validate
+name = um.input("Full Name")
+validator.add("name", name, [required()])
+
+email_input = um.input("Email")
+validator.add("email", email_input, [required(), email()])
+
+password = um.input("Password", type="password")
+validator.add("password", password, [required(), min_length(8)])
+
+confirm = um.input("Confirm Password", type="password")
+validator.add("confirm_password", confirm, [required(), matches(password, "password")])
+
+if um.form_submit_button("Register"):
+    if validator.is_valid():
+        um.success("Registration successful!")
+    else:
+        validator.show_errors()  # Displays um.error() for each validation error
+```
+
+**FormValidator Methods:**
+
+```python
+validator.add(name, value, validators)  # Add field to validate
+validator.validate()                     # Run validation, returns dict of errors
+validator.is_valid()                     # Returns True if no errors
+validator.get_errors(field_name=None)    # Get errors for field or all
+validator.show_errors()                  # Display all errors using um.error()
+validator.clear()                        # Reset all fields and errors
+```
+
+### Custom Validators
+
+Create custom validation logic with the `custom()` validator:
+
+```python
+from umara.validation import custom, validate
+
+def is_even(n):
+    return n % 2 == 0
+
+def is_business_email(email):
+    return not email.endswith("@gmail.com")
+
+errors = validate({
+    "number": (num_input, [custom(is_even, "Must be an even number")]),
+    "email": (email_input, [custom(is_business_email, "Please use a business email")]),
+})
+```
+
+### Complete Form Example
+
+```python
+import umara as um
+from umara.validation import (
+    FormValidator, required, email, min_length,
+    max_length, pattern, min_value, max_value, one_of
+)
+
+um.title("User Registration")
+
+with um.form("registration"):
+    validator = FormValidator()
+
+    um.subheader("Personal Information")
+
+    with um.columns(2):
+        with um.column():
+            first = um.input("First Name")
+            validator.add("first_name", first, [required(), alpha()])
+        with um.column():
+            last = um.input("Last Name")
+            validator.add("last_name", last, [required(), alpha()])
+
+    email_input = um.input("Email", type="email")
+    validator.add("email", email_input, [required(), email()])
+
+    phone = um.input("Phone", placeholder="123-456-7890")
+    validator.add("phone", phone, [
+        required(),
+        pattern(r"^\d{3}-\d{3}-\d{4}$", "Format: 123-456-7890")
+    ])
+
+    um.subheader("Account Details")
+
+    password = um.input("Password", type="password")
+    validator.add("password", password, [
+        required(),
+        min_length(8, "Password must be at least 8 characters"),
+        max_length(50)
+    ])
+
+    age = um.number_input("Age", min_value=0, max_value=150)
+    validator.add("age", age, [min_value(13, "Must be at least 13 years old")])
+
+    plan = um.select("Plan", ["Free", "Pro", "Enterprise"])
+    validator.add("plan", plan, [required(), one_of(["Free", "Pro", "Enterprise"])])
+
+    if um.form_submit_button("Create Account"):
+        if validator.is_valid():
+            um.success(f"Welcome, {first}! Account created successfully.")
+        else:
+            validator.show_errors()
+```
+
+---
+
+## AI Streaming Helpers
+
+Umara provides advanced AI/LLM integration through the `umara.ai` module, going beyond basic streaming to offer metrics, provider adapters, cost estimation, and more.
+
+### AIMessage
+
+Portable message format compatible with OpenAI and Anthropic APIs.
+
+```python
+from umara.ai import AIMessage
+
+# Create messages
+messages = [
+    AIMessage.system("You are a helpful assistant."),
+    AIMessage.user("Tell me a joke"),
+    AIMessage.assistant("Why did the programmer quit? Because he didn't get arrays!"),
+]
+
+# Convert to API format
+openai_messages = [m.to_openai() for m in messages]
+anthropic_messages = [m.to_anthropic() for m in messages]
+```
+
+### StreamMetrics
+
+Collect metrics during streaming for monitoring and optimization.
+
+```python
+from umara.ai import StreamMetrics
+
+metrics = StreamMetrics()
+# Populated during streaming:
+# metrics.tokens_generated - estimated token count
+# metrics.chunks_received - number of stream chunks
+# metrics.start_time / end_time - timing
+# metrics.duration - total time in seconds
+# metrics.tokens_per_second - streaming speed
+```
+
+### stream_with_metrics()
+
+Process any stream and collect metrics.
+
+```python
+from umara.ai import stream_with_metrics
+
+# With OpenAI
+stream = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Hello"}],
+    stream=True
+)
+
+response, metrics = stream_with_metrics(stream)
+
+um.text(response)
+um.caption(f"Generated {metrics.tokens_generated} tokens in {metrics.duration:.1f}s "
+           f"({metrics.tokens_per_second:.0f} tok/s)")
+```
+
+### write_stream_with_stats()
+
+Stream content to UI with automatic statistics display.
+
+```python
+from umara.ai import write_stream_with_stats
+
+# Displays streaming content + stats after completion
+result = um.ai.write_stream_with_stats(stream, show_stats=True)
+# Shows: "Generated ~150 tokens in 2.3s (65 tok/s)"
+
+# Access the result
+print(result.content)  # Full response text
+print(result.metrics.tokens_per_second)  # Streaming speed
+```
+
+### chat_stream()
+
+Stream AI response directly inside a chat message container.
+
+```python
+from umara.ai import chat_stream
+
+with um.chat_container():
+    um.chat_message("Tell me a story", role="user")
+
+    stream = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": "Tell me a story"}],
+        stream=True
+    )
+
+    # Streams inside a styled chat message bubble
+    response = um.ai.chat_stream(stream, role="assistant", avatar="🤖")
+```
+
+### simulate_stream()
+
+Create simulated streams for testing and demos without API calls.
+
+```python
+from umara.ai import simulate_stream
+
+# Test streaming UI without API
+stream = um.ai.simulate_stream(
+    "Hello! I'm a simulated AI response. How can I help you today?",
+    chunk_size=10,  # Characters per chunk
+    delay=0.02      # Delay between chunks (seconds)
+)
+
+um.write_stream(stream)
+```
+
+### async_simulate_stream()
+
+Async version for async applications.
+
+```python
+from umara.ai import async_simulate_stream
+
+async for chunk in um.ai.async_simulate_stream("Hello!", delay=0.02):
+    print(chunk, end="", flush=True)
+```
+
+### typewriter()
+
+Display text with a typewriter animation effect.
+
+```python
+from umara.ai import typewriter
+
+um.ai.typewriter(
+    "Welcome to the AI assistant! How can I help you today?",
+    speed=0.03  # Seconds per character
+)
+```
+
+### show_thinking()
+
+Display AI reasoning/thinking in a collapsible container.
+
+```python
+from umara.ai import show_thinking
+
+# Show AI's chain-of-thought reasoning
+um.ai.show_thinking(
+    """Let me break this down step by step:
+    1. First, I'll analyze the input
+    2. Then, I'll formulate a response
+    3. Finally, I'll provide the answer""",
+    collapsed=True,  # Start collapsed
+    title="Thinking..."
+)
+```
+
+### Provider Adapters
+
+Convert provider-specific streams to plain string iterators.
+
+```python
+from umara.ai import create_openai_stream_adapter, create_anthropic_stream_adapter
+
+# OpenAI
+openai_stream = client.chat.completions.create(model="gpt-4", messages=msgs, stream=True)
+um.write_stream(create_openai_stream_adapter(openai_stream))
+
+# Anthropic
+anthropic_stream = client.messages.stream(model="claude-3-opus", messages=msgs)
+um.write_stream(create_anthropic_stream_adapter(anthropic_stream))
+```
+
+### estimate_tokens()
+
+Estimate token count for text (roughly 4 characters per token).
+
+```python
+from umara.ai import estimate_tokens
+
+tokens = estimate_tokens("Hello, how are you today?")
+print(f"Estimated tokens: {tokens}")  # ~6 tokens
+```
+
+### estimate_cost()
+
+Estimate API cost for a request based on model pricing.
+
+```python
+from umara.ai import estimate_cost
+
+cost = estimate_cost(
+    input_tokens=500,
+    output_tokens=1000,
+    model="gpt-4"
+)
+print(f"Estimated cost: ${cost:.4f}")  # ~$0.075
+
+# Supported models include:
+# OpenAI: gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-3.5-turbo
+# Anthropic: claude-3-opus, claude-3-sonnet, claude-3-haiku, claude-3.5-sonnet
+```
+
+### Complete AI Chat Example
+
+```python
+import umara as um
+from umara.ai import AIMessage, chat_stream, estimate_cost
+
+um.set_page_config(page_title="AI Chat")
+
+# Initialize chat history
+um.session_state.setdefault("messages", [
+    AIMessage.system("You are a helpful, friendly assistant.")
+])
+um.session_state.setdefault("total_cost", 0.0)
+
+um.title("AI Chat")
+
+# Display chat history
+with um.chat_container(height="400px"):
+    for msg in um.session_state.messages:
+        if msg.role != "system":
+            um.chat_message(msg.content, role=msg.role)
+
+# Chat input
+user_input = um.chat_input("Type your message...")
+
+if user_input:
+    # Add user message
+    um.session_state.messages.append(AIMessage.user(user_input))
+
+    # Create API request
+    stream = client.chat.completions.create(
+        model="gpt-4",
+        messages=[m.to_openai() for m in um.session_state.messages],
+        stream=True
+    )
+
+    # Stream response
+    response = chat_stream(stream, role="assistant")
+
+    # Save assistant response
+    um.session_state.messages.append(AIMessage.assistant(response))
+
+    # Track costs
+    input_tokens = sum(estimate_tokens(m.content) for m in um.session_state.messages[:-1])
+    output_tokens = estimate_tokens(response)
+    um.session_state.total_cost += estimate_cost(input_tokens, output_tokens, "gpt-4")
+
+    um.rerun()
+
+# Display cost
+um.caption(f"Estimated session cost: ${um.session_state.total_cost:.4f}")
+```
+
+---
+
 ## Best Practices
 
 ### 1. Use Keys for Stateful Widgets
@@ -3618,4 +4085,4 @@ um.text("More content...")
 
 ---
 
-*Documentation generated for Umara v0.5.1*
+*Documentation generated for Umara v0.5.1 - Includes Form Validation, AI Streaming Helpers*

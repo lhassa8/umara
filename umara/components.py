@@ -1062,26 +1062,46 @@ def file_uploader(
     max_file_size: int | None = None,
     disabled: bool = False,
     label_visibility: str = "visible",
+    help: str | None = None,
     style: Style | None = None,
 ) -> Any | None:
     """
-    Create a file uploader.
+    Create a file uploader with drag-and-drop support.
+
+    Like Streamlit's file_uploader, this component allows users to upload
+    files which are returned as UploadedFile objects with read(), getvalue(),
+    and other file-like methods.
 
     Args:
         label: Uploader label
-        key: State key
-        accept: Accepted file types (e.g., ['.pdf', '.docx'])
+        key: State key for the widget
+        accept: Accepted file types (e.g., ['.pdf', '.docx', 'image/*'])
         type: Alias for accept (Streamlit compatibility)
         multiple: Allow multiple files
         accept_multiple_files: Alias for multiple (Streamlit compatibility)
         max_file_size: Maximum file size in bytes (e.g., 10*1024*1024 for 10MB)
-        disabled: Whether disabled
+        disabled: Whether the uploader is disabled
         label_visibility: Label visibility ('visible', 'hidden', 'collapsed')
+        help: Optional help text shown below the uploader
         style: Optional Style object
 
     Returns:
-        Uploaded file(s) or None
+        UploadedFile or list[UploadedFile] if files uploaded, None otherwise
+
+    Example:
+        uploaded = um.file_uploader("Upload a file", accept=[".pdf", ".docx"])
+        if uploaded:
+            content = uploaded.read()
+            um.write(f"Uploaded: {uploaded.name} ({uploaded.size} bytes)")
+
+        # Multiple files
+        files = um.file_uploader("Upload files", accept_multiple_files=True)
+        if files:
+            for f in files:
+                um.write(f"- {f.name}")
     """
+    from umara.upload import UploadedFile, parse_uploaded_files
+
     ctx = get_context()
     state = get_session_state()
 
@@ -1092,7 +1112,13 @@ def file_uploader(
     effective_multiple = accept_multiple_files if accept_multiple_files is not None else multiple
 
     state_key = key or f"_file_{label or 'default'}"
-    current_value = state.setdefault(state_key, None)
+    raw_value = state.setdefault(state_key, None)
+
+    # Convert raw file data to UploadedFile objects
+    if raw_value is not None:
+        current_value = parse_uploaded_files(raw_value)
+    else:
+        current_value = None
 
     props = {
         "label": label if label_visibility == "visible" else "",
@@ -1101,6 +1127,8 @@ def file_uploader(
         "maxFileSize": max_file_size,
         "disabled": disabled,
         "stateKey": state_key,
+        "help": help,
+        "labelVisibility": label_visibility,
     }
     style_dict = _normalize_style(style)
     ctx.create_component("file_uploader", props=props, style=style_dict)
@@ -3042,22 +3070,181 @@ def toast(
     *,
     icon: str | None = None,
     duration: int = 4000,
+    type: Literal["default", "success", "error", "warning", "info"] = "default",
+    position: Literal[
+        "top-right", "top-left", "top-center",
+        "bottom-right", "bottom-left", "bottom-center"
+    ] = "bottom-right",
+    closable: bool = True,
+    action_label: str | None = None,
+    action_url: str | None = None,
+    show_progress: bool = True,
+    title: str | None = None,
 ) -> None:
     """
     Display a toast notification.
 
+    Toasts are non-blocking notifications that appear temporarily to provide
+    feedback to users. They support multiple variants, positions, and can
+    include action buttons.
+
     Args:
-        message: Message to display
-        icon: Optional icon (emoji or icon name)
-        duration: How long to show toast (milliseconds)
+        message: Message to display in the toast
+        icon: Optional icon (emoji or icon name). Auto-set based on type if not provided
+        duration: How long to show toast in milliseconds (0 for persistent)
+        type: Toast variant - "default", "success", "error", "warning", or "info"
+        position: Where to display the toast on screen
+        closable: Whether the toast can be manually dismissed
+        action_label: Optional label for an action button
+        action_url: URL to navigate to when action is clicked
+        show_progress: Show a progress bar indicating time until auto-dismiss
+        title: Optional title displayed above the message
+
+    Example:
+        # Simple toast
+        um.toast("File saved successfully!")
+
+        # Success toast with icon
+        um.toast("Upload complete!", type="success")
+
+        # Error toast that stays until dismissed
+        um.toast("Connection lost", type="error", duration=0)
+
+        # Toast with action button
+        um.toast(
+            "New version available",
+            type="info",
+            action_label="Update Now",
+            action_url="/update"
+        )
+
+        # Custom position
+        um.toast("Check this out!", position="top-center")
     """
     ctx = get_context()
+
+    # Auto-assign icons based on type if not provided
+    if icon is None:
+        type_icons = {
+            "success": "check_circle",
+            "error": "error",
+            "warning": "warning",
+            "info": "info",
+            "default": None,
+        }
+        icon = type_icons.get(type)
+
     props = {
         "message": message,
         "icon": icon,
         "duration": duration,
+        "type": type,
+        "position": position,
+        "closable": closable,
+        "actionLabel": action_label,
+        "actionUrl": action_url,
+        "showProgress": show_progress and duration > 0,
+        "title": title,
     }
     ctx.create_component("toast", props=props)
+
+
+def toast_success(
+    message: str,
+    *,
+    title: str | None = None,
+    duration: int = 4000,
+    **kwargs,
+) -> None:
+    """
+    Display a success toast notification.
+
+    Shorthand for toast(..., type="success").
+
+    Args:
+        message: Success message to display
+        title: Optional title
+        duration: How long to show (milliseconds)
+        **kwargs: Additional toast options
+
+    Example:
+        um.toast_success("Profile updated!")
+        um.toast_success("Order placed", title="Success")
+    """
+    toast(message, type="success", title=title, duration=duration, **kwargs)
+
+
+def toast_error(
+    message: str,
+    *,
+    title: str | None = None,
+    duration: int = 6000,
+    **kwargs,
+) -> None:
+    """
+    Display an error toast notification.
+
+    Shorthand for toast(..., type="error"). Defaults to longer duration.
+
+    Args:
+        message: Error message to display
+        title: Optional title
+        duration: How long to show (milliseconds, default 6000)
+        **kwargs: Additional toast options
+
+    Example:
+        um.toast_error("Failed to save changes")
+        um.toast_error("Server error", title="Error", duration=0)
+    """
+    toast(message, type="error", title=title, duration=duration, **kwargs)
+
+
+def toast_warning(
+    message: str,
+    *,
+    title: str | None = None,
+    duration: int = 5000,
+    **kwargs,
+) -> None:
+    """
+    Display a warning toast notification.
+
+    Shorthand for toast(..., type="warning").
+
+    Args:
+        message: Warning message to display
+        title: Optional title
+        duration: How long to show (milliseconds)
+        **kwargs: Additional toast options
+
+    Example:
+        um.toast_warning("Unsaved changes will be lost")
+    """
+    toast(message, type="warning", title=title, duration=duration, **kwargs)
+
+
+def toast_info(
+    message: str,
+    *,
+    title: str | None = None,
+    duration: int = 4000,
+    **kwargs,
+) -> None:
+    """
+    Display an info toast notification.
+
+    Shorthand for toast(..., type="info").
+
+    Args:
+        message: Info message to display
+        title: Optional title
+        duration: How long to show (milliseconds)
+        **kwargs: Additional toast options
+
+    Example:
+        um.toast_info("Tip: Press Ctrl+S to save")
+    """
+    toast(message, type="info", title=title, duration=duration, **kwargs)
 
 
 # =============================================================================

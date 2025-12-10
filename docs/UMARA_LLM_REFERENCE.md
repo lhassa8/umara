@@ -740,6 +740,157 @@ Control modal visibility by key.
 
 ---
 
+## Form Validation
+
+Umara includes a built-in validation system with 17+ validators. Import from `umara.validation`.
+
+### validate()
+```python
+from umara.validation import validate, required, email, min_length
+
+errors = validate({
+    "email": (email_input, [required(), email()]),
+    "password": (password, [required(), min_length(8)]),
+})
+# Returns: dict[str, list[str]] - empty dict if valid
+```
+
+### validate_field()
+```python
+from umara.validation import validate_field, required, email
+
+errors = validate_field(email_input, [required(), email()])
+# Returns: list[str] - list of error messages
+```
+
+### is_valid()
+```python
+from umara.validation import is_valid, required, min_length
+
+if is_valid(password, [required(), min_length(8)]):
+    um.success("Password is valid!")
+```
+
+### Available Validators
+```python
+required(message="...")           # Not empty/None
+min_length(n, message="...")      # Minimum string/list length
+max_length(n, message="...")      # Maximum string/list length
+email(message="...")              # Valid email format
+url(message="...")                # Valid URL format
+pattern(regex, message="...")     # Regex match
+min_value(n, message="...")       # Minimum numeric value
+max_value(n, message="...")       # Maximum numeric value
+in_range(min, max, message="...")  # Numeric range
+one_of(options, message="...")    # Value in list
+matches(other, name, message="...") # Matches another value
+numeric(message="...")            # Is numeric
+integer(message="...")            # Is whole number
+alpha(message="...")              # Letters only
+alphanumeric(message="...")       # Letters and numbers only
+no_whitespace(message="...")      # No spaces/tabs/newlines
+custom(fn, message="...")         # Custom validation function
+```
+
+### FormValidator Class
+```python
+from umara.validation import FormValidator, required, email
+
+validator = FormValidator()
+validator.add("name", name_input, [required()])
+validator.add("email", email_input, [required(), email()])
+
+if um.form_submit_button("Submit"):
+    if validator.is_valid():
+        um.success("Form valid!")
+    else:
+        validator.show_errors()  # Displays um.error() for each
+```
+
+---
+
+## AI Streaming Helpers
+
+Advanced AI/LLM integration helpers in `umara.ai`.
+
+### stream_with_metrics()
+```python
+from umara.ai import stream_with_metrics
+
+response, metrics = stream_with_metrics(openai_stream)
+print(f"Tokens: {metrics.tokens_generated}, Speed: {metrics.tokens_per_second:.0f} tok/s")
+```
+
+### write_stream_with_stats()
+```python
+from umara.ai import write_stream_with_stats
+
+result = um.ai.write_stream_with_stats(stream, show_stats=True)
+# Displays streaming content + "Generated ~150 tokens in 2.3s (65 tok/s)"
+```
+
+### chat_stream()
+```python
+from umara.ai import chat_stream
+
+# Streams inside a chat message container
+response = um.ai.chat_stream(stream, role="assistant", avatar="🤖")
+```
+
+### simulate_stream()
+```python
+from umara.ai import simulate_stream
+
+# Test streaming without API calls
+stream = um.ai.simulate_stream("Hello! How can I help?", chunk_size=10, delay=0.02)
+um.write_stream(stream)
+```
+
+### typewriter()
+```python
+from umara.ai import typewriter
+
+um.ai.typewriter("Hello! How can I help you today?", speed=0.03)
+```
+
+### show_thinking()
+```python
+from umara.ai import show_thinking
+
+um.ai.show_thinking("Let me break this down:\n1. First...", collapsed=True)
+```
+
+### estimate_cost()
+```python
+from umara.ai import estimate_cost
+
+cost = um.ai.estimate_cost(input_tokens=500, output_tokens=1000, model="gpt-4")
+print(f"Estimated: ${cost:.4f}")
+```
+
+### Provider Adapters
+```python
+from umara.ai import create_openai_stream_adapter, create_anthropic_stream_adapter
+
+# Convert provider streams to plain string iterators
+um.write_stream(create_openai_stream_adapter(openai_stream))
+um.write_stream(create_anthropic_stream_adapter(anthropic_stream))
+```
+
+### AIMessage
+```python
+from umara.ai import AIMessage
+
+messages = [
+    AIMessage.system("You are helpful"),
+    AIMessage.user("Hello!"),
+    AIMessage.assistant("Hi there!"),
+]
+# Convert: msg.to_openai() or msg.to_anthropic()
+```
+
+---
+
 ## Common Patterns
 
 ### Basic Chat App
@@ -846,4 +997,4 @@ if "key" not in um.state:
 
 ---
 
-*Umara v0.5.1 - All 79 components documented*
+*Umara v0.5.1 - 79 components + Form Validation + AI Streaming Helpers*
