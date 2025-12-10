@@ -1,6 +1,6 @@
 # Umara LLM Reference Guide
 
-Concise API reference for LLM agents using Umara v0.5.1. All signatures verified against source code.
+Concise API reference for LLM agents using Umara v0.6.0. All signatures verified against source code.
 
 ## Quick Start
 
@@ -997,4 +997,141 @@ if "key" not in um.state:
 
 ---
 
-*Umara v0.5.1 - 79 components + Form Validation + AI Streaming Helpers*
+## Advanced Caching (v0.6.0)
+
+Cache expensive operations with TTL support, LRU eviction, and async support.
+
+### @cache() decorator
+```python
+from umara import cache
+
+@cache(ttl=3600)  # Cache for 1 hour
+def fetch_data(query: str) -> dict:
+    return expensive_api_call(query)
+```
+
+### @memoize decorator
+```python
+from umara import memoize
+
+@memoize
+def fibonacci(n: int) -> int:
+    if n <= 1:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)
+```
+
+### AI-specific caching
+```python
+from umara import cache_embedding, cache_llm_response
+
+@cache_embedding(ttl=86400)  # 24 hours
+def get_embedding(text: str) -> list[float]:
+    return openai.embeddings.create(input=text)
+
+@cache_llm_response(ttl=3600)
+def get_completion(prompt: str) -> str:
+    return client.chat.completions.create(...)
+```
+
+### Cache utilities
+```python
+from umara import clear_all_caches, get_cache_stats
+
+clear_all_caches()  # Clear all cached data
+stats = get_cache_stats()  # Get cache statistics
+```
+
+---
+
+## Fragments - Partial Reruns (v0.6.0)
+
+Update specific sections without re-rendering the entire page.
+
+### @fragment decorator
+```python
+from umara import fragment
+import umara as um
+
+@fragment(run_every=5.0)  # Auto-refresh every 5 seconds
+def live_metrics():
+    data = fetch_latest_metrics()
+    um.metric("Active Users", data["users"])
+```
+
+### fragment_container context manager
+```python
+from umara import fragment_container
+import umara as um
+
+with fragment_container("metrics", run_every=10.0):
+    um.metric("CPU", get_cpu_usage())
+    um.metric("Memory", get_memory_usage())
+```
+
+### @poll decorator
+```python
+from umara import poll
+import umara as um
+
+@poll(interval=10.0)
+def check_status():
+    status = get_service_status()
+    if status == "down":
+        um.error("Service is down!")
+```
+
+---
+
+## Connection Management (v0.6.0)
+
+Manage database connections and API clients with automatic caching.
+
+### @connection decorator
+```python
+from umara import connection
+
+@connection(ttl=3600)
+def get_db():
+    return sqlite3.connect("app.db")
+
+# Connection is cached and reused
+db = get_db()
+```
+
+### SQL connections
+```python
+from umara import sql_connection
+
+@sql_connection()
+def get_postgres():
+    return psycopg2.connect(os.environ["DATABASE_URL"])
+```
+
+### AI client helpers
+```python
+from umara import openai_client, anthropic_client
+
+# Get cached OpenAI client
+client = openai_client()()
+
+# Get cached Anthropic client
+client = anthropic_client()()
+```
+
+### Connection pool
+```python
+from umara import ConnectionPool
+
+pool = ConnectionPool(
+    factory=lambda: psycopg2.connect(DATABASE_URL),
+    size=5
+)
+
+with pool.acquire() as conn:
+    conn.execute("SELECT * FROM users")
+```
+
+---
+
+*Umara v0.6.0 - 79 components + Caching + Fragments + Connection Management*
