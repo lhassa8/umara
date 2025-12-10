@@ -168,7 +168,38 @@ from umara.themes import (
 )
 from umara.upload import UploadedFile
 
-__version__ = "0.5.1"
+# Advanced caching system
+from umara.cache import (
+    async_cache,
+    cache_embedding,
+    cache_llm_response,
+    clear_all_caches,
+    get_cache_stats,
+    memoize,
+)
+
+# Fragment system for partial reruns
+from umara.fragments import (
+    FragmentGroup,
+    async_fragment,
+    fragment_container,
+    get_all_fragment_stats,
+    poll,
+    rerun_fragment,
+)
+
+# Connection management
+from umara.connections import (
+    ConnectionPool,
+    anthropic_client,
+    api_connection,
+    close_all_connections,
+    get_connection_info,
+    openai_client,
+    sql_connection,
+)
+
+__version__ = "0.6.0"
 __all__ = [
     # Core
     "UmaraApp",
@@ -321,4 +352,26 @@ __all__ = [
     "style",
     # File Upload
     "UploadedFile",
+    # Advanced Caching
+    "memoize",
+    "async_cache",
+    "cache_embedding",
+    "cache_llm_response",
+    "clear_all_caches",
+    "get_cache_stats",
+    # Fragment System (partial reruns)
+    "fragment_container",
+    "rerun_fragment",
+    "async_fragment",
+    "FragmentGroup",
+    "poll",
+    "get_all_fragment_stats",
+    # Connection Management
+    "sql_connection",
+    "api_connection",
+    "ConnectionPool",
+    "close_all_connections",
+    "get_connection_info",
+    "openai_client",
+    "anthropic_client",
 ]
