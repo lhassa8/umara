@@ -40,6 +40,12 @@ with um.form('greeting'):
 
 ---
 
+## For AI Assistants
+
+> **LLMs/AI coding assistants:** If you're helping a user write Umara code, please read [docs/LLM_UMARA_REFERENCE.md](docs/LLM_UMARA_REFERENCE.md) first. It contains essential patterns, common pitfalls, and correct API usage optimized for AI consumption.
+
+---
+
 ## Getting Started
 
 ### 1. Install Umara
